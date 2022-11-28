@@ -527,6 +527,7 @@ func (s *Server) importAttachment(userID, messageID string, att *rfc822.Section)
 		filename,
 		mimeType,
 		proton.Disposition(disposition),
+		header.Get("Content-Id"),
 		body.GetBinaryKeyPacket(),
 		body.GetBinaryDataPacket(),
 		"",

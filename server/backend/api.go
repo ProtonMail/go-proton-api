@@ -553,9 +553,18 @@ func (b *Backend) CreateAttachment(
 	filename string,
 	mimeType rfc822.MIMEType,
 	disposition proton.Disposition,
+	contentID string,
 	keyPackets, dataPacket []byte,
 	armSig string,
 ) (proton.Attachment, error) {
+	if disposition != proton.InlineDisposition && disposition != proton.AttachmentDisposition {
+		return proton.Attachment{}, errors.New("The Disposition only allows 'attachment', or 'inline'")
+	}
+
+	if disposition == proton.InlineDisposition && contentID == "" {
+		return proton.Attachment{}, errors.New("The 'inline' Disposition is only allowed with Content ID")
+	}
+
 	return withAcc(b, userID, func(acc *account) (proton.Attachment, error) {
 		return withMessages(b, func(messages map[string]*message) (proton.Attachment, error) {
 			return withAtts(b, func(atts map[string]*attachment) (proton.Attachment, error) {
