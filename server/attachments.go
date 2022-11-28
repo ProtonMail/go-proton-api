@@ -24,6 +24,7 @@ func (s *Server) handlePostMailAttachments() gin.HandlerFunc {
 			form.Value["Filename"][0],
 			rfc822.MIMEType(form.Value["MIMEType"][0]),
 			proton.Disposition(form.Value["Disposition"][0]),
+			form.Value["ContentID"][0],
 			mustReadFileHeader(form.File["KeyPackets"][0]),
 			mustReadFileHeader(form.File["DataPacket"][0]),
 			string(mustReadFileHeader(form.File["Signature"][0])),
