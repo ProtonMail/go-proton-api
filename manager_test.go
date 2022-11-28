@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -98,6 +100,52 @@ func TestHandleTooManyRequests(t *testing.T) {
 	if numCalls != 5 {
 		t.Fatal("expected numCalls to be 5, instead got", numCalls)
 	}
+}
+
+func TestHandleTooManyRequestsRetryAfter(t *testing.T) {
+	getDelay := func(iCal int) time.Duration {
+		return time.Duration(5*1<<iCal) * time.Second
+	}
+
+	iRetry := -1
+	lastCall := time.Now()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		currentCall := time.Now()
+
+		if iRetry >= 0 {
+			delay := getDelay(iRetry)
+			assert.False(t, currentCall.Before(
+				lastCall.Add(delay)),
+				"Delay was %v but expected to have %v",
+				currentCall.Sub(lastCall),
+				delay,
+			)
+		}
+
+		iRetry++
+		lastCall = currentCall
+
+		// test defaul 10sec
+		if iRetry == 1 {
+			w.Header().Set("Retry-After", "something")
+		} else {
+			w.Header().Set("Retry-After", fmt.Sprintf("%.0f", getDelay(iRetry).Seconds()))
+		}
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer ts.Close()
+
+	m := proton.New(
+		proton.WithHostURL(ts.URL),
+		proton.WithRetryCount(3),
+	)
+
+	c := m.NewClient("", "", "", time.Now().Add(time.Hour))
+	defer c.Close()
+
+	_, err := c.GetAddresses(context.Background())
+	require.Error(t, err)
 }
 
 func TestHandleUnprocessableEntity(t *testing.T) {
