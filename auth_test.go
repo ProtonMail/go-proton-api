@@ -2,61 +2,13 @@ package proton_test
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server"
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 )
-
-func TestAutomaticAuthRefresh(t *testing.T) {
-	wantAuth := proton.Auth{
-		UID:          "testUID",
-		AccessToken:  "testAcc",
-		RefreshToken: "testRef",
-	}
-
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/core/v4/auth/refresh", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		if err := json.NewEncoder(w).Encode(wantAuth); err != nil {
-			panic(err)
-		}
-	})
-
-	mux.HandleFunc("/core/v4/users", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	ts := httptest.NewServer(mux)
-	defer ts.Close()
-
-	var gotAuth proton.Auth
-
-	// Create a new client.
-	c := proton.New(proton.WithHostURL(ts.URL)).NewClient("uid", "acc", "ref", time.Now().Add(-time.Second))
-	defer c.Close()
-
-	// Register an auth handler.
-	c.AddAuthHandler(func(auth proton.Auth) { gotAuth = auth })
-
-	// Make a request with an access token that already expired one second ago.
-	if _, err := c.GetUser(context.Background()); err != nil {
-		t.Fatal("got unexpected error", err)
-	}
-
-	// The auth callback should have been called.
-	if !cmp.Equal(gotAuth, wantAuth) {
-		t.Fatal("got unexpected auth", gotAuth)
-	}
-}
 
 func TestAuth(t *testing.T) {
 	s := server.New()
@@ -100,4 +52,44 @@ func TestAuth(t *testing.T) {
 
 	// Delete the last session.
 	require.NoError(t, c2.AuthDelete(context.Background()))
+}
+
+func TestAuth_Refresh(t *testing.T) {
+	s := server.New()
+	defer s.Close()
+
+	s.SetAuthLife(10 * time.Second)
+
+	_, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
+	require.NoError(t, err)
+
+	m := proton.New(
+		proton.WithHostURL(s.GetHostURL()),
+		proton.WithTransport(proton.InsecureTransport()),
+	)
+	defer m.Close()
+
+	// Create one session.
+	c, _, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
+	require.NoError(t, err)
+
+	// Wait for 5 seconds.
+	time.Sleep(5 * time.Second)
+
+	// The client should still be authenticated.
+	{
+		user, err := c.GetUser(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "username", user.Name)
+	}
+
+	// Wait for 5 more seconds.
+	time.Sleep(5 * time.Second)
+
+	// The client's auth token should have expired, but will be refreshed.
+	{
+		user, err := c.GetUser(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "username", user.Name)
+	}
 }

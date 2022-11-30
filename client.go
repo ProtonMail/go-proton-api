@@ -3,10 +3,8 @@ package proton
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/bradenaw/juniper/xsync"
 	"github.com/go-resty/resty/v2"
@@ -34,7 +32,6 @@ type Client struct {
 	uid      string
 	acc      string
 	ref      string
-	exp      time.Time
 	authLock sync.RWMutex
 
 	authHandlers   []AuthHandler
@@ -107,7 +104,6 @@ func (c *Client) Close() {
 	c.uid = ""
 	c.acc = ""
 	c.ref = ""
-	c.exp = time.Time{}
 
 	c.hookLock.Lock()
 	defer c.hookLock.Unlock()
@@ -116,10 +112,9 @@ func (c *Client) Close() {
 	c.deauthHandlers = nil
 }
 
-func (c *Client) withAuth(acc, ref string, exp time.Time) *Client {
+func (c *Client) withAuth(acc, ref string) *Client {
 	c.acc = acc
 	c.ref = ref
-	c.exp = exp
 
 	return c
 }
@@ -149,15 +144,6 @@ func (c *Client) doRes(ctx context.Context, fn func(*resty.Request) (*resty.Resp
 		return nil, fmt.Errorf("received no response from API: %w", err)
 	}
 
-	// If we receive a 401, notify deauth handlers.
-	if res.StatusCode() == http.StatusUnauthorized {
-		c.deauthOnce.Do(func() {
-			for _, handler := range c.deauthHandlers {
-				handler()
-			}
-		})
-	}
-
 	return res, err
 }
 
@@ -169,21 +155,6 @@ func (c *Client) newReq(ctx context.Context) (*resty.Request, error) {
 
 	if c.uid != "" {
 		r.SetHeader("x-pm-uid", c.uid)
-	}
-
-	if time.Now().After(c.exp) {
-		auth, err := c.m.authRefresh(ctx, c.uid, c.ref)
-		if err != nil {
-			return nil, err
-		}
-
-		c.acc = auth.AccessToken
-		c.ref = auth.RefreshToken
-		c.exp = time.Now().Add(time.Duration(auth.ExpiresIn) * time.Second)
-
-		if err := c.handleAuth(auth); err != nil {
-			return nil, err
-		}
 	}
 
 	if c.acc != "" {

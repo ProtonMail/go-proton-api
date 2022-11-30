@@ -88,7 +88,7 @@ func TestHandleTooManyRequests(t *testing.T) {
 	)
 
 	// The call should succeed because the 5th retry should succeed (429s are retried).
-	c := m.NewClient("", "", "", time.Now().Add(time.Hour))
+	c := m.NewClient("", "", "")
 	defer c.Close()
 
 	if _, err := c.GetAddresses(context.Background()); err != nil {
@@ -141,7 +141,7 @@ func TestHandleTooManyRequestsRetryAfter(t *testing.T) {
 		proton.WithRetryCount(3),
 	)
 
-	c := m.NewClient("", "", "", time.Now().Add(time.Hour))
+	c := m.NewClient("", "", "")
 	defer c.Close()
 
 	_, err := c.GetAddresses(context.Background())
@@ -163,7 +163,7 @@ func TestHandleUnprocessableEntity(t *testing.T) {
 	)
 
 	// The call should fail because the first call should fail (422s are not retried).
-	c := m.NewClient("", "", "", time.Now().Add(time.Hour))
+	c := m.NewClient("", "", "")
 	defer c.Close()
 
 	if _, err := c.GetAddresses(context.Background()); err == nil {
@@ -193,7 +193,7 @@ func TestHandleDialFailure(t *testing.T) {
 	)
 
 	// The call should succeed because the last retry should succeed (dial errors are retried).
-	c := m.NewClient("", "", "", time.Now().Add(time.Hour))
+	c := m.NewClient("", "", "")
 	defer c.Close()
 
 	if _, err := c.GetAddresses(context.Background()); err != nil {
@@ -226,7 +226,7 @@ func TestHandleTooManyDialFailures(t *testing.T) {
 	)
 
 	// The call should fail because every dial will fail and we'll run out of retries.
-	c := m.NewClient("", "", "", time.Now().Add(time.Hour))
+	c := m.NewClient("", "", "")
 	defer c.Close()
 
 	if _, err := c.GetAddresses(context.Background()); err == nil {
@@ -267,7 +267,7 @@ func TestRetriesWithContextTimeout(t *testing.T) {
 	// Theoretically, this should succeed; on the fifth retry, we'll get StatusOK.
 	// However, that will take at least >5s, and we only allow 1s in the context.
 	// Thus, it will fail.
-	c := m.NewClient("", "", "", time.Now().Add(time.Hour))
+	c := m.NewClient("", "", "")
 	defer c.Close()
 
 	if _, err := c.GetAddresses(ctx); err == nil {
@@ -289,7 +289,7 @@ func TestReturnErrNoConnection(t *testing.T) {
 	)
 
 	// The call should fail because every dial will fail and we'll run out of retries.
-	c := m.NewClient("", "", "", time.Now().Add(time.Hour))
+	c := m.NewClient("", "", "")
 	defer c.Close()
 
 	if _, err := c.GetAddresses(context.Background()); err == nil {

@@ -34,7 +34,6 @@ type Auth struct {
 	AccessToken  string
 	RefreshToken string
 	ServerProof  string
-	ExpiresIn    int
 
 	Scope        string
 	TwoFA        TwoFAInfo `json:"2FA"`
