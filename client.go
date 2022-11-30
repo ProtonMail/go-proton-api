@@ -2,7 +2,9 @@ package proton
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 	"sync/atomic"
 
@@ -131,25 +133,30 @@ func (c *Client) doRes(ctx context.Context, fn func(*resty.Request) (*resty.Resp
 	c.hookLock.RLock()
 	defer c.hookLock.RUnlock()
 
-	req, err := c.newReq(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Perform the request.
-	res, err := fn(req)
+	res, err := c.exec(ctx, fn)
 
 	// If we receive no response, we can't do anything.
 	if res.RawResponse == nil {
 		return nil, fmt.Errorf("received no response from API: %w", err)
 	}
 
+	// If we receive a 401, we need to refresh the auth.
+	if res.StatusCode() == http.StatusUnauthorized {
+		if err := c.authRefresh(ctx); err != nil {
+			return nil, fmt.Errorf("failed to refresh auth: %w", err)
+		}
+
+		if res, err = c.exec(ctx, fn); err != nil {
+			return nil, fmt.Errorf("failed to retry request: %w", err)
+		}
+	}
+
 	return res, err
 }
 
-func (c *Client) newReq(ctx context.Context) (*resty.Request, error) {
-	c.authLock.Lock()
-	defer c.authLock.Unlock()
+func (c *Client) exec(ctx context.Context, fn func(*resty.Request) (*resty.Response, error)) (*resty.Response, error) {
+	c.authLock.RLock()
+	defer c.authLock.RUnlock()
 
 	r := c.m.r(WithClient(ctx, c.clientID))
 
@@ -161,12 +168,31 @@ func (c *Client) newReq(ctx context.Context) (*resty.Request, error) {
 		r.SetAuthToken(c.acc)
 	}
 
-	return r, nil
+	return fn(r)
 }
 
-func (c *Client) handleAuth(auth Auth) error {
+func (c *Client) authRefresh(ctx context.Context) error {
+	c.authLock.Lock()
+	defer c.authLock.Unlock()
+
 	c.hookLock.RLock()
 	defer c.hookLock.RUnlock()
+
+	auth, err := c.m.authRefresh(ctx, c.uid, c.ref)
+	if apiErr := new(Error); errors.As(err, &apiErr) && apiErr.Code == AuthRefreshTokenInvalid {
+		c.deauthOnce.Do(func() {
+			for _, handler := range c.deauthHandlers {
+				handler()
+			}
+		})
+
+		return fmt.Errorf("failed to refresh auth (token is invalid): %w", err)
+	} else if err != nil {
+		return fmt.Errorf("failed to refresh auth: %w", err)
+	}
+
+	c.acc = auth.AccessToken
+	c.ref = auth.RefreshToken
 
 	for _, handler := range c.authHandlers {
 		handler(auth)
