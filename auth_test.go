@@ -8,7 +8,6 @@ import (
 
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server"
-	"github.com/bradenaw/juniper/iterator"
 	"github.com/bradenaw/juniper/parallel"
 	"github.com/stretchr/testify/require"
 )
@@ -106,8 +105,11 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
+	const username = "username"
+	password := []byte("password")
+
 	// Create a user on the server.
-	userID, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
+	userID, _, err := s.CreateUser(username, "email@pm.me", password)
 	require.NoError(t, err)
 
 	// The auth is valid for 4 seconds.
@@ -119,21 +121,25 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 	)
 	defer m.Close()
 
-	// Create a lot of sessions for the user.
-	clients := iterator.Collect(parallel.MapIterator(iterator.Counter(100), runtime.NumCPU(), runtime.NumCPU(), func(int) *proton.Client {
-		c, auth, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
-		require.NoError(t, err)
-		require.Equal(t, userID, auth.UserID)
+	c, auth, err := m.NewClientWithLogin(context.Background(), username, password)
+	require.NoError(t, err)
+	require.Equal(t, userID, auth.UserID)
 
-		return c
-	}))
+	time.Sleep(2 * time.Second)
+
+	parallel.Do(runtime.NumCPU(), 100, func(idx int) {
+		user, err := c.GetUser(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "username", user.Name)
+		require.Equal(t, userID, user.ID)
+	})
 
 	// Wait for the auth to expire.
-	time.Sleep(4 * time.Second)
+	time.Sleep(2 * time.Second)
 
-	// Each client's auth token should have expired, but will be refreshed on the next request.
+	// Client auth token should have expired, but will be refreshed on the next request.
 	parallel.Do(runtime.NumCPU(), 100, func(idx int) {
-		user, err := clients[idx].GetUser(context.Background())
+		user, err := c.GetUser(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, "username", user.Name)
 		require.Equal(t, userID, user.ID)
