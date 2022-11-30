@@ -2,7 +2,6 @@ package proton
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -179,15 +178,26 @@ func (c *Client) authRefresh(ctx context.Context) error {
 	defer c.hookLock.RUnlock()
 
 	auth, err := c.m.authRefresh(ctx, c.uid, c.ref)
-	if apiErr := new(Error); errors.As(err, &apiErr) && apiErr.Code == AuthRefreshTokenInvalid {
-		c.deauthOnce.Do(func() {
-			for _, handler := range c.deauthHandlers {
-				handler()
-			}
-		})
 
-		return fmt.Errorf("failed to refresh auth (token is invalid): %w", err)
-	} else if err != nil {
+	if err != nil {
+		if respErr, ok := err.(*resty.ResponseError); ok {
+
+			switch respErr.Response.StatusCode() {
+			case http.StatusBadRequest, http.StatusUnprocessableEntity:
+				c.deauthOnce.Do(func() {
+					for _, handler := range c.deauthHandlers {
+						handler()
+					}
+				})
+
+				return fmt.Errorf("failed to refresh auth, de-auth: %w", err)
+			case http.StatusConflict, http.StatusTooManyRequests, http.StatusInternalServerError, http.StatusServiceUnavailable:
+				return fmt.Errorf("failed to refresh auth, server issues: %w", err)
+			default:
+				//
+			}
+		}
+
 		return fmt.Errorf("failed to refresh auth: %w", err)
 	}
 

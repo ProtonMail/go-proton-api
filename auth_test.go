@@ -143,3 +143,47 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 		require.Equal(t, userID, user.ID)
 	})
 }
+
+func TestAuth_Refresh_Deauth(t *testing.T) {
+	s := server.New()
+	defer s.Close()
+
+	// Create a user on the server.
+	userID, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
+	require.NoError(t, err)
+
+	m := proton.New(
+		proton.WithHostURL(s.GetHostURL()),
+		proton.WithTransport(proton.InsecureTransport()),
+	)
+	defer m.Close()
+
+	// Create one session for the user.
+	c, auth, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
+	require.NoError(t, err)
+	require.Equal(t, userID, auth.UserID)
+
+	deauth := false
+	c.AddDeauthHandler(func() {
+		deauth = true
+	})
+
+	// The client should still be authenticated.
+	{
+		user, err := c.GetUser(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "username", user.Name)
+		require.Equal(t, userID, user.ID)
+	}
+
+	require.NoError(t, s.RevokeUser(userID))
+
+	// The client's auth token should have expired, and should not be refreshed
+	{
+		_, err := c.GetUser(context.Background())
+		require.Error(t, err)
+	}
+
+	// The client shuold call de-auth handlers.
+	require.Eventually(t, func() bool { return deauth }, time.Second, 300*time.Millisecond)
+}

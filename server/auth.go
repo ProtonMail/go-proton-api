@@ -66,7 +66,7 @@ func (s *Server) handlePostAuthRefresh() gin.HandlerFunc {
 
 		auth, err := s.b.NewAuthRef(req.UID, req.RefreshToken)
 		if err != nil {
-			_ = c.AbortWithError(http.StatusUnauthorized, err)
+			_ = c.AbortWithError(http.StatusUnprocessableEntity, err)
 			return
 		}
 

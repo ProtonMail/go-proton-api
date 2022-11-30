@@ -8,6 +8,7 @@ import (
 
 	"github.com/ProtonMail/go-srp"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/go-resty/resty/v2"
 )
 
 var ErrInvalidProof = errors.New("unexpected server proof")
@@ -110,7 +111,11 @@ func (m *Manager) authRefresh(ctx context.Context, uid, ref string) (Auth, error
 		Auth
 	}
 
-	if _, err := m.r(ctx).SetBody(req).SetResult(&res).Post("/core/v4/auth/refresh"); err != nil {
+	if resp, err := m.r(ctx).SetBody(req).SetResult(&res).Post("/core/v4/auth/refresh"); err != nil {
+		if resp != nil {
+			return Auth{}, &resty.ResponseError{Response: resp, Err: err}
+		}
+
 		return Auth{}, err
 	}
 
