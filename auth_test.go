@@ -105,11 +105,8 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	const username = "username"
-	password := []byte("password")
-
 	// Create a user on the server.
-	userID, _, err := s.CreateUser(username, "email@pm.me", password)
+	userID, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
 	require.NoError(t, err)
 
 	// The auth is valid for 4 seconds.
@@ -121,12 +118,13 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 	)
 	defer m.Close()
 
-	c, auth, err := m.NewClientWithLogin(context.Background(), username, password)
+	c, auth, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
 	require.NoError(t, err)
 	require.Equal(t, userID, auth.UserID)
 
 	time.Sleep(2 * time.Second)
 
+	// The client should still be authenticated.
 	parallel.Do(runtime.NumCPU(), 100, func(idx int) {
 		user, err := c.GetUser(context.Background())
 		require.NoError(t, err)
