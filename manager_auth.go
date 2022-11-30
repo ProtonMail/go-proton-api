@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"time"
 
 	"github.com/ProtonMail/go-srp"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
@@ -116,8 +115,4 @@ func (m *Manager) authRefresh(ctx context.Context, uid, ref string) (Auth, error
 	}
 
 	return res.Auth, nil
-}
-
-func expiresIn(seconds int) time.Time {
-	return time.Now().Add(time.Duration(seconds) * time.Second)
 }

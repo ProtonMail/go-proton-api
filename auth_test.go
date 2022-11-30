@@ -58,10 +58,12 @@ func TestAuth_Refresh(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	s.SetAuthLife(10 * time.Second)
-
-	_, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
+	// Create a user on the server.
+	userID, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
 	require.NoError(t, err)
+
+	// The auth is valid for 4 seconds.
+	s.SetAuthLife(4 * time.Second)
 
 	m := proton.New(
 		proton.WithHostURL(s.GetHostURL()),
@@ -69,27 +71,30 @@ func TestAuth_Refresh(t *testing.T) {
 	)
 	defer m.Close()
 
-	// Create one session.
-	c, _, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
+	// Create one session for the user.
+	c, auth, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
 	require.NoError(t, err)
+	require.Equal(t, userID, auth.UserID)
 
-	// Wait for 5 seconds.
-	time.Sleep(5 * time.Second)
+	// Wait for 2 seconds.
+	time.Sleep(2 * time.Second)
 
 	// The client should still be authenticated.
 	{
 		user, err := c.GetUser(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, "username", user.Name)
+		require.Equal(t, userID, user.ID)
 	}
 
-	// Wait for 5 more seconds.
-	time.Sleep(5 * time.Second)
+	// Wait for 2 more seconds.
+	time.Sleep(2 * time.Second)
 
-	// The client's auth token should have expired, but will be refreshed.
+	// The client's auth token should have expired, but will be refreshed on the next request.
 	{
 		user, err := c.GetUser(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, "username", user.Name)
+		require.Equal(t, userID, user.ID)
 	}
 }

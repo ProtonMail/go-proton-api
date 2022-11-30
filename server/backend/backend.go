@@ -471,21 +471,21 @@ func withAccEmail[T any](b *Backend, email string, fn func(acc *account) (T, err
 }
 
 func withAccAuth[T any](b *Backend, authUID, authAcc string, fn func(acc *account) (T, error)) (T, error) {
-	b.accLock.RLock()
-	defer b.accLock.RUnlock()
+	b.accLock.Lock()
+	defer b.accLock.Unlock()
 
 	for _, acc := range b.accounts {
 		acc.authLock.Lock()
 		defer acc.authLock.Unlock()
 
-		auth, ok := acc.auth[authUID]
+		val, ok := acc.auth[authUID]
 		if !ok {
 			continue
 		}
 
-		if time.Since(auth.creation) > b.authLife {
-			delete(acc.auth, authUID)
-		} else if auth.acc == authAcc {
+		if time.Since(val.creation) > b.authLife {
+			acc.auth[authUID] = auth{ref: val.ref, creation: val.creation}
+		} else if val.acc == authAcc {
 			return fn(acc)
 		}
 	}

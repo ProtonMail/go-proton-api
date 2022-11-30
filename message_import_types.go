@@ -35,7 +35,7 @@ type ImportRes struct {
 func buildImportReqFields(addrKR *crypto.KeyRing, req []namedImportReq) ([]*resty.MultipartField, error) {
 	var fields []*resty.MultipartField
 
-	metadata := make(map[string]ImportMetadata)
+	metadata := make(map[string]ImportMetadata, len(req))
 
 	for _, req := range req {
 		metadata[req.Name] = req.Metadata

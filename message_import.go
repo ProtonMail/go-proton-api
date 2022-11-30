@@ -52,11 +52,6 @@ func (c *Client) importMessages(ctx context.Context, addrKR *crypto.KeyRing, req
 		})
 	}
 
-	fields, err := buildImportReqFields(addrKR, named)
-	if err != nil {
-		return nil, err
-	}
-
 	type namedImportRes struct {
 		Name     string
 		Response ImportRes
@@ -67,6 +62,11 @@ func (c *Client) importMessages(ctx context.Context, addrKR *crypto.KeyRing, req
 	}
 
 	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		fields, err := buildImportReqFields(addrKR, named)
+		if err != nil {
+			return nil, err
+		}
+
 		return r.SetMultipartFields(fields...).SetResult(&res).Post("/mail/v4/messages/import")
 	}); err != nil {
 		return nil, err
