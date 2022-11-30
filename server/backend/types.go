@@ -39,8 +39,7 @@ type auth struct {
 	acc string
 	ref string
 
-	expiration time.Time
-	creation   time.Time
+	creation time.Time
 }
 
 func newAuth(authLife time.Duration) auth {
@@ -48,8 +47,7 @@ func newAuth(authLife time.Duration) auth {
 		acc: uuid.NewString(),
 		ref: uuid.NewString(),
 
-		expiration: time.Now().Add(authLife),
-		creation:   time.Now(),
+		creation: time.Now(),
 	}
 }
 
@@ -61,7 +59,6 @@ func (auth *auth) toAuth(userID, authUID string, proof []byte) proton.Auth {
 		AccessToken:  auth.acc,
 		RefreshToken: auth.ref,
 		ServerProof:  base64.StdEncoding.EncodeToString(proof),
-		ExpiresIn:    int(time.Until(auth.expiration).Seconds()),
 
 		TwoFA:        proton.TwoFAInfo{Enabled: proton.TwoFADisabled},
 		PasswordMode: proton.OnePasswordMode,

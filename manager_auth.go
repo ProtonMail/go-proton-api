@@ -13,8 +13,8 @@ import (
 
 var ErrInvalidProof = errors.New("unexpected server proof")
 
-func (m *Manager) NewClient(uid, acc, ref string, exp time.Time) *Client {
-	return newClient(m, uid).withAuth(acc, ref, exp)
+func (m *Manager) NewClient(uid, acc, ref string) *Client {
+	return newClient(m, uid).withAuth(acc, ref)
 }
 
 func (m *Manager) NewClientWithRefresh(ctx context.Context, uid, ref string) (*Client, Auth, error) {
@@ -25,7 +25,7 @@ func (m *Manager) NewClientWithRefresh(ctx context.Context, uid, ref string) (*C
 		return nil, Auth{}, err
 	}
 
-	return c.withAuth(auth.AccessToken, auth.RefreshToken, expiresIn(auth.ExpiresIn)), auth, nil
+	return c.withAuth(auth.AccessToken, auth.RefreshToken), auth, nil
 }
 
 func (m *Manager) NewClientWithLogin(ctx context.Context, username string, password []byte) (*Client, Auth, error) {
@@ -65,7 +65,7 @@ func (m *Manager) NewClientWithLogin(ctx context.Context, username string, passw
 		}
 	}
 
-	return newClient(m, auth.UID).withAuth(auth.AccessToken, auth.RefreshToken, expiresIn(auth.ExpiresIn)), auth, nil
+	return newClient(m, auth.UID).withAuth(auth.AccessToken, auth.RefreshToken), auth, nil
 }
 
 func (m *Manager) getAuthInfo(ctx context.Context, req AuthInfoReq) (AuthInfo, error) {

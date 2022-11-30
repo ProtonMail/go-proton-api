@@ -475,15 +475,17 @@ func withAccAuth[T any](b *Backend, authUID, authAcc string, fn func(acc *accoun
 	defer b.accLock.RUnlock()
 
 	for _, acc := range b.accounts {
-		acc.authLock.RLock()
-		defer acc.authLock.RUnlock()
+		acc.authLock.Lock()
+		defer acc.authLock.Unlock()
 
 		auth, ok := acc.auth[authUID]
 		if !ok {
 			continue
 		}
 
-		if auth.acc == authAcc {
+		if time.Since(auth.creation) > b.authLife {
+			delete(acc.auth, authUID)
+		} else if auth.acc == authAcc {
 			return fn(acc)
 		}
 	}

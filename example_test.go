@@ -13,7 +13,7 @@ func ExampleManager_NewClient() {
 	m := proton.New()
 
 	// If auth information is already known, it can be used to create a client straight away.
-	c := m.NewClient("...uid...", "...acc...", "...ref...", time.Now().Add(time.Hour))
+	c := m.NewClient("...uid...", "...acc...", "...ref...")
 	defer c.Close()
 
 	// All API operations must be run within a context.
@@ -83,7 +83,7 @@ func ExampleClient_AddAuthHandler() {
 	m := proton.New()
 
 	// Create a new client.
-	c := m.NewClient("...uid...", "...acc...", "...ref...", time.Now().Add(time.Hour))
+	c := m.NewClient("...uid...", "...acc...", "...ref...")
 	defer c.Close()
 
 	// Register an auth handler with the client.
