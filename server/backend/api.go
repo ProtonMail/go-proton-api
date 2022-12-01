@@ -433,6 +433,14 @@ func (b *Backend) CreateDraft(
 		return withMessages(b, func(messages map[string]*message) (proton.Message, error) {
 			msg := newMessage(addrID, subject, sender, toList, ccList, bccList, armBody, mimeType, externalID)
 
+			if err := b.withLabels(func(labels map[string]*label) error {
+				msg.addLabel(proton.DraftsLabel, labels)
+				msg.addLabel(proton.AllMailLabel, labels)
+				return nil
+			}); err != nil {
+				return proton.Message{}, fmt.Errorf("cannot label draft as draft: %w", err)
+			}
+
 			messages[msg.messageID] = msg
 
 			updateID, err := b.newUpdate(&messageCreated{messageID: msg.messageID})
