@@ -573,19 +573,31 @@ func TestServer_Calls_Manager(t *testing.T) {
 func TestServer_CreateMessage(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
-			addresses, err := c.GetAddresses(ctx)
+			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 
-			draft, err := c.CreateDraft(ctx, proton.CreateDraftReq{
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass)
+			require.NoError(t, err)
+
+			draft, err := c.CreateDraft(ctx, addrKRs[addr[0].ID], proton.CreateDraftReq{
 				Message: proton.DraftTemplate{
 					Subject: "My subject",
-					Sender:  &mail.Address{Address: addresses[0].Email},
+					Sender:  &mail.Address{Address: addr[0].Email},
 					ToList:  []*mail.Address{{Address: "recipient@pm.me"}},
 				},
 			})
 			require.NoError(t, err)
 
-			require.Equal(t, addresses[0].ID, draft.AddressID)
+			require.Equal(t, addr[0].ID, draft.AddressID)
 			require.Equal(t, "My subject", draft.Subject)
 			require.Equal(t, &mail.Address{Address: "email@pm.me"}, draft.Sender)
 			require.ElementsMatch(t, []string{proton.AllMailLabel, proton.AllDraftsLabel, proton.DraftsLabel}, draft.LabelIDs)
@@ -596,19 +608,31 @@ func TestServer_CreateMessage(t *testing.T) {
 func TestServer_UpdateDraft(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
-			addresses, err := c.GetAddresses(ctx)
+			user, err := c.GetUser(ctx)
+			require.NoError(t, err)
+
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass)
 			require.NoError(t, err)
 
 			// Create the draft.
-			draft, err := c.CreateDraft(ctx, proton.CreateDraftReq{
+			draft, err := c.CreateDraft(ctx, addrKRs[addr[0].ID], proton.CreateDraftReq{
 				Message: proton.DraftTemplate{
 					Subject: "My subject",
-					Sender:  &mail.Address{Address: addresses[0].Email},
+					Sender:  &mail.Address{Address: addr[0].Email},
 					ToList:  []*mail.Address{{Address: "recipient@pm.me"}},
 				},
 			})
 			require.NoError(t, err)
-			require.Equal(t, addresses[0].ID, draft.AddressID)
+			require.Equal(t, addr[0].ID, draft.AddressID)
 			require.Equal(t, "My subject", draft.Subject)
 			require.Equal(t, &mail.Address{Address: "email@pm.me"}, draft.Sender)
 
@@ -619,7 +643,7 @@ func TestServer_UpdateDraft(t *testing.T) {
 			eventCh := c.NewEventStream(ctx, time.Second, 0, fromEventID)
 
 			// Update the draft subject/to-list.
-			msg, err := c.UpdateDraft(ctx, draft.ID, proton.UpdateDraftReq{
+			msg, err := c.UpdateDraft(ctx, draft.ID, addrKRs[addr[0].ID], proton.UpdateDraftReq{
 				Message: proton.DraftTemplate{
 					Subject: "Edited subject",
 					ToList:  []*mail.Address{{Address: "edited@pm.me"}},
@@ -657,13 +681,25 @@ func TestServer_UpdateDraft(t *testing.T) {
 func TestServer_SendMessage(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
-			addresses, err := c.GetAddresses(ctx)
+			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 
-			draft, err := c.CreateDraft(ctx, proton.CreateDraftReq{
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass)
+			require.NoError(t, err)
+
+			draft, err := c.CreateDraft(ctx, addrKRs[addr[0].ID], proton.CreateDraftReq{
 				Message: proton.DraftTemplate{
 					Subject: "My subject",
-					Sender:  &mail.Address{Address: addresses[0].Email},
+					Sender:  &mail.Address{Address: addr[0].Email},
 					ToList:  []*mail.Address{{Address: "recipient@pm.me"}},
 				},
 			})
@@ -673,7 +709,7 @@ func TestServer_SendMessage(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, draft.ID, sent.ID)
-			require.Equal(t, addresses[0].ID, sent.AddressID)
+			require.Equal(t, addr[0].ID, sent.AddressID)
 			require.Equal(t, "My subject", sent.Subject)
 			require.Contains(t, sent.LabelIDs, proton.SentLabel)
 		})
