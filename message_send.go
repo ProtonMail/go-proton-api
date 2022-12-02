@@ -20,6 +20,20 @@ func (c *Client) CreateDraft(ctx context.Context, req CreateDraftReq) (Message, 
 	return res.Message, nil
 }
 
+func (c *Client) UpdateDraft(ctx context.Context, draftID string, req UpdateDraftReq) (Message, error) {
+	var res struct {
+		Message Message
+	}
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetBody(req).SetResult(&res).Put("/mail/v4/messages/" + draftID)
+	}); err != nil {
+		return Message{}, err
+	}
+
+	return res.Message, nil
+}
+
 func (c *Client) SendDraft(ctx context.Context, draftID string, req SendDraftReq) (Message, error) {
 	var res struct {
 		Sent Message

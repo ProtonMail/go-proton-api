@@ -362,27 +362,6 @@ func (b *Backend) CreateMessage(
 	})
 }
 
-func (b *Backend) UpdateDraft(userID, draftID string, changes proton.DraftTemplate) (string, error) {
-	return withAcc(b, userID, func(acc *account) (string, error) {
-		return withMessages(b, func(messages map[string]*message) (string, error) {
-			if _, ok := messages[draftID]; !ok {
-				return "", fmt.Errorf("message %q not found", draftID)
-			}
-
-			messages[draftID].applyChanges(changes)
-
-			updateID, err := b.newUpdate(&messageUpdated{messageID: draftID})
-			if err != nil {
-				return "", err
-			}
-
-			acc.updateIDs = append(acc.updateIDs, updateID)
-
-			return draftID, nil
-		})
-	})
-}
-
 func (b *Backend) Encrypt(userID, addrID, decBody string) (string, error) {
 	return withAcc(b, userID, func(acc *account) (string, error) {
 		pubKey, err := acc.addresses[addrID].keys[0].getPubKey()
