@@ -71,6 +71,7 @@ func newMessageFromTemplate(addrID string, template proton.DraftTemplate) *messa
 		toList:  template.ToList,
 		ccList:  template.CCList,
 		bccList: template.BCCList,
+		unread:  bool(template.Unread),
 
 		armBody:  template.Body,
 		mimeType: template.MIMEType,
