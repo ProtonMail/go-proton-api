@@ -14,6 +14,7 @@ type DraftTemplate struct {
 	BCCList  []*mail.Address
 	Body     string
 	MIMEType rfc822.MIMEType
+	Unread   Bool
 
 	ExternalID string `json:",omitempty"`
 }
