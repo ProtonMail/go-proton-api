@@ -59,6 +59,24 @@ func newMessage(
 	}
 }
 
+func newMessageFromTemplate(addrID string, template proton.DraftTemplate) *message {
+	return &message{
+		messageID:  uuid.NewString(),
+		externalID: template.ExternalID,
+		addrID:     addrID,
+		sysLabel:   pointer(""),
+
+		subject: template.Subject,
+		sender:  template.Sender,
+		toList:  template.ToList,
+		ccList:  template.CCList,
+		bccList: template.BCCList,
+
+		armBody:  template.Body,
+		mimeType: template.MIMEType,
+	}
+}
+
 func (msg *message) toMessage(att map[string]*attachment) proton.Message {
 	return proton.Message{
 		MessageMetadata: msg.toMetadata(),
@@ -167,8 +185,7 @@ func (msg *message) getParsedHeaders() proton.Headers {
 
 // applyChanges will apply non-nil field from passed message.
 //
-// NOTE: This is not feature complete. It might panic on non-implemented
-// changes.
+// NOTE: This is not feature complete. It might panic on non-implemented changes.
 func (msg *message) applyChanges(changes proton.DraftTemplate) {
 	if changes.Subject != "" {
 		msg.subject = changes.Subject

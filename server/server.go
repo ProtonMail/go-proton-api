@@ -150,12 +150,6 @@ func (s *Server) UnlabelMessage(userID, msgID, labelID string) error {
 	return s.b.UnlabelMessages(userID, labelID, msgID)
 }
 
-func (s *Server) UpdateDraft(userID, draftID string, changes proton.DraftTemplate) error {
-	_, err := s.b.UpdateDraft(userID, draftID, changes)
-
-	return err
-}
-
 func (s *Server) SetAuthLife(authLife time.Duration) {
 	s.b.SetAuthLife(authLife)
 }

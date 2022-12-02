@@ -588,6 +588,7 @@ func TestServer_CreateMessage(t *testing.T) {
 			require.Equal(t, addresses[0].ID, draft.AddressID)
 			require.Equal(t, "My subject", draft.Subject)
 			require.Equal(t, &mail.Address{Address: "email@pm.me"}, draft.Sender)
+			require.ElementsMatch(t, []string{proton.AllMailLabel, proton.AllDraftsLabel, proton.DraftsLabel}, draft.LabelIDs)
 		})
 	})
 }
@@ -598,6 +599,7 @@ func TestServer_UpdateDraft(t *testing.T) {
 			addresses, err := c.GetAddresses(ctx)
 			require.NoError(t, err)
 
+			// Create the draft.
 			draft, err := c.CreateDraft(ctx, proton.CreateDraftReq{
 				Message: proton.DraftTemplate{
 					Subject: "My subject",
@@ -606,33 +608,31 @@ func TestServer_UpdateDraft(t *testing.T) {
 				},
 			})
 			require.NoError(t, err)
-
 			require.Equal(t, addresses[0].ID, draft.AddressID)
 			require.Equal(t, "My subject", draft.Subject)
 			require.Equal(t, &mail.Address{Address: "email@pm.me"}, draft.Sender)
 
-			user, err := c.GetUser(ctx)
-			require.NoError(t, err)
-
+			// Create an event stream to watch for an update event.
 			fromEventID, err := c.GetLatestEventID(ctx)
 			require.NoError(t, err)
 
 			eventCh := c.NewEventStream(ctx, time.Second, 0, fromEventID)
 
-			// Draft updated on server side.
-			_, err = s.b.UpdateDraft(user.ID, draft.ID, proton.DraftTemplate{
-				Subject: "Edited subject",
-				ToList:  []*mail.Address{{Address: "edited@pm.me"}},
-				Body:    "Edited body",
+			// Update the draft subject/to-list.
+			msg, err := c.UpdateDraft(ctx, draft.ID, proton.UpdateDraftReq{
+				Message: proton.DraftTemplate{
+					Subject: "Edited subject",
+					ToList:  []*mail.Address{{Address: "edited@pm.me"}},
+				},
 			})
 			require.NoError(t, err)
+			require.Equal(t, "Edited subject", msg.Subject)
 
-			var updated *proton.MessageMetadata
-
+			// We should eventually get an update event.
 			require.Eventually(t, func() bool {
 				event := <-eventCh
 
-				if len(event.Messages) != 1 {
+				if len(event.Messages) < 1 {
 					return false
 				}
 
@@ -644,14 +644,12 @@ func TestServer_UpdateDraft(t *testing.T) {
 					return false
 				}
 
-				updated = &event.Messages[0].Message
+				require.Equal(t, draft.ID, event.Messages[0].ID)
+				require.Equal(t, "Edited subject", event.Messages[0].Message.Subject)
+				require.Equal(t, []*mail.Address{{Address: "edited@pm.me"}}, event.Messages[0].Message.ToList)
 
 				return true
 			}, 5*time.Second, time.Millisecond*100)
-
-			require.Equal(t, draft.ID, updated.ID)
-			require.Equal(t, "Edited subject", updated.Subject)
-			require.Equal(t, []*mail.Address{{Address: "edited@pm.me"}}, updated.ToList)
 		})
 	})
 }

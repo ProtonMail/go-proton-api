@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"net/mail"
 
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
@@ -420,30 +419,50 @@ func (b *Backend) DeleteMessage(userID, messageID string) error {
 	})
 }
 
-func (b *Backend) CreateDraft(
-	userID, addrID string,
-	subject string,
-	sender *mail.Address,
-	toList, ccList, bccList []*mail.Address,
-	armBody string,
-	mimeType rfc822.MIMEType,
-	externalID string,
-) (proton.Message, error) {
+func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate) (proton.Message, error) {
 	return withAcc(b, userID, func(acc *account) (proton.Message, error) {
 		return withMessages(b, func(messages map[string]*message) (proton.Message, error) {
-			msg := newMessage(addrID, subject, sender, toList, ccList, bccList, armBody, mimeType, externalID)
+			return withLabels(b, func(labels map[string]*label) (proton.Message, error) {
+				msg := newMessageFromTemplate(addrID, draft)
 
-			messages[msg.messageID] = msg
+				// Drafts automatically get the sysLabel "Drafts".
+				msg.addLabel(proton.DraftsLabel, labels)
 
-			updateID, err := b.newUpdate(&messageCreated{messageID: msg.messageID})
-			if err != nil {
-				return proton.Message{}, err
-			}
+				messages[msg.messageID] = msg
 
-			acc.messageIDs = append(acc.messageIDs, msg.messageID)
-			acc.updateIDs = append(acc.updateIDs, updateID)
+				updateID, err := b.newUpdate(&messageCreated{messageID: msg.messageID})
+				if err != nil {
+					return proton.Message{}, err
+				}
 
-			return msg.toMessage(nil), nil
+				acc.messageIDs = append(acc.messageIDs, msg.messageID)
+				acc.updateIDs = append(acc.updateIDs, updateID)
+
+				return msg.toMessage(nil), nil
+			})
+		})
+	})
+}
+
+func (b *Backend) UpdateDraft(userID, draftID string, changes proton.DraftTemplate) (proton.Message, error) {
+	return withAcc(b, userID, func(acc *account) (proton.Message, error) {
+		return withMessages(b, func(messages map[string]*message) (proton.Message, error) {
+			return withAtts(b, func(atts map[string]*attachment) (proton.Message, error) {
+				if _, ok := messages[draftID]; !ok {
+					return proton.Message{}, fmt.Errorf("message %q not found", draftID)
+				}
+
+				messages[draftID].applyChanges(changes)
+
+				updateID, err := b.newUpdate(&messageUpdated{messageID: draftID})
+				if err != nil {
+					return proton.Message{}, err
+				}
+
+				acc.updateIDs = append(acc.updateIDs, updateID)
+
+				return messages[draftID].toMessage(atts), nil
+			})
 		})
 	})
 }

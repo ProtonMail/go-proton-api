@@ -82,6 +82,7 @@ func initRouter(s *Server) {
 			messages.GET("/ids", s.handleGetMailMessageIDs())
 			messages.GET("/:messageID", s.handleGetMailMessage())
 			messages.POST("/:messageID", s.handlePostMailMessage())
+			messages.PUT("/:messageID", s.handlePutMailMessage())
 			messages.PUT("/read", s.handlePutMailMessagesRead())
 			messages.PUT("/unread", s.handlePutMailMessagesUnread())
 			messages.PUT("/label", s.handlePutMailMessagesLabel())

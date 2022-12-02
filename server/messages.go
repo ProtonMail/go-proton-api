@@ -18,14 +18,11 @@ import (
 
 func (s *Server) handleGetMailMessages() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		filter := proton.MessageFilter{
-			ID: c.QueryArray("ID"),
-		}
 		s.getMailMessages(
 			c,
 			mustParseInt(c.DefaultQuery("Page", "0")),
 			mustParseInt(c.DefaultQuery("PageSize", "100")),
-			filter,
+			proton.MessageFilter{ID: c.QueryArray("ID")},
 		)
 	}
 }
@@ -88,18 +85,7 @@ func (s *Server) postMailMessages(c *gin.Context) {
 		return
 	}
 
-	message, err := s.b.CreateDraft(
-		c.GetString("UserID"),
-		addrID,
-		req.Message.Subject,
-		req.Message.Sender,
-		req.Message.ToList,
-		req.Message.CCList,
-		req.Message.BCCList,
-		req.Message.Body,
-		req.Message.MIMEType,
-		req.Message.ExternalID,
-	)
+	message, err := s.b.CreateDraft(c.GetString("UserID"), addrID, req.Message)
 	if err != nil {
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
 		return
@@ -161,6 +147,27 @@ func (s *Server) handlePostMailMessage() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{
 			"Sent": message,
+		})
+	}
+}
+
+func (s *Server) handlePutMailMessage() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req proton.UpdateDraftReq
+
+		if err := c.BindJSON(&req); err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		message, err := s.b.UpdateDraft(c.GetString("UserID"), c.Param("messageID"), req.Message)
+		if err != nil {
+			c.AbortWithStatus(http.StatusUnprocessableEntity)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"Message": message,
 		})
 	}
 }

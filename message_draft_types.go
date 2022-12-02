@@ -36,3 +36,8 @@ type CreateDraftReq struct {
 	ParentID string `json:",omitempty"`
 	Action   CreateDraftAction
 }
+
+type UpdateDraftReq struct {
+	Message              DraftTemplate
+	AttachmentKeyPackets []string
+}
