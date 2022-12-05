@@ -23,17 +23,10 @@ func (c *Client) CreateDraft(ctx context.Context, addrKR *crypto.KeyRing, req Cr
 		return Message{}, fmt.Errorf("failed to armor draft: %w", err)
 	}
 
-	type encCreateDraftReq struct {
-		CreateDraftReq
-
-		Body string
-	}
+	req.Message.Body = arm
 
 	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetBody(encCreateDraftReq{
-			CreateDraftReq: req,
-			Body:           arm,
-		}).SetResult(&res).Post("/mail/v4/messages")
+		return r.SetBody(req).SetResult(&res).Post("/mail/v4/messages")
 	}); err != nil {
 		return Message{}, err
 	}
@@ -46,27 +39,22 @@ func (c *Client) UpdateDraft(ctx context.Context, draftID string, addrKR *crypto
 		Message Message
 	}
 
-	enc, err := addrKR.Encrypt(crypto.NewPlainMessageFromString(req.Message.Body), nil)
-	if err != nil {
-		return Message{}, fmt.Errorf("failed to encrypt draft: %w", err)
-	}
+	if req.Message.Body != "" {
+		enc, err := addrKR.Encrypt(crypto.NewPlainMessageFromString(req.Message.Body), nil)
+		if err != nil {
+			return Message{}, fmt.Errorf("failed to encrypt draft: %w", err)
+		}
 
-	arm, err := enc.GetArmored()
-	if err != nil {
-		return Message{}, fmt.Errorf("failed to armor draft: %w", err)
-	}
+		arm, err := enc.GetArmored()
+		if err != nil {
+			return Message{}, fmt.Errorf("failed to armor draft: %w", err)
+		}
 
-	type encUpdateDraftReq struct {
-		UpdateDraftReq
-
-		Body string
+		req.Message.Body = arm
 	}
 
 	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetBody(encUpdateDraftReq{
-			UpdateDraftReq: req,
-			Body:           arm,
-		}).SetResult(&res).Put("/mail/v4/messages/" + draftID)
+		return r.SetBody(req).SetResult(&res).Put("/mail/v4/messages/" + draftID)
 	}); err != nil {
 		return Message{}, err
 	}
