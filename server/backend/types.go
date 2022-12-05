@@ -60,7 +60,6 @@ func (auth *auth) toAuth(userID, authUID string, proof []byte) proton.Auth {
 		RefreshToken: auth.ref,
 		ServerProof:  base64.StdEncoding.EncodeToString(proof),
 
-		TwoFA:        proton.TwoFAInfo{Enabled: proton.TwoFADisabled},
 		PasswordMode: proton.OnePasswordMode,
 	}
 }

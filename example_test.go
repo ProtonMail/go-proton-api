@@ -63,7 +63,7 @@ func ExampleManager_NewClientWithLogin() {
 	defer c.Close()
 
 	// If 2FA is necessary, an additional request is required.
-	if auth.TwoFA.Enabled == proton.TOTPEnabled {
+	if auth.TwoFA.Enabled&proton.HasTOTP != 0 {
 		if err := c.Auth2FA(ctx, proton.Auth2FAReq{TwoFactorCode: "...TOTP..."}); err != nil {
 			panic(err)
 		}
