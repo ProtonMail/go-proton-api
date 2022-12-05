@@ -34,7 +34,6 @@ func (b *Backend) NewAuthInfo(username string) (proton.AuthInfo, error) {
 			ServerEphemeral: base64.StdEncoding.EncodeToString(challenge),
 			Salt:            base64.StdEncoding.EncodeToString(acc.salt),
 			SRPSession:      session,
-			TwoFA:           proton.TwoFAInfo{Enabled: proton.TwoFADisabled},
 		}, nil
 	})
 }

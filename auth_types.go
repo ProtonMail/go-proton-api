@@ -41,25 +41,26 @@ type Auth struct {
 }
 
 type RegisteredKey struct {
-	Version   string
-	KeyHandle string
+	AttestationFormat string
+	CredentialID      []int
+	Name              string
 }
 
-type U2FInfo struct {
-	Challenge      string
-	RegisteredKeys []RegisteredKey
+type FIDO2Info struct {
+	AuthenticationOptions any
+	RegisteredKeys        []RegisteredKey
 }
 
 type TwoFAInfo struct {
 	Enabled TwoFAStatus
-	U2F     U2FInfo
+	FIDO2   FIDO2Info
 }
 
 type TwoFAStatus int
 
 const (
-	TwoFADisabled TwoFAStatus = iota
-	TOTPEnabled
+	HasTOTP TwoFAStatus = 1 << iota
+	HasFIDO2
 )
 
 type PasswordMode int
