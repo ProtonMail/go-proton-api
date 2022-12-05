@@ -13,7 +13,12 @@ func (c *Client) CreateDraft(ctx context.Context, addrKR *crypto.KeyRing, req Cr
 		Message Message
 	}
 
-	enc, err := addrKR.Encrypt(crypto.NewPlainMessageFromString(req.Message.Body), nil)
+	kr, err := addrKR.FirstKey()
+	if err != nil {
+		return Message{}, fmt.Errorf("failed to get first key: %w", err)
+	}
+
+	enc, err := kr.Encrypt(crypto.NewPlainMessageFromString(req.Message.Body), nil)
 	if err != nil {
 		return Message{}, fmt.Errorf("failed to encrypt draft: %w", err)
 	}
@@ -40,7 +45,12 @@ func (c *Client) UpdateDraft(ctx context.Context, draftID string, addrKR *crypto
 	}
 
 	if req.Message.Body != "" {
-		enc, err := addrKR.Encrypt(crypto.NewPlainMessageFromString(req.Message.Body), nil)
+		kr, err := addrKR.FirstKey()
+		if err != nil {
+			return Message{}, fmt.Errorf("failed to get first key: %w", err)
+		}
+
+		enc, err := kr.Encrypt(crypto.NewPlainMessageFromString(req.Message.Body), nil)
 		if err != nil {
 			return Message{}, fmt.Errorf("failed to encrypt draft: %w", err)
 		}

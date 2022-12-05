@@ -19,12 +19,17 @@ func (c *Client) UploadAttachment(ctx context.Context, addrKR *crypto.KeyRing, r
 		Attachment Attachment
 	}
 
-	sig, err := addrKR.SignDetached(crypto.NewPlainMessage(req.Body))
+	kr, err := addrKR.FirstKey()
+	if err != nil {
+		return res.Attachment, fmt.Errorf("failed to get first key: %w", err)
+	}
+
+	sig, err := kr.SignDetached(crypto.NewPlainMessage(req.Body))
 	if err != nil {
 		return Attachment{}, fmt.Errorf("failed to sign attachment: %w", err)
 	}
 
-	enc, err := addrKR.EncryptAttachment(crypto.NewPlainMessage(req.Body), req.Filename)
+	enc, err := kr.EncryptAttachment(crypto.NewPlainMessage(req.Body), req.Filename)
 	if err != nil {
 		return Attachment{}, fmt.Errorf("failed to encrypt attachment: %w", err)
 	}
