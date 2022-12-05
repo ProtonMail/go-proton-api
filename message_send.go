@@ -46,14 +46,20 @@ func (c *Client) UpdateDraft(ctx context.Context, draftID string, addrKR *crypto
 		Message Message
 	}
 
-	enc, err := addrKR.Encrypt(crypto.NewPlainMessageFromString(req.Message.Body), nil)
-	if err != nil {
-		return Message{}, fmt.Errorf("failed to encrypt draft: %w", err)
-	}
+	var encBody string
 
-	arm, err := enc.GetArmored()
-	if err != nil {
-		return Message{}, fmt.Errorf("failed to armor draft: %w", err)
+	if req.Message.Body != "" {
+		enc, err := addrKR.Encrypt(crypto.NewPlainMessageFromString(req.Message.Body), nil)
+		if err != nil {
+			return Message{}, fmt.Errorf("failed to encrypt draft: %w", err)
+		}
+
+		arm, err := enc.GetArmored()
+		if err != nil {
+			return Message{}, fmt.Errorf("failed to armor draft: %w", err)
+		}
+
+		encBody = arm
 	}
 
 	type encUpdateDraftReq struct {
@@ -65,7 +71,7 @@ func (c *Client) UpdateDraft(ctx context.Context, draftID string, addrKR *crypto
 	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
 		return r.SetBody(encUpdateDraftReq{
 			UpdateDraftReq: req,
-			Body:           arm,
+			Body:           encBody,
 		}).SetResult(&res).Put("/mail/v4/messages/" + draftID)
 	}); err != nil {
 		return Message{}, err
