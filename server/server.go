@@ -17,6 +17,7 @@ type AuthCacher interface {
 	SetAuthInfo(username string, info proton.AuthInfo)
 	GetAuth(username string) (proton.Auth, bool)
 	SetAuth(username string, auth proton.Auth)
+	PopAuth() (string, proton.Auth)
 }
 
 type Server struct {
@@ -179,4 +180,12 @@ func (s *Server) RevokeUser(userID string) error {
 
 func (s *Server) Close() {
 	s.s.Close()
+}
+
+func (s *Server) PopCachedAuth() (string, proton.Auth) {
+	if s.authCacher == nil {
+		return "", proton.Auth{}
+	}
+
+	return s.authCacher.PopAuth()
 }

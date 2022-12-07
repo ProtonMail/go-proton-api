@@ -50,3 +50,17 @@ func (c *authCache) SetAuth(username string, auth proton.Auth) {
 
 	c.auth[username] = auth
 }
+
+func (c *authCache) PopAuth() (string, proton.Auth) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	for username, auth := range c.auth {
+		delete(c.auth, username)
+		delete(c.info, username)
+
+		return username, auth
+	}
+
+	return "", proton.Auth{}
+}
