@@ -2,7 +2,9 @@ package proton
 
 import (
 	"context"
+	"encoding/base64"
 
+	"github.com/ProtonMail/go-srp"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -20,28 +22,38 @@ func (c *Client) GetUser(ctx context.Context) (User, error) {
 	return res.User, nil
 }
 
-func (c *Client) SendVerificationCode(ctx context.Context, req SendVerificationCodeReq) error {
-	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetBody(req).Post("/core/v4/users/code")
-	})
-}
-
-func (c *Client) CreateUser(ctx context.Context, req CreateUserReq) (User, error) {
-	var res struct {
-		User User
+func (c *Client) DeleteUser(ctx context.Context, password []byte, req DeleteUserReq) error {
+	user, err := c.GetUser(ctx)
+	if err != nil {
+		return err
 	}
 
-	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetBody(req).SetResult(&res).Post("/core/v4/users")
-	}); err != nil {
-		return User{}, err
+	info, err := c.m.AuthInfo(ctx, AuthInfoReq{Username: user.Name})
+	if err != nil {
+		return err
 	}
 
-	return res.User, nil
-}
+	srpAuth, err := srp.NewAuth(info.Version, user.Name, password, info.Salt, info.Modulus, info.ServerEphemeral)
+	if err != nil {
+		return err
+	}
 
-func (c *Client) GetUsernameAvailable(ctx context.Context, username string) error {
+	proofs, err := srpAuth.GenerateProofs(2048)
+	if err != nil {
+		return err
+	}
+
 	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetQueryParam("Name", username).Get("/core/v4/users/available")
+		return r.SetBody(struct {
+			DeleteUserReq
+			AuthReq
+		}{
+			DeleteUserReq: req,
+			AuthReq: AuthReq{
+				ClientProof:     base64.StdEncoding.EncodeToString(proofs.ClientProof),
+				ClientEphemeral: base64.StdEncoding.EncodeToString(proofs.ClientEphemeral),
+				SRPSession:      info.SRPSession,
+			},
+		}).Delete("/core/v4/users/delete")
 	})
 }

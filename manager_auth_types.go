@@ -13,18 +13,33 @@ type AuthInfo struct {
 	TwoFA           TwoFAInfo `json:"2FA"`
 }
 
-type U2FReq struct {
-	KeyHandle     string
-	ClientData    string
-	SignatureData string
+type AuthVerifier struct {
+	Version   int
+	ModulusID string
+	Salt      string
+	Verifier  string
+}
+
+type AuthModulus struct {
+	Modulus   string
+	ModulusID string
+}
+
+type FIDO2Req struct {
+	AuthenticationOptions any
+	ClientData            string
+	AuthenticatorData     string
+	Signature             string
+	CredentialID          string
 }
 
 type AuthReq struct {
+	Auth2FAReq
+
 	Username        string
 	ClientEphemeral string
 	ClientProof     string
 	SRPSession      string
-	U2F             U2FReq
 }
 
 type Auth struct {
@@ -72,6 +87,7 @@ const (
 
 type Auth2FAReq struct {
 	TwoFactorCode string
+	FIDO2         FIDO2Req
 }
 
 type AuthRefreshReq struct {

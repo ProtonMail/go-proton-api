@@ -29,7 +29,7 @@ func (m *Manager) NewClientWithRefresh(ctx context.Context, uid, ref string) (*C
 }
 
 func (m *Manager) NewClientWithLogin(ctx context.Context, username string, password []byte) (*Client, Auth, error) {
-	info, err := m.getAuthInfo(ctx, AuthInfoReq{Username: username})
+	info, err := m.AuthInfo(ctx, AuthInfoReq{Username: username})
 	if err != nil {
 		return nil, Auth{}, err
 	}
@@ -68,7 +68,7 @@ func (m *Manager) NewClientWithLogin(ctx context.Context, username string, passw
 	return newClient(m, auth.UID).withAuth(auth.AccessToken, auth.RefreshToken), auth, nil
 }
 
-func (m *Manager) getAuthInfo(ctx context.Context, req AuthInfoReq) (AuthInfo, error) {
+func (m *Manager) AuthInfo(ctx context.Context, req AuthInfoReq) (AuthInfo, error) {
 	var res struct {
 		AuthInfo
 	}
@@ -78,6 +78,16 @@ func (m *Manager) getAuthInfo(ctx context.Context, req AuthInfoReq) (AuthInfo, e
 	}
 
 	return res.AuthInfo, nil
+}
+
+func (m *Manager) AuthModulus(ctx context.Context) (AuthModulus, error) {
+	var res AuthModulus
+
+	if _, err := m.r(ctx).SetResult(&res).Get("/core/v4/auth/modulus"); err != nil {
+		return AuthModulus{}, err
+	}
+
+	return res, nil
 }
 
 func (m *Manager) auth(ctx context.Context, req AuthReq) (Auth, error) {
