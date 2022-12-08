@@ -17,6 +17,7 @@ type AuthCacher interface {
 	SetAuthInfo(username string, info proton.AuthInfo)
 	GetAuth(username string) (proton.Auth, bool)
 	SetAuth(username string, auth proton.Auth)
+	FindAuthByUID(uid string) (string, proton.Auth)
 	PopAuth() (string, proton.Auth)
 }
 
@@ -38,7 +39,7 @@ type Server struct {
 	minAppVersion *semver.Version
 
 	// proxyOrigin is the URL of the origin server when the server is a proxy.
-	proxyOrigin string
+	proxy *proxyServer
 
 	// authCacher can optionally be set to cache proxied auth calls.
 	authCacher AuthCacher
@@ -180,6 +181,7 @@ func (s *Server) RevokeUser(userID string) error {
 
 func (s *Server) Close() {
 	s.s.Close()
+	s.proxy.transport.CloseIdleConnections()
 }
 
 func (s *Server) PopCachedAuth() (string, proton.Auth) {

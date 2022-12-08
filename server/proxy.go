@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -14,36 +15,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func newProxy(proxyOrigin, base, path string) http.HandlerFunc {
-	origin, err := url.Parse(proxyOrigin)
-	if err != nil {
-		panic(err)
+func (s *Server) handleProxy(base string) gin.HandlerFunc {
+	s.proxy.base = base
+
+	s.proxy.handle("/", s.handleProxyAll)
+
+	if s.authCacher != nil {
+		s.proxy.handle("/core/v4/auth", s.handleProxyAuth)
+		s.proxy.handle("/core/v4/auth/info", s.handleProxyAuthInfo)
+		s.proxy.handle("/core/v4/auth/refresh", s.handleProxyAuthRefresh)
 	}
 
-	return (&httputil.ReverseProxy{
-		Director: func(req *http.Request) {
-			req.URL.Scheme = origin.Scheme
-			req.URL.Host = origin.Host
-			req.URL.Path = origin.Path + strings.TrimPrefix(path, base)
-			req.Host = origin.Host
-		},
-
-		Transport: proton.InsecureTransport(),
-	}).ServeHTTP
-}
-
-func (s *Server) handleProxy(base string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		proxy := newProxyServer(s.proxyOrigin, base)
-
-		proxy.handle("/", s.handleProxyAll)
-
-		if s.authCacher != nil {
-			proxy.handle("/core/v4/auth", s.handleProxyAuth)
-			proxy.handle("/core/v4/auth/info", s.handleProxyAuthInfo)
-		}
-
-		proxy.ServeHTTP(c.Writer, c.Request)
+		s.proxy.ServeHTTP(c.Writer, c.Request)
 	}
 }
 
@@ -132,20 +116,72 @@ func (s *Server) handleProxyAuthInfo(proxier func(string) HandlerFunc) http.Hand
 	}
 }
 
+func (s *Server) handleProxyAuthRefresh(proxier func(string) HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req, err := readFromBody[proton.AuthRefreshReq](r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		username, cachedAuth := s.authCacher.FindAuthByUID(req.UID)
+		if username == "" {
+			http.Error(w, fmt.Sprintf("cannot find cached auth for uid %q", req.UID), http.StatusInternalServerError)
+			return
+		}
+
+		b, err := proxier(r.URL.Path)(w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res, err := readFrom[proton.Auth](b)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		cachedAuth.AccessToken = res.AccessToken
+		cachedAuth.RefreshToken = res.RefreshToken
+
+		s.authCacher.SetAuth(username, cachedAuth)
+	}
+}
+
 type HandlerFunc func(http.ResponseWriter, *http.Request) ([]byte, error)
 
 type proxyServer struct {
-	mux *http.ServeMux
-
-	origin, base string
+	mux       *http.ServeMux
+	origin    *url.URL
+	base      string
+	transport *http.Transport
 }
 
-func newProxyServer(origin, base string) *proxyServer {
-	return &proxyServer{
-		mux:    http.NewServeMux(),
-		origin: origin,
-		base:   base,
+func newProxyServer(proxyOrigin string) *proxyServer {
+	originURL, err := url.Parse(proxyOrigin)
+	if err != nil {
+		panic(err)
 	}
+
+	return &proxyServer{
+		mux:       http.NewServeMux(),
+		origin:    originURL,
+		transport: proton.InsecureTransport(),
+	}
+}
+
+func (s *proxyServer) proxyCall(path string) http.HandlerFunc {
+	return (&httputil.ReverseProxy{
+		Director: func(req *http.Request) {
+			req.URL.Scheme = s.origin.Scheme
+			req.URL.Host = s.origin.Host
+			req.URL.Path = s.origin.Path + strings.TrimPrefix(path, s.base)
+			req.Host = s.origin.Host
+		},
+
+		Transport: s.transport,
+	}).ServeHTTP
 }
 
 func (s *proxyServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -158,7 +194,7 @@ func (s *proxyServer) handle(path string, h func(func(string) HandlerFunc) http.
 			buf := new(bytes.Buffer)
 
 			// Call the proxy, capturing whatever data it writes.
-			newProxy(s.origin, s.base, path)(&writerWrapper{w, buf}, r)
+			s.proxyCall(path)(&writerWrapper{w, buf}, r)
 
 			// If there is a gzip header entry, decode it.
 			if strings.Contains(w.Header().Get("Content-Encoding"), "gzip") {

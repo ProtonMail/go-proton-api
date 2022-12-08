@@ -41,8 +41,8 @@ func (builder *serverBuilder) build() *Server {
 		r: gin.New(),
 		b: backend.New(time.Hour),
 
-		proxyOrigin: builder.origin,
-		authCacher:  builder.cacher,
+		proxy:      newProxyServer(builder.origin),
+		authCacher: builder.cacher,
 	}
 
 	if builder.withTLS {

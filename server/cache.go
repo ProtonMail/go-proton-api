@@ -51,6 +51,19 @@ func (c *authCache) SetAuth(username string, auth proton.Auth) {
 	c.auth[username] = auth
 }
 
+func (c *authCache) FindAuthByUID(uid string) (string, proton.Auth) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	for username, auth := range c.auth {
+		if auth.UID == uid {
+			return username, auth
+		}
+	}
+
+	return "", proton.Auth{}
+}
+
 func (c *authCache) PopAuth() (string, proton.Auth) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
