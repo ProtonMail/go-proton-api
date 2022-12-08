@@ -51,7 +51,7 @@ func TestAuthRefresh(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	_, _, err := s.CreateUser("user", "email@pm.me", []byte("pass"))
+	_, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
 	m := proton.New(

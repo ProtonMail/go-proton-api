@@ -16,7 +16,7 @@ func TestAuth(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	_, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
+	_, _, err := s.CreateUser("user", []byte("password"))
 	require.NoError(t, err)
 
 	m := proton.New(
@@ -61,7 +61,7 @@ func TestAuth_Refresh(t *testing.T) {
 	defer s.Close()
 
 	// Create a user on the server.
-	userID, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
+	userID, _, err := s.CreateUser("user", []byte("password"))
 	require.NoError(t, err)
 
 	// The auth is valid for 4 seconds.
@@ -106,7 +106,7 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 	defer s.Close()
 
 	// Create a user on the server.
-	userID, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
+	userID, _, err := s.CreateUser("user", []byte("password"))
 	require.NoError(t, err)
 
 	// The auth is valid for 4 seconds.
@@ -149,7 +149,7 @@ func TestAuth_Refresh_Deauth(t *testing.T) {
 	defer s.Close()
 
 	// Create a user on the server.
-	userID, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
+	userID, _, err := s.CreateUser("user", []byte("password"))
 	require.NoError(t, err)
 
 	m := proton.New(

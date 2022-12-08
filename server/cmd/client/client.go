@@ -64,11 +64,6 @@ func main() {
 							Required: true,
 						},
 						&cli.StringFlag{
-							Name:     "email",
-							Usage:    "email of the account",
-							Required: true,
-						},
-						&cli.StringFlag{
 							Name:     "password",
 							Usage:    "password of the account",
 							Required: true,
@@ -177,7 +172,6 @@ func createUserAction(c *cli.Context) error {
 
 	res, err := client.CreateUser(c.Context, &proto.CreateUserRequest{
 		Username: c.String("username"),
-		Email:    c.String("email"),
 		Password: []byte(c.String("password")),
 	})
 	if err != nil {

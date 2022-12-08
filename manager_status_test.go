@@ -159,7 +159,7 @@ func TestStatus_NoReadExistingConn(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	_, _, err := s.CreateUser("user", "user@pm.me", []byte("pass"))
+	_, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
 	netCtl := proton.NewNetCtl()
@@ -197,7 +197,7 @@ func TestStatus_NoWriteExistingConn(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	_, _, err := s.CreateUser("user", "user@pm.me", []byte("pass"))
+	_, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
 	netCtl := proton.NewNetCtl()

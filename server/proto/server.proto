@@ -33,7 +33,6 @@ message GetInfoResponse {
 
 message CreateUserRequest {
     string username = 1;
-    string email = 2;
     bytes password = 3;
 }
 
