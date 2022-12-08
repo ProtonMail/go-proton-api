@@ -10,6 +10,7 @@ type address struct {
 	addrID string
 	email  string
 	order  int
+	status proton.AddressStatus
 	keys   []key
 }
 
@@ -20,7 +21,7 @@ func (add *address) toAddress() proton.Address {
 
 		Send:    true,
 		Receive: true,
-		Status:  proton.AddressStatusEnabled,
+		Status:  add.status,
 
 		Order:       add.order,
 		DisplayName: add.email,

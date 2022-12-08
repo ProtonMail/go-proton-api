@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/ProtonMail/go-proton-api"
-	"github.com/bradenaw/juniper/xslices"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slices"
 )
@@ -25,17 +24,42 @@ func (s *Server) handleGetAddresses() gin.HandlerFunc {
 
 func (s *Server) handleGetAddress() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		addresses, err := s.b.GetAddresses(c.GetString("UserID"))
+		address, err := s.b.GetAddress(c.GetString("UserID"), c.Param("addressID"))
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"Address": addresses[xslices.IndexFunc(addresses, func(address proton.Address) bool {
-				return address.ID == c.Param("addressID")
-			})],
+			"Address": address,
 		})
+	}
+}
+
+func (s *Server) handlePutAddressEnable() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := s.b.EnableAddress(c.GetString("UserID"), c.Param("addressID")); err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func (s *Server) handlePutAddressDisable() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := s.b.DisableAddress(c.GetString("UserID"), c.Param("addressID")); err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func (s *Server) handleDeleteAddress() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := s.b.DeleteAddress(c.GetString("UserID"), c.Param("addressID")); err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
 	}
 }
 

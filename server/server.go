@@ -33,7 +33,10 @@ type Server struct {
 	callWatchers     []callWatcher
 	callWatchersLock sync.RWMutex
 
-	// MinAppVersion is the minimum app version that the server will accept.
+	// domain is the test server domain.
+	domain string
+
+	// minAppVersion is the minimum app version that the server will accept.
 	minAppVersion *semver.Version
 
 	// proxyOrigin is the URL of the origin server when the server is a proxy.
@@ -56,6 +59,7 @@ func New(opts ...Option) *Server {
 	return builder.build()
 }
 
+// GetHostURL returns the API root to make calls to.
 func (s *Server) GetHostURL() string {
 	return s.s.URL
 }
@@ -65,6 +69,11 @@ func (s *Server) GetProxyURL() string {
 	return s.s.URL + "/proxy"
 }
 
+// GetDomain returns the domain of the server.
+func (s *Server) GetDomain() string {
+	return s.domain
+}
+
 func (s *Server) AddCallWatcher(fn func(Call), paths ...string) {
 	s.callWatchersLock.Lock()
 	defer s.callWatchersLock.Unlock()
@@ -72,13 +81,15 @@ func (s *Server) AddCallWatcher(fn func(Call), paths ...string) {
 	s.callWatchers = append(s.callWatchers, newCallWatcher(fn, paths...))
 }
 
-func (s *Server) CreateUser(username, email string, password []byte) (string, string, error) {
+// CreateUser creates a new server user with the given username and password.
+// A single address will be created for the user, derived from the username and the server's domain.
+func (s *Server) CreateUser(username string, password []byte) (string, string, error) {
 	userID, err := s.b.CreateUser(username, password)
 	if err != nil {
 		return "", "", err
 	}
 
-	addrID, err := s.b.CreateAddress(userID, email, password)
+	addrID, err := s.b.CreateAddress(userID, username+"@"+s.domain, password, true)
 	if err != nil {
 		return "", "", err
 	}
@@ -114,7 +125,7 @@ func (s *Server) RemoveUserKey(userID, keyID string) error {
 }
 
 func (s *Server) CreateAddress(userID, email string, password []byte) (string, error) {
-	return s.b.CreateAddress(userID, email, password)
+	return s.b.CreateAddress(userID, email, password, true)
 }
 
 func (s *Server) RemoveAddress(userID, addrID string) error {

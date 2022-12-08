@@ -48,6 +48,9 @@ func initRouter(s *Server) {
 			if addresses := core.Group("/addresses"); addresses != nil {
 				addresses.GET("", s.handleGetAddresses())
 				addresses.GET("/:addressID", s.handleGetAddress())
+				addresses.DELETE("/:addressID", s.handleDeleteAddress())
+				addresses.PUT("/:addressID/enable", s.handlePutAddressEnable())
+				addresses.PUT("/:addressID/disable", s.handlePutAddressDisable())
 				addresses.PUT("/order", s.handlePutAddressesOrder())
 			}
 
@@ -112,6 +115,11 @@ func initRouter(s *Server) {
 	// Test routes don't need authentication.
 	if tests := s.r.Group("/tests"); tests != nil {
 		tests.GET("/ping", s.handleGetPing())
+	}
+
+	// Quark routes don't need authentication.
+	if quark := s.r.Group("/internal/quark"); quark != nil {
+		quark.GET("/:command", s.handleQuarkCommand())
 	}
 
 	// Proxy any calls to the upstream server.

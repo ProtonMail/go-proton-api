@@ -44,3 +44,21 @@ func (c *Client) OrderAddresses(ctx context.Context, req OrderAddressesReq) erro
 		return r.SetBody(req).Put("/core/v4/addresses/order")
 	})
 }
+
+func (c *Client) EnableAddress(ctx context.Context, addressID string) error {
+	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.Put("/core/v4/addresses/" + addressID + "/enable")
+	})
+}
+
+func (c *Client) DisableAddress(ctx context.Context, addressID string) error {
+	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.Put("/core/v4/addresses/" + addressID + "/disable")
+	})
+}
+
+func (c *Client) DeleteAddress(ctx context.Context, addressID string) error {
+	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.Delete("/core/v4/addresses/" + addressID)
+	})
+}

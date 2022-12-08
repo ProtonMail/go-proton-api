@@ -26,13 +26,13 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func TestServer(t *testing.T) {
+func TestServer_LoginLogout(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 			require.Equal(t, "user", user.Name)
-			require.Equal(t, "email@pm.me", user.Email)
+			require.Equal(t, "user@"+s.GetDomain(), user.Email)
 
 			// Logout from the test API.
 			require.NoError(t, c.AuthDelete(ctx))
@@ -45,7 +45,7 @@ func TestServer(t *testing.T) {
 
 func TestServerMulti(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		_, _, err := s.CreateUser("user", "email@pm.me", []byte("pass"))
+		_, _, err := s.CreateUser("user", []byte("pass"))
 		require.NoError(t, err)
 
 		// Create one client.
@@ -120,7 +120,7 @@ func TestServer_Ping(t *testing.T) {
 
 func TestServer_Bool(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 1, func([]string) {
 				metadata, err := c.GetMessageMetadata(ctx, proton.MessageFilter{})
 				require.NoError(t, err)
@@ -140,7 +140,7 @@ func TestServer_Bool(t *testing.T) {
 
 func TestServer_Messages(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 1000, func(messageIDs []string) {
 				// Get the messages.
 				metadata, err := c.GetMessageMetadata(ctx, proton.MessageFilter{})
@@ -180,7 +180,7 @@ func TestServer_Messages(t *testing.T) {
 
 func TestServer_MessageFilter(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 1000, func(messageIDs []string) {
 				// Get the messages.
 				metadata, err := c.GetMessageMetadata(ctx, proton.MessageFilter{})
@@ -210,7 +210,7 @@ func TestServer_MessageFilter(t *testing.T) {
 
 func TestServer_MessageIDs(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 10000, func(wantMessageIDs []string) {
 				allMessageIDs, err := c.GetMessageIDs(ctx, "")
 				require.NoError(t, err)
@@ -226,7 +226,7 @@ func TestServer_MessageIDs(t *testing.T) {
 
 func TestServer_MessagesDelete(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 1000, func(messageIDs []string) {
 				// Get the messages.
 				metadata, err := c.GetMessageMetadata(ctx, proton.MessageFilter{})
@@ -255,7 +255,7 @@ func TestServer_MessagesDelete(t *testing.T) {
 
 func TestServer_MessagesDeleteAfterUpdate(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 1000, func(messageIDs []string) {
 				// Get the initial event ID.
 				eventID, err := c.GetLatestEventID(ctx)
@@ -285,7 +285,7 @@ func TestServer_MessagesDeleteAfterUpdate(t *testing.T) {
 
 func TestServer_Events(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 3, func(messageIDs []string) {
 				// Get the latest event ID to stream from.
 				fromEventID, err := c.GetLatestEventID(ctx)
@@ -367,7 +367,7 @@ func TestServer_Events(t *testing.T) {
 func TestServer_Events_Multi(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		for i := 0; i < 10; i++ {
-			withUser(ctx, t, s, m, fmt.Sprintf("user%v", i), fmt.Sprintf("email%v@pm.me", i), "pass", func(c *proton.Client) {
+			withUser(ctx, t, s, m, fmt.Sprintf("user%v", i), "pass", func(c *proton.Client) {
 				latest, err := c.GetLatestEventID(ctx)
 				require.NoError(t, err)
 
@@ -393,7 +393,7 @@ func TestServer_Events_Multi(t *testing.T) {
 
 func TestServer_Events_Refresh(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 
@@ -417,11 +417,11 @@ func TestServer_Events_Refresh(t *testing.T) {
 
 func TestServer_RevokeUser(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 			require.Equal(t, "user", user.Name)
-			require.Equal(t, "email@pm.me", user.Email)
+			require.Equal(t, "user@"+s.GetDomain(), user.Email)
 
 			// Revoke the user's auth.
 			require.NoError(t, s.RevokeUser(user.ID))
@@ -434,7 +434,7 @@ func TestServer_RevokeUser(t *testing.T) {
 
 func TestServer_Calls(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			var calls []Call
 
 			// Watch calls that are made.
@@ -466,7 +466,7 @@ func TestServer_Calls(t *testing.T) {
 
 func TestServer_Calls_Status(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			var calls []Call
 
 			// Watch calls that are made.
@@ -492,7 +492,7 @@ func TestServer_Calls_Request(t *testing.T) {
 			calls = append(calls, call)
 		})
 
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(*proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(*proton.Client) {
 			require.Equal(
 				t,
 				calls[0].RequestBody,
@@ -510,7 +510,7 @@ func TestServer_Calls_Response(t *testing.T) {
 			calls = append(calls, call)
 		})
 
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			salts, err := c.GetSalts(ctx)
 			require.NoError(t, err)
 
@@ -531,7 +531,7 @@ func TestServer_Calls_Cookies(t *testing.T) {
 			calls = append(calls, call)
 		})
 
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(*proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(*proton.Client) {
 			// The header in the first call's response should set the Session-Id cookie.
 			resHeader := (&http.Response{Header: calls[len(calls)-2].ResponseHeader})
 			require.Len(t, resHeader.Cookies(), 1)
@@ -572,7 +572,7 @@ func TestServer_Calls_Manager(t *testing.T) {
 
 func TestServer_CreateMessage(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 
@@ -592,14 +592,15 @@ func TestServer_CreateMessage(t *testing.T) {
 				Message: proton.DraftTemplate{
 					Subject: "My subject",
 					Sender:  &mail.Address{Address: addr[0].Email},
-					ToList:  []*mail.Address{{Address: "recipient@pm.me"}},
+					ToList:  []*mail.Address{{Address: "recipient@example.com"}},
 				},
 			})
 			require.NoError(t, err)
 
 			require.Equal(t, addr[0].ID, draft.AddressID)
 			require.Equal(t, "My subject", draft.Subject)
-			require.Equal(t, &mail.Address{Address: "email@pm.me"}, draft.Sender)
+			require.Equal(t, &mail.Address{Address: "user@" + s.GetDomain()}, draft.Sender)
+			require.Equal(t, []*mail.Address{{Address: "recipient@example.com"}}, draft.ToList)
 			require.ElementsMatch(t, []string{proton.AllMailLabel, proton.AllDraftsLabel, proton.DraftsLabel}, draft.LabelIDs)
 		})
 	})
@@ -607,7 +608,7 @@ func TestServer_CreateMessage(t *testing.T) {
 
 func TestServer_UpdateDraft(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 
@@ -628,13 +629,14 @@ func TestServer_UpdateDraft(t *testing.T) {
 				Message: proton.DraftTemplate{
 					Subject: "My subject",
 					Sender:  &mail.Address{Address: addr[0].Email},
-					ToList:  []*mail.Address{{Address: "recipient@pm.me"}},
+					ToList:  []*mail.Address{{Address: "recipient@example.com"}},
 				},
 			})
 			require.NoError(t, err)
 			require.Equal(t, addr[0].ID, draft.AddressID)
 			require.Equal(t, "My subject", draft.Subject)
-			require.Equal(t, &mail.Address{Address: "email@pm.me"}, draft.Sender)
+			require.Equal(t, &mail.Address{Address: "user@" + s.GetDomain()}, draft.Sender)
+			require.Equal(t, []*mail.Address{{Address: "recipient@example.com"}}, draft.ToList)
 
 			// Create an event stream to watch for an update event.
 			fromEventID, err := c.GetLatestEventID(ctx)
@@ -646,7 +648,7 @@ func TestServer_UpdateDraft(t *testing.T) {
 			msg, err := c.UpdateDraft(ctx, draft.ID, addrKRs[addr[0].ID], proton.UpdateDraftReq{
 				Message: proton.DraftTemplate{
 					Subject: "Edited subject",
-					ToList:  []*mail.Address{{Address: "edited@pm.me"}},
+					ToList:  []*mail.Address{{Address: "edited@example.com"}},
 				},
 			})
 			require.NoError(t, err)
@@ -670,7 +672,7 @@ func TestServer_UpdateDraft(t *testing.T) {
 
 				require.Equal(t, draft.ID, event.Messages[0].ID)
 				require.Equal(t, "Edited subject", event.Messages[0].Message.Subject)
-				require.Equal(t, []*mail.Address{{Address: "edited@pm.me"}}, event.Messages[0].Message.ToList)
+				require.Equal(t, []*mail.Address{{Address: "edited@example.com"}}, event.Messages[0].Message.ToList)
 
 				return true
 			}, 5*time.Second, time.Millisecond*100)
@@ -680,7 +682,7 @@ func TestServer_UpdateDraft(t *testing.T) {
 
 func TestServer_SendMessage(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 
@@ -700,7 +702,7 @@ func TestServer_SendMessage(t *testing.T) {
 				Message: proton.DraftTemplate{
 					Subject: "My subject",
 					Sender:  &mail.Address{Address: addr[0].Email},
-					ToList:  []*mail.Address{{Address: "recipient@pm.me"}},
+					ToList:  []*mail.Address{{Address: "recipient@example.com"}},
 				},
 			})
 			require.NoError(t, err)
@@ -711,6 +713,7 @@ func TestServer_SendMessage(t *testing.T) {
 			require.Equal(t, draft.ID, sent.ID)
 			require.Equal(t, addr[0].ID, sent.AddressID)
 			require.Equal(t, "My subject", sent.Subject)
+			require.Equal(t, []*mail.Address{{Address: "recipient@example.com"}}, sent.ToList)
 			require.Contains(t, sent.LabelIDs, proton.SentLabel)
 		})
 	})
@@ -718,7 +721,7 @@ func TestServer_SendMessage(t *testing.T) {
 
 func TestServer_AuthDelete(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			require.NoError(t, c.AuthDelete(ctx))
 		})
 	})
@@ -733,7 +736,7 @@ func TestServer_ForceUpgrade(t *testing.T) {
 
 	s.SetMinAppVersion(semver.MustParse("1.0.0"))
 
-	if _, _, err := s.CreateUser("user", "email@pm.me", []byte("pass")); err != nil {
+	if _, _, err := s.CreateUser("user", []byte("pass")); err != nil {
 		t.Fatal(err)
 	}
 
@@ -759,7 +762,7 @@ func TestServer_ForceUpgrade(t *testing.T) {
 
 func TestServer_Import(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
 
@@ -913,7 +916,7 @@ func TestServer_Labels(t *testing.T) {
 	}
 
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
 
@@ -1055,7 +1058,7 @@ func TestServer_Import_FlagsAndLabels(t *testing.T) {
 	}
 
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
 
@@ -1082,7 +1085,7 @@ func TestServer_Import_FlagsAndLabels(t *testing.T) {
 							Flags:     tt.flags,
 							LabelIDs:  tt.labelIDs,
 						},
-						Message: []byte(fmt.Sprintf("From: sender@pm.me\r\nReceiver: recipient@pm.me\r\nSubject: %v\r\n\r\nHello World!", uuid.New())),
+						Message: newMessageLiteral("sender@example.com", "recipient@example.com"),
 					}}...))
 					if tt.wantError {
 						require.Error(t, err)
@@ -1107,12 +1110,12 @@ func TestServer_Import_FlagsAndLabels(t *testing.T) {
 
 func TestServer_PublicKeys(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		if _, _, err := s.CreateUser("other", "other@pm.me", []byte("pass")); err != nil {
+		if _, _, err := s.CreateUser("other", []byte("pass")); err != nil {
 			t.Fatal(err)
 		}
 
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
-			intKeys, intType, err := c.GetPublicKeys(ctx, "other@pm.me")
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			intKeys, intType, err := c.GetPublicKeys(ctx, "other@"+s.GetDomain())
 			require.NoError(t, err)
 			require.Equal(t, proton.RecipientTypeInternal, intType)
 			require.Len(t, intKeys, 1)
@@ -1133,8 +1136,11 @@ func TestServer_Proxy(t *testing.T) {
 			calls = append(calls, call)
 		})
 
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(_ *proton.Client) {
-			proxy := New(WithProxyOrigin(s.GetHostURL()))
+		withUser(ctx, t, s, m, "user", "pass", func(_ *proton.Client) {
+			proxy := New(
+				WithProxyOrigin(s.GetHostURL()),
+				WithProxyTransport(proton.InsecureTransport()),
+			)
 			defer proxy.Close()
 
 			m := proton.New(
@@ -1161,9 +1167,10 @@ func TestServer_Proxy(t *testing.T) {
 
 func TestServer_Proxy_Cache(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(_ *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(_ *proton.Client) {
 			proxy := New(
 				WithProxyOrigin(s.GetHostURL()),
+				WithProxyTransport(proton.InsecureTransport()),
 				WithAuthCacher(NewAuthCache()),
 			)
 			defer proxy.Close()
@@ -1190,9 +1197,10 @@ func TestServer_Proxy_Cache(t *testing.T) {
 
 func TestServer_Proxy_AuthDelete(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(_ *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(_ *proton.Client) {
 			proxy := New(
 				WithProxyOrigin(s.GetHostURL()),
+				WithProxyTransport(proton.InsecureTransport()),
 				WithAuthCacher(NewAuthCache()),
 			)
 			defer proxy.Close()
@@ -1299,7 +1307,7 @@ func TestServer_RealProxy_Cache(t *testing.T) {
 
 func TestServer_Messages_Fetch(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 1000, func(messageIDs []string) {
 				ctl := proton.NewNetCtl()
 
@@ -1341,7 +1349,7 @@ func TestServer_Messages_Fetch(t *testing.T) {
 
 func TestServer_Messages_Status(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 1000, func(messageIDs []string) {
 				ctl := proton.NewNetCtl()
 
@@ -1381,7 +1389,7 @@ func TestServer_Messages_Status(t *testing.T) {
 
 func TestServer_Labels_Duplicates(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			req := proton.CreateLabelReq{
 				Name:  uuid.NewString(),
 				Color: "#f66",
@@ -1400,7 +1408,7 @@ func TestServer_Labels_Duplicates(t *testing.T) {
 
 func TestServer_Labels_Duplicates_Update(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			label1, err := c.CreateLabel(context.Background(), proton.CreateLabelReq{
 				Name:  uuid.NewString(),
 				Color: "#f66",
@@ -1441,7 +1449,7 @@ func TestServer_Labels_Duplicates_Update(t *testing.T) {
 
 func TestServer_Labels_Subfolders(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			parent, err := c.CreateLabel(context.Background(), proton.CreateLabelReq{
 				Name:  uuid.NewString(),
 				Color: "#f66",
@@ -1472,7 +1480,7 @@ func TestServer_Labels_Subfolders(t *testing.T) {
 
 func TestServer_Labels_Subfolders_Reassign(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			parent1, err := c.CreateLabel(context.Background(), proton.CreateLabelReq{
 				Name:  uuid.NewString(),
 				Color: "#f66",
@@ -1520,7 +1528,7 @@ func TestServer_Labels_Subfolders_Reassign(t *testing.T) {
 
 func TestServer_Labels_Subfolders_DeleteParentWithChildren(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			parent, err := c.CreateLabel(context.Background(), proton.CreateLabelReq{
 				Name:  uuid.NewString(),
 				Color: "#f66",
@@ -1564,9 +1572,54 @@ func TestServer_Labels_Subfolders_DeleteParentWithChildren(t *testing.T) {
 	})
 }
 
+func TestServer_AddressCreateDelete(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			user, err := c.GetUser(context.Background())
+			require.NoError(t, err)
+
+			// Create an address.
+			alias, err := s.CreateAddress(user.ID, "alias@example.com", []byte("pass"))
+			require.NoError(t, err)
+
+			// The user should have two addresses, both enabled.
+			{
+				addr, err := c.GetAddresses(context.Background())
+				require.NoError(t, err)
+				require.Len(t, addr, 2)
+				require.Equal(t, addr[0].Status, proton.AddressStatusEnabled)
+				require.Equal(t, addr[1].Status, proton.AddressStatusEnabled)
+			}
+
+			// Disable the alias.
+			require.NoError(t, c.DisableAddress(context.Background(), alias))
+
+			// The user should have two addresses, the primary enabled and the alias disabled.
+			{
+				addr, err := c.GetAddresses(context.Background())
+				require.NoError(t, err)
+				require.Len(t, addr, 2)
+				require.Equal(t, addr[0].Status, proton.AddressStatusEnabled)
+				require.Equal(t, addr[1].Status, proton.AddressStatusDisabled)
+			}
+
+			// Delete the alias.
+			require.NoError(t, c.DeleteAddress(context.Background(), alias))
+
+			// The user should have one address, the primary enabled.
+			{
+				addr, err := c.GetAddresses(context.Background())
+				require.NoError(t, err)
+				require.Len(t, addr, 1)
+				require.Equal(t, addr[0].Status, proton.AddressStatusEnabled)
+			}
+		})
+	})
+}
+
 func TestServer_AddressOrder(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "email@pm.me", "pass", func(c *proton.Client) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			user, err := c.GetUser(context.Background())
 			require.NoError(t, err)
 
@@ -1574,13 +1627,13 @@ func TestServer_AddressOrder(t *testing.T) {
 			require.NoError(t, err)
 
 			// Create 3 additional addresses.
-			addr1, err := s.CreateAddress(user.ID, "addr1@pm.me", []byte("pass"))
+			addr1, err := s.CreateAddress(user.ID, "addr1@example.com", []byte("pass"))
 			require.NoError(t, err)
 
-			addr2, err := s.CreateAddress(user.ID, "addr2@pm.me", []byte("pass"))
+			addr2, err := s.CreateAddress(user.ID, "addr2@example.com", []byte("pass"))
 			require.NoError(t, err)
 
-			addr3, err := s.CreateAddress(user.ID, "addr3@pm.me", []byte("pass"))
+			addr3, err := s.CreateAddress(user.ID, "addr3@example.com", []byte("pass"))
 			require.NoError(t, err)
 
 			addresses, err := c.GetAddresses(context.Background())
@@ -1626,11 +1679,11 @@ func withServer(t *testing.T, fn func(ctx context.Context, s *Server, m *proton.
 	fn(ctx, s, m)
 }
 
-func withUser(ctx context.Context, t *testing.T, s *Server, m *proton.Manager, username, email, password string, fn func(c *proton.Client)) {
-	_, _, err := s.CreateUser(username, email, []byte(password))
+func withUser(ctx context.Context, t *testing.T, s *Server, m *proton.Manager, user, pass string, fn func(c *proton.Client)) {
+	_, _, err := s.CreateUser(user, []byte(pass))
 	require.NoError(t, err)
 
-	c, _, err := m.NewClientWithLogin(ctx, username, []byte(password))
+	c, _, err := m.NewClientWithLogin(ctx, user, []byte(pass))
 	require.NoError(t, err)
 	defer c.Close()
 
@@ -1676,7 +1729,7 @@ func importMessages(
 				Flags:     flags,
 				Unread:    true,
 			},
-			Message: []byte(fmt.Sprintf("From: sender@pm.me\r\nReceiver: recipient@pm.me\r\nSubject: %v\r\n\r\nHello World!", uuid.New())),
+			Message: newMessageLiteral("sender@example.com", "recipient@example.com"),
 		}
 	}))
 

@@ -16,6 +16,8 @@ import (
 )
 
 type Backend struct {
+	domain string
+
 	accounts map[string]*account
 	accLock  sync.RWMutex
 
@@ -40,8 +42,9 @@ type Backend struct {
 	authLife time.Duration
 }
 
-func New(authLife time.Duration) *Backend {
+func New(authLife time.Duration, domain string) *Backend {
 	return &Backend{
+		domain:      domain,
 		accounts:    make(map[string]*account),
 		attachments: make(map[string]*attachment),
 		attData:     make(map[string][]byte),
@@ -49,8 +52,7 @@ func New(authLife time.Duration) *Backend {
 		labels:      make(map[string]*label),
 		updates:     make(map[ID]update),
 		srp:         make(map[string]*srp.Server),
-
-		authLife: authLife,
+		authLife:    authLife,
 	}
 }
 
@@ -190,31 +192,42 @@ func (b *Backend) RemoveUserKey(userID, keyID string) error {
 	return nil
 }
 
-func (b *Backend) CreateAddress(userID, email string, password []byte) (string, error) {
+func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool) (string, error) {
 	return withAcc(b, userID, func(acc *account) (string, error) {
-		token, err := crypto.RandomToken(32)
-		if err != nil {
-			return "", err
-		}
+		var keys []key
 
-		armKey, err := GenerateKey(acc.username, email, token, "rsa", 2048)
-		if err != nil {
-			return "", err
-		}
+		if withKey {
+			token, err := crypto.RandomToken(32)
+			if err != nil {
+				return "", err
+			}
 
-		passphrase, err := hashPassword([]byte(password), acc.salt)
-		if err != nil {
-			return "", err
-		}
+			armKey, err := GenerateKey(acc.username, email, token, "rsa", 2048)
+			if err != nil {
+				return "", err
+			}
 
-		userKR, err := acc.keys[0].unlock(passphrase)
-		if err != nil {
-			return "", err
-		}
+			passphrase, err := hashPassword([]byte(password), acc.salt)
+			if err != nil {
+				return "", err
+			}
 
-		encToken, sigToken, err := encryptWithSignature(userKR, token)
-		if err != nil {
-			return "", err
+			userKR, err := acc.keys[0].unlock(passphrase)
+			if err != nil {
+				return "", err
+			}
+
+			encToken, sigToken, err := encryptWithSignature(userKR, token)
+			if err != nil {
+				return "", err
+			}
+
+			keys = append(keys, key{
+				keyID: uuid.NewString(),
+				key:   armKey,
+				tok:   encToken,
+				sig:   sigToken,
+			})
 		}
 
 		addressID := uuid.NewString()
@@ -223,12 +236,8 @@ func (b *Backend) CreateAddress(userID, email string, password []byte) (string, 
 			addrID: addressID,
 			email:  email,
 			order:  len(acc.addresses) + 1,
-			keys: []key{{
-				keyID: uuid.NewString(),
-				key:   armKey,
-				tok:   encToken,
-				sig:   sigToken,
-			}},
+			status: proton.AddressStatusEnabled,
+			keys:   keys,
 		}
 
 		updateID, err := b.newUpdate(&addressCreated{addressID: addressID})

@@ -71,7 +71,7 @@ func (s *service) GetInfo(ctx context.Context, req *proto.GetInfoRequest) (*prot
 }
 
 func (s *service) CreateUser(ctx context.Context, req *proto.CreateUserRequest) (*proto.CreateUserResponse, error) {
-	userID, addrID, err := s.server.CreateUser(req.Username, req.Email, req.Password)
+	userID, addrID, err := s.server.CreateUser(req.Username, req.Password)
 	if err != nil {
 		return nil, err
 	}

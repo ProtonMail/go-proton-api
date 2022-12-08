@@ -50,11 +50,70 @@ func (b *Backend) GetAddressID(email string) (string, error) {
 	})
 }
 
+func (b *Backend) GetAddress(userID, addrID string) (proton.Address, error) {
+	return withAcc(b, userID, func(acc *account) (proton.Address, error) {
+		if addr, ok := acc.addresses[addrID]; ok {
+			return addr.toAddress(), nil
+		}
+
+		return proton.Address{}, errors.New("no such address")
+	})
+}
+
 func (b *Backend) GetAddresses(userID string) ([]proton.Address, error) {
 	return withAcc(b, userID, func(acc *account) ([]proton.Address, error) {
 		return xslices.Map(maps.Values(acc.addresses), func(add *address) proton.Address {
 			return add.toAddress()
 		}), nil
+	})
+}
+
+func (b *Backend) EnableAddress(userID, addrID string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		acc.addresses[addrID].status = proton.AddressStatusEnabled
+
+		updateID, err := b.newUpdate(&addressUpdated{addressID: addrID})
+		if err != nil {
+			return err
+		}
+
+		acc.updateIDs = append(acc.updateIDs, updateID)
+
+		return nil
+	})
+}
+
+func (b *Backend) DisableAddress(userID, addrID string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		acc.addresses[addrID].status = proton.AddressStatusDisabled
+
+		updateID, err := b.newUpdate(&addressUpdated{addressID: addrID})
+		if err != nil {
+			return err
+		}
+
+		acc.updateIDs = append(acc.updateIDs, updateID)
+
+		return nil
+	})
+}
+
+func (b *Backend) DeleteAddress(userID, addrID string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		if acc.addresses[addrID].status != proton.AddressStatusDisabled {
+			return errors.New("address is not disabled")
+		}
+
+		delete(acc.addresses, addrID)
+
+		updateID, err := b.newUpdate(&addressDeleted{addressID: addrID})
+		if err != nil {
+			return err
+		}
+
+		acc.updateIDs = append(acc.updateIDs, updateID)
+
+		return nil
 	})
 }
 

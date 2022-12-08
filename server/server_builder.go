@@ -13,6 +13,7 @@ import (
 
 type serverBuilder struct {
 	withTLS bool
+	domain  string
 	logger  io.Writer
 	origin  string
 	cacher  AuthCacher
@@ -29,6 +30,7 @@ func newServerBuilder() *serverBuilder {
 
 	return &serverBuilder{
 		withTLS: true,
+		domain:  "proton.local",
 		logger:  logger,
 		origin:  proton.DefaultHostURL,
 	}
@@ -39,8 +41,9 @@ func (builder *serverBuilder) build() *Server {
 
 	s := &Server{
 		r: gin.New(),
-		b: backend.New(time.Hour),
+		b: backend.New(time.Hour, builder.domain),
 
+		domain:      builder.domain,
 		proxyOrigin: builder.origin,
 		authCacher:  builder.cacher,
 	}
@@ -81,6 +84,21 @@ type withTLS struct {
 
 func (opt withTLS) config(builder *serverBuilder) {
 	builder.withTLS = opt.withTLS
+}
+
+// withDomain controls the domain of the server.
+func WithDomain(domain string) Option {
+	return &withDomain{
+		domain: domain,
+	}
+}
+
+type withDomain struct {
+	domain string
+}
+
+func (opt withDomain) config(builder *serverBuilder) {
+	builder.domain = opt.domain
 }
 
 // WithLogger controls where Gin logs to.

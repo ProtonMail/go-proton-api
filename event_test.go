@@ -22,7 +22,7 @@ func TestEventStreamer(t *testing.T) {
 		proton.WithTransport(proton.InsecureTransport()),
 	)
 
-	_, _, err := s.CreateUser("username", "email@pm.me", []byte("password"))
+	_, _, err := s.CreateUser("user", []byte("password"))
 	require.NoError(t, err)
 
 	c, _, err := m.NewClientWithLogin(ctx, "username", []byte("password"))
