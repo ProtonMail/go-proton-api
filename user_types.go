@@ -15,44 +15,8 @@ type User struct {
 	Currency string
 }
 
-type TokenType string
-
-const (
-	EmailTokenType TokenType = "email"
-	SMSTokenType   TokenType = "sms"
-)
-
-type SendVerificationCodeReq struct {
-	Username    string
-	Type        TokenType
-	Destination TokenDestination
-}
-
-type TokenDestination struct {
-	Address string
-	Phone   string
-}
-
-type UserType int
-
-const (
-	MailUserType UserType = iota + 1
-	VPNUserType
-)
-
-type CreateUserReq struct {
-	Username  string
-	Email     string `json:",omitempty"`
-	Phone     string `json:",omitempty"`
-	Token     string
-	TokenType TokenType
-	Type      UserType
-	Auth      CreateUserAuth
-}
-
-type CreateUserAuth struct {
-	Version   int
-	ModulusID string
-	Salt      string
-	Verifier  string
+type DeleteUserReq struct {
+	Reason   string
+	Feedback string
+	Email    string
 }
