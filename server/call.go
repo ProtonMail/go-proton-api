@@ -3,12 +3,16 @@ package server
 import (
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type Call struct {
 	URL    *url.URL
 	Method string
 	Status int
+
+	Time     time.Time
+	Duration time.Duration
 
 	RequestHeader http.Header
 	RequestBody   []byte

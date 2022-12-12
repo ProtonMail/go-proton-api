@@ -22,13 +22,13 @@ func TestEventStreamer(t *testing.T) {
 		proton.WithTransport(proton.InsecureTransport()),
 	)
 
-	_, _, err := s.CreateUser("user", []byte("password"))
+	_, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
-	c, _, err := m.NewClientWithLogin(ctx, "username", []byte("password"))
+	c, _, err := m.NewClientWithLogin(ctx, "user", []byte("pass"))
 	require.NoError(t, err)
 
-	createTestMessages(t, c, "password", 10)
+	createTestMessages(t, c, "pass", 10)
 
 	latestEventID, err := c.GetLatestEventID(ctx)
 	require.NoError(t, err)
@@ -53,7 +53,7 @@ func TestEventStreamer(t *testing.T) {
 	c.Close()
 
 	// Create a new client and perform some actions with it to generate more events.
-	cc, _, err := m.NewClientWithLogin(ctx, "username", []byte("password"))
+	cc, _, err := m.NewClientWithLogin(ctx, "user", []byte("pass"))
 	require.NoError(t, err)
 	defer cc.Close()
 

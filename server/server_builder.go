@@ -12,11 +12,12 @@ import (
 )
 
 type serverBuilder struct {
-	withTLS bool
-	domain  string
-	logger  io.Writer
-	origin  string
-	cacher  AuthCacher
+	withTLS     bool
+	domain      string
+	logger      io.Writer
+	origin      string
+	cacher      AuthCacher
+	rateLimiter *rateLimiter
 }
 
 func newServerBuilder() *serverBuilder {
@@ -46,6 +47,7 @@ func (builder *serverBuilder) build() *Server {
 		domain:      builder.domain,
 		proxyOrigin: builder.origin,
 		authCacher:  builder.cacher,
+		rateLimit:   builder.rateLimiter,
 	}
 
 	if builder.withTLS {
@@ -142,4 +144,20 @@ type withAuthCache struct {
 
 func (opt withAuthCache) config(builder *serverBuilder) {
 	builder.cacher = opt.cacher
+}
+
+func WithRateLimit(limit int, window time.Duration) Option {
+	return &withRateLimit{
+		limit:  limit,
+		window: window,
+	}
+}
+
+type withRateLimit struct {
+	limit  int
+	window time.Duration
+}
+
+func (opt withRateLimit) config(builder *serverBuilder) {
+	builder.rateLimiter = newRateLimiter(opt.limit, opt.window)
 }

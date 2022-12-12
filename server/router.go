@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,6 +21,7 @@ func initRouter(s *Server) {
 	s.r.Use(
 		s.requireValidAppVersion(),
 		s.setSessionCookie(),
+		s.applyRateLimit(),
 	)
 
 	if core := s.r.Group("/core/v4"); core != nil {
@@ -171,8 +173,23 @@ func (s *Server) setSessionCookie() gin.HandlerFunc {
 	}
 }
 
+func (s *Server) applyRateLimit() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if s.rateLimit == nil {
+			return
+		}
+
+		if wait := s.rateLimit.exceeded(); wait > 0 {
+			c.Header("Retry-After", strconv.Itoa(int(wait.Seconds())))
+			c.AbortWithStatus(http.StatusTooManyRequests)
+		}
+	}
+}
+
 func (s *Server) logCalls() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		start := time.Now()
+
 		req, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			panic(err)
@@ -198,6 +215,9 @@ func (s *Server) logCalls() gin.HandlerFunc {
 					URL:    c.Request.URL,
 					Method: c.Request.Method,
 					Status: c.Writer.Status(),
+
+					Time:     start,
+					Duration: time.Since(start),
 
 					RequestHeader: c.Request.Header,
 					RequestBody:   req,

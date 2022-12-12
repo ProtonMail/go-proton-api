@@ -15,11 +15,11 @@ func TestStatus(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	netCtl := proton.NewNetCtl()
+	ctl := proton.NewNetCtl()
 
 	m := proton.New(
 		proton.WithHostURL(s.GetHostURL()),
-		proton.WithTransport(proton.NewDialer(netCtl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
 
 	var (
@@ -39,7 +39,7 @@ func TestStatus(t *testing.T) {
 	require.Zero(t, called)
 
 	// Now we simulate a network failure.
-	netCtl.Disable()
+	ctl.Disable()
 
 	// This should fail.
 	require.Error(t, m.Ping(context.Background()))
@@ -49,7 +49,7 @@ func TestStatus(t *testing.T) {
 	require.Equal(t, proton.StatusDown, status)
 
 	// Now we simulate a network restoration.
-	netCtl.Enable()
+	ctl.Enable()
 
 	// This should succeed.
 	require.NoError(t, m.Ping(context.Background()))
@@ -63,11 +63,11 @@ func TestStatus_NoDial(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	netCtl := proton.NewNetCtl()
+	ctl := proton.NewNetCtl()
 
 	m := proton.New(
 		proton.WithHostURL(s.GetHostURL()),
-		proton.WithTransport(proton.NewDialer(netCtl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
 
 	var (
@@ -81,7 +81,7 @@ func TestStatus_NoDial(t *testing.T) {
 	})
 
 	// Disable dialing.
-	netCtl.SetCanDial(false)
+	ctl.SetCanDial(false)
 
 	// This should fail.
 	require.Error(t, m.Ping(context.Background()))
@@ -95,11 +95,11 @@ func TestStatus_NoRead(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	netCtl := proton.NewNetCtl()
+	ctl := proton.NewNetCtl()
 
 	m := proton.New(
 		proton.WithHostURL(s.GetHostURL()),
-		proton.WithTransport(proton.NewDialer(netCtl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
 
 	var (
@@ -113,7 +113,7 @@ func TestStatus_NoRead(t *testing.T) {
 	})
 
 	// Disable reading.
-	netCtl.SetCanRead(false)
+	ctl.SetCanRead(false)
 
 	// This should fail.
 	require.Error(t, m.Ping(context.Background()))
@@ -127,11 +127,11 @@ func TestStatus_NoWrite(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	netCtl := proton.NewNetCtl()
+	ctl := proton.NewNetCtl()
 
 	m := proton.New(
 		proton.WithHostURL(s.GetHostURL()),
-		proton.WithTransport(proton.NewDialer(netCtl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
 
 	var (
@@ -145,7 +145,7 @@ func TestStatus_NoWrite(t *testing.T) {
 	})
 
 	// Disable writing.
-	netCtl.SetCanWrite(false)
+	ctl.SetCanWrite(false)
 
 	// This should fail.
 	require.Error(t, m.Ping(context.Background()))
@@ -162,17 +162,17 @@ func TestStatus_NoReadExistingConn(t *testing.T) {
 	_, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
-	netCtl := proton.NewNetCtl()
+	ctl := proton.NewNetCtl()
 
 	var dialed int
 
-	netCtl.OnDial(func(net.Conn) {
+	ctl.OnDial(func(net.Conn) {
 		dialed++
 	})
 
 	m := proton.New(
 		proton.WithHostURL(s.GetHostURL()),
-		proton.WithTransport(proton.NewDialer(netCtl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
 
 	// This should succeed.
@@ -184,13 +184,10 @@ func TestStatus_NoReadExistingConn(t *testing.T) {
 	require.Equal(t, 1, dialed)
 
 	// Disable reading on the existing connection.
-	netCtl.SetCanRead(false)
+	ctl.SetCanRead(false)
 
 	// This should fail because we won't be able to read the response.
 	require.Error(t, getErr(c.GetUser(context.Background())))
-
-	// We should still have dialed once; the connection should have been reused.
-	require.Equal(t, 1, dialed)
 }
 
 func TestStatus_NoWriteExistingConn(t *testing.T) {
@@ -200,17 +197,17 @@ func TestStatus_NoWriteExistingConn(t *testing.T) {
 	_, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
-	netCtl := proton.NewNetCtl()
+	ctl := proton.NewNetCtl()
 
 	var dialed int
 
-	netCtl.OnDial(func(net.Conn) {
+	ctl.OnDial(func(net.Conn) {
 		dialed++
 	})
 
 	m := proton.New(
 		proton.WithHostURL(s.GetHostURL()),
-		proton.WithTransport(proton.NewDialer(netCtl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 		proton.WithRetryCount(0),
 	)
 
@@ -223,7 +220,7 @@ func TestStatus_NoWriteExistingConn(t *testing.T) {
 	require.Equal(t, 1, dialed)
 
 	// Disable reading on the existing connection.
-	netCtl.SetCanWrite(false)
+	ctl.SetCanWrite(false)
 
 	// This should fail because we won't be able to write the request.
 	require.Error(t, c.LabelMessages(context.Background(), []string{"messageID"}, proton.TrashLabel))
@@ -240,7 +237,7 @@ func TestStatus_ContextCancel(t *testing.T) {
 
 	var called int
 
-	m.AddStatusObserver(func(val proton.Status) {
+	m.AddStatusObserver(func(proton.Status) {
 		called++
 	})
 
@@ -263,7 +260,7 @@ func TestStatus_ContextTimeout(t *testing.T) {
 
 	var called int
 
-	m.AddStatusObserver(func(val proton.Status) {
+	m.AddStatusObserver(func(proton.Status) {
 		called++
 	})
 

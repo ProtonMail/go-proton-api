@@ -4,16 +4,15 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,17 +20,17 @@ func TestConnectionReuse(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	netCtl := proton.NewNetCtl()
+	ctl := proton.NewNetCtl()
 
 	var dialed int
 
-	netCtl.OnDial(func(net.Conn) {
+	ctl.OnDial(func(net.Conn) {
 		dialed++
 	})
 
 	m := proton.New(
 		proton.WithHostURL(s.GetHostURL()),
-		proton.WithTransport(proton.NewDialer(netCtl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
 
 	// This should succeed; the resulting connection should be reused.
@@ -69,89 +68,70 @@ func TestAuthRefresh(t *testing.T) {
 }
 
 func TestHandleTooManyRequests(t *testing.T) {
-	var numCalls int
+	// Create a server with a rate limit of 1 request per second.
+	s := server.New(server.WithRateLimit(1, time.Second))
+	defer s.Close()
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		numCalls++
+	var calls []server.Call
 
-		if numCalls < 5 {
-			w.WriteHeader(http.StatusTooManyRequests)
-		} else {
-			w.WriteHeader(http.StatusOK)
-		}
-	}))
-	defer ts.Close()
+	// Watch the calls made.
+	s.AddCallWatcher(func(call server.Call) {
+		calls = append(calls, call)
+	})
 
 	m := proton.New(
-		proton.WithHostURL(ts.URL),
-		proton.WithRetryCount(5),
+		proton.WithHostURL(s.GetHostURL()),
+		proton.WithTransport(proton.InsecureTransport()),
 	)
+	defer m.Close()
 
-	// The call should succeed because the 5th retry should succeed (429s are retried).
-	c := m.NewClient("", "", "")
-	defer c.Close()
-
-	if _, err := c.GetAddresses(context.Background()); err != nil {
-		t.Fatal("got unexpected error", err)
+	// Make five calls; they should all succeed, but will be rate limited.
+	for i := 0; i < 5; i++ {
+		require.NoError(t, m.Ping(context.Background()))
 	}
 
-	// The server should be called 5 times.
-	// The first four calls should return 429 and the last call should return 200.
-	if numCalls != 5 {
-		t.Fatal("expected numCalls to be 5, instead got", numCalls)
+	// After each 429 response, we should wait at least the requested duration before making the next request.
+	for idx, call := range calls {
+		if call.Status == http.StatusTooManyRequests {
+			after, err := strconv.Atoi(call.ResponseHeader.Get("Retry-After"))
+			require.NoError(t, err)
+
+			// The next call should be made after the requested duration.
+			require.True(t, calls[idx+1].Time.After(call.Time.Add(time.Duration(after)*time.Second)))
+		}
 	}
 }
 
-func TestHandleTooManyRequestsRetryAfter(t *testing.T) {
-	getDelay := func(iCal int) time.Duration {
-		return time.Duration(5*1<<iCal) * time.Second
-	}
+func TestHandleTooManyRequests_Malformed(t *testing.T) {
+	var calls []time.Time
 
-	iRetry := -1
-	lastCall := time.Now()
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		currentCall := time.Now()
-
-		if iRetry >= 0 {
-			delay := getDelay(iRetry)
-			assert.False(t, currentCall.Before(
-				lastCall.Add(delay)),
-				"Delay was %v but expected to have %v",
-				currentCall.Sub(lastCall),
-				delay,
-			)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if len(calls) == 0 {
+			w.Header().Set("Retry-After", "malformed")
+			w.WriteHeader(http.StatusTooManyRequests)
 		}
 
-		iRetry++
-		lastCall = currentCall
-
-		// test defaul 10sec
-		if iRetry == 1 {
-			w.Header().Set("Retry-After", "something")
-		} else {
-			w.Header().Set("Retry-After", fmt.Sprintf("%.0f", getDelay(iRetry).Seconds()))
-		}
-		w.WriteHeader(http.StatusTooManyRequests)
+		calls = append(calls, time.Now())
 	}))
 	defer ts.Close()
 
-	m := proton.New(
-		proton.WithHostURL(ts.URL),
-		proton.WithRetryCount(3),
-	)
+	m := proton.New(proton.WithHostURL(ts.URL))
+	defer m.Close()
 
-	c := m.NewClient("", "", "")
-	defer c.Close()
+	require.NoError(t, m.Ping(context.Background()))
 
-	_, err := c.GetAddresses(context.Background())
-	require.Error(t, err)
+	// The first call should fail because the Retry-After header is invalid.
+	// The second call should succeed.
+	require.Len(t, calls, 2)
+
+	// The second call should be made at least 10 seconds after the first call.
+	require.True(t, calls[1].After(calls[0].Add(10*time.Second)))
 }
 
 func TestHandleUnprocessableEntity(t *testing.T) {
 	var numCalls int
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		numCalls++
 		w.WriteHeader(http.StatusUnprocessableEntity)
 	}))
@@ -180,7 +160,7 @@ func TestHandleUnprocessableEntity(t *testing.T) {
 func TestHandleDialFailure(t *testing.T) {
 	var numCalls int
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		numCalls++
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -210,7 +190,7 @@ func TestHandleDialFailure(t *testing.T) {
 func TestHandleTooManyDialFailures(t *testing.T) {
 	var numCalls int
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		numCalls++
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -242,7 +222,7 @@ func TestHandleTooManyDialFailures(t *testing.T) {
 func TestRetriesWithContextTimeout(t *testing.T) {
 	var numCalls int
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		numCalls++
 
 		if numCalls < 5 {
@@ -276,7 +256,7 @@ func TestRetriesWithContextTimeout(t *testing.T) {
 }
 
 func TestReturnErrNoConnection(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer ts.Close()
@@ -305,7 +285,7 @@ func TestStatusCallbacks(t *testing.T) {
 
 	m := proton.New(
 		proton.WithHostURL(s.GetHostURL()),
-		proton.WithTransport(proton.NewDialer(ctl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
 
 	statusCh := make(chan proton.Status, 1)

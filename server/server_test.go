@@ -77,7 +77,7 @@ func TestServer_Ping(t *testing.T) {
 
 		m := proton.New(
 			proton.WithHostURL(s.GetHostURL()),
-			proton.WithTransport(proton.NewDialer(ctl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+			proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 		)
 
 		var status proton.Status
@@ -1313,7 +1313,7 @@ func TestServer_Messages_Fetch(t *testing.T) {
 
 				mm := proton.New(
 					proton.WithHostURL(s.GetHostURL()),
-					proton.WithTransport(proton.NewDialer(ctl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+					proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 				)
 				defer mm.Close()
 
@@ -1355,7 +1355,7 @@ func TestServer_Messages_Status(t *testing.T) {
 
 				mm := proton.New(
 					proton.WithHostURL(s.GetHostURL()),
-					proton.WithTransport(proton.NewDialer(ctl, &tls.Config{InsecureSkipVerify: true}).GetRoundTripper()),
+					proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 				)
 				defer mm.Close()
 
