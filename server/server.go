@@ -47,6 +47,9 @@ type Server struct {
 
 	// offline is whether to pretend the server is offline and return 5xx errors.
 	offline bool
+
+	// rateLimit is the rate limiter for the server.
+	rateLimit *rateLimiter
 }
 
 func New(opts ...Option) *Server {
@@ -69,7 +72,7 @@ func (s *Server) GetProxyURL() string {
 	return s.s.URL + "/proxy"
 }
 
-// GetDomain returns the domain of the server.
+// GetDomain returns the domain of the server (e.g. "proton.local").
 func (s *Server) GetDomain() string {
 	return s.domain
 }

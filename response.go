@@ -62,37 +62,31 @@ func updateTime(_ *resty.Client, res *resty.Response) error {
 	return nil
 }
 
+// nolint:gosec
 func catchRetryAfter(_ *resty.Client, res *resty.Response) (time.Duration, error) {
-	if res.StatusCode() == http.StatusTooManyRequests {
-		if after := res.Header().Get("Retry-After"); after != "" {
-			l := logrus.WithFields(logrus.Fields{
-				"pkg":        "go-proton-api",
-				"statusCode": res.StatusCode(),
-				"url":        res.Request.URL,
-				"verb":       res.Request.Method,
-			})
-
-			seconds, err := strconv.Atoi(after)
-			if err != nil {
-				l.WithField("after", after).WithError(err).Warning(
-					"Cannot convert Retry-After to a number, continue with default 10 second cooldown.",
-				)
-				seconds = 10
-			}
-
-			// To avoid spikes when all clients retry at the same time, we add some random wait.
-			seconds += rand.Intn(10) //nolint:gosec // It is OK to use weak random number generator here.
-			l = l.WithField("delay", seconds)
-
-			// Maximum retry time in client is is one minute. But
-			// here wait times can be longer e.g. high API load
-			l.Warn("Delay the retry after http response")
-			return time.Duration(seconds) * time.Second, nil
-		}
+	// 0 and no error means default behaviour which is exponential backoff with jitter.
+	if res.StatusCode() != http.StatusTooManyRequests {
+		return 0, nil
 	}
 
-	// 0 and no error means default behaviour which is exponential backoff with jitter.
-	return 0, nil
+	// Parse the Retry-After header, or fallback to 10 seconds.
+	after, err := strconv.Atoi(res.Header().Get("Retry-After"))
+	if err != nil {
+		after = 10
+	}
+
+	// Add some jitter to the delay.
+	after += rand.Intn(10)
+
+	logrus.WithFields(logrus.Fields{
+		"pkg":    "go-proton-api",
+		"status": res.StatusCode(),
+		"url":    res.Request.URL,
+		"method": res.Request.Method,
+		"after":  after,
+	}).Warn("Too many requests, retrying after delay")
+
+	return time.Duration(after) * time.Second, nil
 }
 
 func catchTooManyRequests(res *resty.Response, _ error) bool {

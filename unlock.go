@@ -12,6 +12,8 @@ func Unlock(user User, addresses []Address, saltedKeyPass []byte) (*crypto.KeyRi
 	userKR, err := user.Keys.Unlock(saltedKeyPass, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to unlock user keys: %w", err)
+	} else if userKR.CountDecryptionEntities() == 0 {
+		return nil, nil, fmt.Errorf("failed to unlock any user keys")
 	}
 
 	addrKRs := make(map[string]*crypto.KeyRing)
@@ -19,9 +21,13 @@ func Unlock(user User, addresses []Address, saltedKeyPass []byte) (*crypto.KeyRi
 	for idx, addrKR := range parallel.Map(runtime.NumCPU(), addresses, func(addr Address) *crypto.KeyRing {
 		return addr.Keys.TryUnlock(saltedKeyPass, userKR)
 	}) {
-		if addrKR != nil {
-			addrKRs[addresses[idx].ID] = addrKR
+		if addrKR.CountDecryptionEntities() == 0 {
+			continue
+		} else if addrKR == nil {
+			continue
 		}
+
+		addrKRs[addresses[idx].ID] = addrKR
 	}
 
 	if len(addrKRs) == 0 {

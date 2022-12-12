@@ -16,7 +16,7 @@ func TestAuth(t *testing.T) {
 	s := server.New()
 	defer s.Close()
 
-	_, _, err := s.CreateUser("user", []byte("password"))
+	_, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
 	m := proton.New(
@@ -26,14 +26,14 @@ func TestAuth(t *testing.T) {
 	defer m.Close()
 
 	// Create one session.
-	c1, auth1, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
+	c1, auth1, err := m.NewClientWithLogin(context.Background(), "user", []byte("pass"))
 	require.NoError(t, err)
 
 	// Revoke all other sessions.
 	require.NoError(t, c1.AuthRevokeAll(context.Background()))
 
 	// Create another session.
-	c2, _, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
+	c2, _, err := m.NewClientWithLogin(context.Background(), "user", []byte("pass"))
 	require.NoError(t, err)
 
 	// There should be two sessions.
@@ -61,7 +61,7 @@ func TestAuth_Refresh(t *testing.T) {
 	defer s.Close()
 
 	// Create a user on the server.
-	userID, _, err := s.CreateUser("user", []byte("password"))
+	userID, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
 	// The auth is valid for 4 seconds.
@@ -74,7 +74,7 @@ func TestAuth_Refresh(t *testing.T) {
 	defer m.Close()
 
 	// Create one session for the user.
-	c, auth, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
+	c, auth, err := m.NewClientWithLogin(context.Background(), "user", []byte("pass"))
 	require.NoError(t, err)
 	require.Equal(t, userID, auth.UserID)
 
@@ -85,7 +85,7 @@ func TestAuth_Refresh(t *testing.T) {
 	{
 		user, err := c.GetUser(context.Background())
 		require.NoError(t, err)
-		require.Equal(t, "username", user.Name)
+		require.Equal(t, "user", user.Name)
 		require.Equal(t, userID, user.ID)
 	}
 
@@ -96,7 +96,7 @@ func TestAuth_Refresh(t *testing.T) {
 	{
 		user, err := c.GetUser(context.Background())
 		require.NoError(t, err)
-		require.Equal(t, "username", user.Name)
+		require.Equal(t, "user", user.Name)
 		require.Equal(t, userID, user.ID)
 	}
 }
@@ -106,7 +106,7 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 	defer s.Close()
 
 	// Create a user on the server.
-	userID, _, err := s.CreateUser("user", []byte("password"))
+	userID, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
 	// The auth is valid for 4 seconds.
@@ -118,7 +118,7 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 	)
 	defer m.Close()
 
-	c, auth, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
+	c, auth, err := m.NewClientWithLogin(context.Background(), "user", []byte("pass"))
 	require.NoError(t, err)
 	require.Equal(t, userID, auth.UserID)
 
@@ -128,7 +128,7 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 	parallel.Do(runtime.NumCPU(), 100, func(idx int) {
 		user, err := c.GetUser(context.Background())
 		require.NoError(t, err)
-		require.Equal(t, "username", user.Name)
+		require.Equal(t, "user", user.Name)
 		require.Equal(t, userID, user.ID)
 	})
 
@@ -139,7 +139,7 @@ func TestAuth_Refresh_Multi(t *testing.T) {
 	parallel.Do(runtime.NumCPU(), 100, func(idx int) {
 		user, err := c.GetUser(context.Background())
 		require.NoError(t, err)
-		require.Equal(t, "username", user.Name)
+		require.Equal(t, "user", user.Name)
 		require.Equal(t, userID, user.ID)
 	})
 }
@@ -149,7 +149,7 @@ func TestAuth_Refresh_Deauth(t *testing.T) {
 	defer s.Close()
 
 	// Create a user on the server.
-	userID, _, err := s.CreateUser("user", []byte("password"))
+	userID, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
 
 	m := proton.New(
@@ -159,7 +159,7 @@ func TestAuth_Refresh_Deauth(t *testing.T) {
 	defer m.Close()
 
 	// Create one session for the user.
-	c, auth, err := m.NewClientWithLogin(context.Background(), "username", []byte("password"))
+	c, auth, err := m.NewClientWithLogin(context.Background(), "user", []byte("pass"))
 	require.NoError(t, err)
 	require.Equal(t, userID, auth.UserID)
 
@@ -172,7 +172,7 @@ func TestAuth_Refresh_Deauth(t *testing.T) {
 	{
 		user, err := c.GetUser(context.Background())
 		require.NoError(t, err)
-		require.Equal(t, "username", user.Name)
+		require.Equal(t, "user", user.Name)
 		require.Equal(t, userID, user.ID)
 	}
 
