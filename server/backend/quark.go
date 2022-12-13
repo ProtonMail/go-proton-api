@@ -18,6 +18,9 @@ func (s *Backend) RunQuarkCommand(command string, args ...string) (any, error) {
 	case "user:create:address":
 		return s.quarkUserCreateAddress(args...)
 
+	case "user:create:subscription":
+		return s.quarkUserCreateSubscription(args...)
+
 	default:
 		return nil, fmt.Errorf("unknown command: %s", command)
 	}
@@ -26,7 +29,7 @@ func (s *Backend) RunQuarkCommand(command string, args ...string) (any, error) {
 func (s *Backend) quarkEncryptionID(args ...string) (string, error) {
 	fs := flag.NewFlagSet("encryption:id", flag.ContinueOnError)
 
-	// Required arguments.
+	// Positional arguments.
 	// arg0: value
 
 	decrypt := fs.Bool("decrypt", false, "decrypt the given encrypted ID")
@@ -46,11 +49,9 @@ func (s *Backend) quarkEncryptionID(args ...string) (string, error) {
 func (s *Backend) quarkUserCreate(args ...string) (proton.User, error) {
 	fs := flag.NewFlagSet("user:create", flag.ContinueOnError)
 
-	// Required arguments.
+	// Flag arguments.
 	name := fs.String("name", "", "new user's name")
 	pass := fs.String("password", "", "new user's password")
-
-	// Optional arguments.
 	newAddr := fs.Bool("create-address", false, "create the user's default address, will not automatically setup the address key")
 	genKeys := fs.String("gen-keys", "", "generate new address keys for the user")
 
@@ -76,12 +77,12 @@ func (s *Backend) quarkUserCreate(args ...string) (proton.User, error) {
 func (s *Backend) quarkUserCreateAddress(args ...string) (proton.Address, error) {
 	fs := flag.NewFlagSet("user:create:address", flag.ContinueOnError)
 
-	// Required arguments.
+	// Positional arguments.
 	// arg0: userID
 	// arg1: password
 	// arg2: email
 
-	// Optional arguments.
+	// Flag arguments.
 	genKeys := fs.String("gen-keys", "", "generate new address keys for the user")
 
 	if err := fs.Parse(args); err != nil {
@@ -95,4 +96,24 @@ func (s *Backend) quarkUserCreateAddress(args ...string) (proton.Address, error)
 	}
 
 	return s.GetAddress(fs.Arg(0), addrID)
+}
+
+func (s *Backend) quarkUserCreateSubscription(args ...string) (any, error) {
+	fs := flag.NewFlagSet("user:create:subscription", flag.ContinueOnError)
+
+	// Positional arguments.
+	// arg0: userID
+
+	// Flag arguments.
+	planID := fs.String("planID", "", "plan ID for the user")
+
+	if err := fs.Parse(args); err != nil {
+		return nil, err
+	}
+
+	if err := s.CreateSubscription(fs.Arg(0), *planID); err != nil {
+		return proton.Address{}, fmt.Errorf("failed to create subscription: %w", err)
+	}
+
+	return nil, nil
 }

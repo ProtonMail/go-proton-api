@@ -2,6 +2,7 @@ package server
 
 import (
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"time"
@@ -12,12 +13,13 @@ import (
 )
 
 type serverBuilder struct {
-	withTLS     bool
-	domain      string
-	logger      io.Writer
-	origin      string
-	cacher      AuthCacher
-	rateLimiter *rateLimiter
+	withTLS        bool
+	domain         string
+	logger         io.Writer
+	origin         string
+	proxyTransport *http.Transport
+	cacher         AuthCacher
+	rateLimiter    *rateLimiter
 }
 
 func newServerBuilder() *serverBuilder {
@@ -30,10 +32,11 @@ func newServerBuilder() *serverBuilder {
 	}
 
 	return &serverBuilder{
-		withTLS: true,
-		domain:  "proton.local",
-		logger:  logger,
-		origin:  proton.DefaultHostURL,
+		withTLS:        true,
+		domain:         "proton.local",
+		logger:         logger,
+		origin:         proton.DefaultHostURL,
+		proxyTransport: &http.Transport{},
 	}
 }
 
@@ -44,10 +47,11 @@ func (builder *serverBuilder) build() *Server {
 		r: gin.New(),
 		b: backend.New(time.Hour, builder.domain),
 
-		domain:      builder.domain,
-		proxyOrigin: builder.origin,
-		authCacher:  builder.cacher,
-		rateLimit:   builder.rateLimiter,
+		domain:         builder.domain,
+		proxyOrigin:    builder.origin,
+		authCacher:     builder.cacher,
+		rateLimit:      builder.rateLimiter,
+		proxyTransport: builder.proxyTransport,
 	}
 
 	if builder.withTLS {
@@ -160,4 +164,18 @@ type withRateLimit struct {
 
 func (opt withRateLimit) config(builder *serverBuilder) {
 	builder.rateLimiter = newRateLimiter(opt.limit, opt.window)
+}
+
+func WithProxyTransport(transport *http.Transport) Option {
+	return &withProxyTransport{
+		transport: transport,
+	}
+}
+
+type withProxyTransport struct {
+	transport *http.Transport
+}
+
+func (opt withProxyTransport) config(builder *serverBuilder) {
+	builder.proxyTransport = opt.transport
 }
