@@ -30,5 +30,5 @@ func (m *Manager) QuarkRes(ctx context.Context, command string, args ...string) 
 		return nil, err
 	}
 
-	return []byte(goquery.NewDocumentFromNode(doc).Find(".content").Text()), nil
+	return []byte(strings.TrimSpace(goquery.NewDocumentFromNode(doc).Find(".content").Text())), nil
 }

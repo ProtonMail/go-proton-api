@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"sync"
 	"time"
@@ -41,6 +42,9 @@ type Server struct {
 
 	// proxyOrigin is the URL of the origin server when the server is a proxy.
 	proxyOrigin string
+
+	// proxyTransport is the transport to use when the server is a proxy.
+	proxyTransport *http.Transport
 
 	// authCacher can optionally be set to cache proxied auth calls.
 	authCacher AuthCacher
@@ -192,5 +196,6 @@ func (s *Server) RevokeUser(userID string) error {
 }
 
 func (s *Server) Close() {
+	s.proxyTransport.CloseIdleConnections()
 	s.s.Close()
 }

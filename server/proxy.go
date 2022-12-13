@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func newProxy(proxyOrigin, base, path string) http.HandlerFunc {
+func newProxy(proxyOrigin, base, path string, transport http.RoundTripper) http.HandlerFunc {
 	origin, err := url.Parse(proxyOrigin)
 	if err != nil {
 		panic(err)
@@ -28,13 +28,13 @@ func newProxy(proxyOrigin, base, path string) http.HandlerFunc {
 			req.Host = origin.Host
 		},
 
-		Transport: proton.InsecureTransport(),
+		Transport: transport,
 	}).ServeHTTP
 }
 
 func (s *Server) handleProxy(base string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		proxy := newProxyServer(s.proxyOrigin, base)
+		proxy := newProxyServer(s.proxyOrigin, base, s.proxyTransport)
 
 		proxy.handle("/", s.handleProxyAll)
 
@@ -138,13 +138,16 @@ type proxyServer struct {
 	mux *http.ServeMux
 
 	origin, base string
+
+	transport http.RoundTripper
 }
 
-func newProxyServer(origin, base string) *proxyServer {
+func newProxyServer(origin, base string, transport http.RoundTripper) *proxyServer {
 	return &proxyServer{
-		mux:    http.NewServeMux(),
-		origin: origin,
-		base:   base,
+		mux:       http.NewServeMux(),
+		origin:    origin,
+		base:      base,
+		transport: transport,
 	}
 }
 
@@ -158,7 +161,7 @@ func (s *proxyServer) handle(path string, h func(func(string) HandlerFunc) http.
 			buf := new(bytes.Buffer)
 
 			// Call the proxy, capturing whatever data it writes.
-			newProxy(s.origin, s.base, path)(&writerWrapper{w, buf}, r)
+			newProxy(s.origin, s.base, path, s.transport)(&writerWrapper{w, buf}, r)
 
 			// If there is a gzip header entry, decode it.
 			if strings.Contains(w.Header().Get("Content-Encoding"), "gzip") {

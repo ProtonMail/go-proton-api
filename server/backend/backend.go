@@ -338,6 +338,11 @@ func (b *Backend) RemoveAddressKey(userID, addrID, keyID string) error {
 	})
 }
 
+// TODO: Implement this when we support subscriptions in the test server.
+func (b *Backend) CreateSubscription(userID, planID string) error {
+	return nil
+}
+
 func (b *Backend) CreateMessage(
 	userID, addrID string,
 	subject string,
