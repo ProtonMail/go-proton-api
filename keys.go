@@ -57,6 +57,6 @@ func (c *Client) MakeAddressKeyPrimary(ctx context.Context, keyID string, keyLis
 
 func (c *Client) DeleteAddressKey(ctx context.Context, keyID string, keyList KeyList) error {
 	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetBody(struct{ SignedKeyList KeyList }{SignedKeyList: keyList}).Put("/core/v4/keys/" + keyID + "/delete")
+		return r.SetBody(struct{ SignedKeyList KeyList }{SignedKeyList: keyList}).Post("/core/v4/keys/" + keyID + "/delete")
 	})
 }
