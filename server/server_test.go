@@ -1662,6 +1662,14 @@ func TestServer_AddressOrder(t *testing.T) {
 	})
 }
 
+func TestServer_Domains(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		domains, err := m.GetDomains(ctx)
+		require.NoError(t, err)
+		require.Equal(t, []string{s.GetDomain()}, domains)
+	})
+}
+
 func withServer(t *testing.T, fn func(ctx context.Context, s *Server, m *proton.Manager), opts ...Option) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
