@@ -30,6 +30,11 @@ func initRouter(s *Server) {
 			auth.POST("/refresh", s.handlePostAuthRefresh())
 		}
 
+		// Domains routes don't need authentication.
+		if domains := core.Group("/domains"); domains != nil {
+			domains.GET("/available", s.handleGetDomainsAvailable())
+		}
+
 		// Reporting a bug is also possible without authentication.
 		if reports := core.Group("/reports"); reports != nil {
 			reports.POST("/bug", s.handlePostReportBug())
