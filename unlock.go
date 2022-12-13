@@ -21,9 +21,9 @@ func Unlock(user User, addresses []Address, saltedKeyPass []byte) (*crypto.KeyRi
 	for idx, addrKR := range parallel.Map(runtime.NumCPU(), addresses, func(addr Address) *crypto.KeyRing {
 		return addr.Keys.TryUnlock(saltedKeyPass, userKR)
 	}) {
-		if addrKR.CountDecryptionEntities() == 0 {
+		if addrKR == nil {
 			continue
-		} else if addrKR == nil {
+		} else if addrKR.CountDecryptionEntities() == 0 {
 			continue
 		}
 
