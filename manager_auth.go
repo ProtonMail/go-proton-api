@@ -73,7 +73,7 @@ func (m *Manager) AuthInfo(ctx context.Context, req AuthInfoReq) (AuthInfo, erro
 		AuthInfo
 	}
 
-	if _, err := m.r(ctx).SetBody(req).SetResult(&res).Post("/core/v4/auth/info"); err != nil {
+	if _, err := m.r(ctx).SetBody(req).SetResult(&res).Post("/auth/v4/info"); err != nil {
 		return AuthInfo{}, err
 	}
 
@@ -83,7 +83,7 @@ func (m *Manager) AuthInfo(ctx context.Context, req AuthInfoReq) (AuthInfo, erro
 func (m *Manager) AuthModulus(ctx context.Context) (AuthModulus, error) {
 	var res AuthModulus
 
-	if _, err := m.r(ctx).SetResult(&res).Get("/core/v4/auth/modulus"); err != nil {
+	if _, err := m.r(ctx).SetResult(&res).Get("/auth/v4/modulus"); err != nil {
 		return AuthModulus{}, err
 	}
 
@@ -95,7 +95,7 @@ func (m *Manager) auth(ctx context.Context, req AuthReq) (Auth, error) {
 		Auth
 	}
 
-	if _, err := m.r(ctx).SetBody(req).SetResult(&res).Post("/core/v4/auth"); err != nil {
+	if _, err := m.r(ctx).SetBody(req).SetResult(&res).Post("/auth/v4"); err != nil {
 		return Auth{}, err
 	}
 
@@ -121,7 +121,7 @@ func (m *Manager) authRefresh(ctx context.Context, uid, ref string) (Auth, error
 		Auth
 	}
 
-	if resp, err := m.r(ctx).SetBody(req).SetResult(&res).Post("/core/v4/auth/refresh"); err != nil {
+	if resp, err := m.r(ctx).SetBody(req).SetResult(&res).Post("/auth/v4/refresh"); err != nil {
 		if resp != nil {
 			return Auth{}, &resty.ResponseError{Response: resp, Err: err}
 		}

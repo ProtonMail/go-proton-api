@@ -8,13 +8,13 @@ import (
 
 func (c *Client) Auth2FA(ctx context.Context, req Auth2FAReq) error {
 	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetBody(req).Post("/core/v4/auth/2fa")
+		return r.SetBody(req).Post("/auth/v4/2fa")
 	})
 }
 
 func (c *Client) AuthDelete(ctx context.Context) error {
 	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.Delete("/core/v4/auth")
+		return r.Delete("/auth/v4")
 	})
 }
 
