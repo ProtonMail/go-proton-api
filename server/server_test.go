@@ -457,7 +457,7 @@ func TestServer_Calls(t *testing.T) {
 
 			// The logout call should be correct.
 			logoutCall := calls[1]
-			require.Equal(t, "/core/v4/auth", logoutCall.URL.Path)
+			require.Equal(t, "/auth/v4", logoutCall.URL.Path)
 			require.Equal(t, "DELETE", logoutCall.Method)
 			require.Equal(t, http.StatusOK, logoutCall.Status)
 		})

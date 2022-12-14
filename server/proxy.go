@@ -39,8 +39,8 @@ func (s *Server) handleProxy(base string) gin.HandlerFunc {
 		proxy.handle("/", s.handleProxyAll)
 
 		if s.authCacher != nil {
-			proxy.handle("/core/v4/auth", s.handleProxyAuth)
-			proxy.handle("/core/v4/auth/info", s.handleProxyAuthInfo)
+			proxy.handle("/auth/v4", s.handleProxyAuth)
+			proxy.handle("/auth/v4/info", s.handleProxyAuthInfo)
 		}
 
 		proxy.ServeHTTP(c.Writer, c.Request)

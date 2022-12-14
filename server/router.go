@@ -25,13 +25,6 @@ func initRouter(s *Server) {
 	)
 
 	if core := s.r.Group("/core/v4"); core != nil {
-		// These routes are not protected by authentication.
-		if auth := core.Group("/auth"); auth != nil {
-			auth.POST("", s.handlePostAuth())
-			auth.POST("/info", s.handlePostAuthInfo())
-			auth.POST("/refresh", s.handlePostAuthRefresh())
-		}
-
 		// Domains routes don't need authentication.
 		if domains := core.Group("/domains"); domains != nil {
 			domains.GET("/available", s.handleGetDomainsAvailable())
@@ -44,10 +37,6 @@ func initRouter(s *Server) {
 
 		// These routes require auth.
 		if core := core.Group("", s.requireAuth()); core != nil {
-			if auth := core.Group("/auth"); auth != nil {
-				auth.DELETE("", s.handleDeleteAuth())
-			}
-
 			if users := core.Group("/users"); users != nil {
 				users.GET("", s.handleGetUsers())
 			}
@@ -112,11 +101,22 @@ func initRouter(s *Server) {
 		contacts.GET("/emails", s.handleGetContactsEmails())
 	}
 
-	// All auth routes need authentication.
-	if auth := s.r.Group("/auth/v4", s.requireAuth()); auth != nil {
-		auth.GET("/sessions", s.handleGetAuthSessions())
-		auth.DELETE("/sessions", s.handleDeleteAuthSessions())
-		auth.DELETE("/sessions/:authUID", s.handleDeleteAuthSession())
+	// Top level auth routes don't need authentication.
+	if auth := s.r.Group("/auth/v4"); auth != nil {
+		auth.POST("", s.handlePostAuth())
+		auth.POST("/info", s.handlePostAuthInfo())
+		auth.POST("/refresh", s.handlePostAuthRefresh())
+
+		// These routes require auth.
+		if auth := auth.Group("", s.requireAuth()); auth != nil {
+			auth.DELETE("", s.handleDeleteAuth())
+
+			if sessions := auth.Group("/sessions"); sessions != nil {
+				sessions.GET("", s.handleGetAuthSessions())
+				sessions.DELETE("", s.handleDeleteAuthSessions())
+				sessions.DELETE("/:authUID", s.handleDeleteAuthSession())
+			}
+		}
 	}
 
 	// Test routes don't need authentication.
