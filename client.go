@@ -134,19 +134,21 @@ func (c *Client) doRes(ctx context.Context, fn func(*resty.Request) (*resty.Resp
 
 	res, err := c.exec(ctx, fn)
 
-	// If we receive no response, we can't do anything.
-	if res.RawResponse == nil {
-		return nil, fmt.Errorf("received no response from API: %w", err)
-	}
-
-	// If we receive a 401, we need to refresh the auth.
-	if res.StatusCode() == http.StatusUnauthorized {
-		if err := c.authRefresh(ctx); err != nil {
-			return nil, fmt.Errorf("failed to refresh auth: %w", err)
+	if res != nil {
+		// If we receive no response, we can't do anything.
+		if res.RawResponse == nil {
+			return nil, fmt.Errorf("received no response from API: %w", err)
 		}
 
-		if res, err = c.exec(ctx, fn); err != nil {
-			return nil, fmt.Errorf("failed to retry request: %w", err)
+		// If we receive a 401, we need to refresh the auth.
+		if res.StatusCode() == http.StatusUnauthorized {
+			if err := c.authRefresh(ctx); err != nil {
+				return nil, fmt.Errorf("failed to refresh auth: %w", err)
+			}
+
+			if res, err = c.exec(ctx, fn); err != nil {
+				return nil, fmt.Errorf("failed to retry request: %w", err)
+			}
 		}
 	}
 
