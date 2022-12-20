@@ -42,6 +42,13 @@ type AuthReq struct {
 	SRPSession      string
 }
 
+type AuthReqNo2FA struct {
+	Username        string
+	ClientEphemeral string
+	ClientProof     string
+	SRPSession      string
+}
+
 type Auth struct {
 	UserID string
 
