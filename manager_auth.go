@@ -44,7 +44,7 @@ func (m *Manager) NewClientWithLogin(ctx context.Context, username string, passw
 		return nil, Auth{}, err
 	}
 
-	auth, err := m.auth(ctx, AuthReq{
+	auth, err := m.auth(ctx, AuthReqNo2FA{
 		Username:        username,
 		ClientProof:     base64.StdEncoding.EncodeToString(proofs.ClientProof),
 		ClientEphemeral: base64.StdEncoding.EncodeToString(proofs.ClientEphemeral),
@@ -90,7 +90,7 @@ func (m *Manager) AuthModulus(ctx context.Context) (AuthModulus, error) {
 	return res, nil
 }
 
-func (m *Manager) auth(ctx context.Context, req AuthReq) (Auth, error) {
+func (m *Manager) auth(ctx context.Context, req AuthReqNo2FA) (Auth, error) {
 	var res struct {
 		Auth
 	}
