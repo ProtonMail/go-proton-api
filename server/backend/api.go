@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
@@ -579,6 +580,7 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 									armBody,
 									msg.mimeType,
 									msg.externalID,
+									time.Now(),
 								)
 								newMsg.flags |= proton.MessageFlagReceived
 								newMsg.addLabel(proton.InboxLabel, labels)

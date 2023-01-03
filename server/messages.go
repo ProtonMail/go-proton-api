@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/mail"
 	"strconv"
+	"time"
 
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
@@ -458,6 +459,16 @@ func (s *Server) importBody(
 	toList := tryParseAddressList(header.Get("To"))
 	ccList := tryParseAddressList(header.Get("Cc"))
 	bccList := tryParseAddressList(header.Get("Bcc"))
+	date := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	headerDate := header.Get("Date")
+	if len(headerDate) != 0 {
+		if d, err := mail.ParseDate(headerDate); err != nil {
+			return "", err
+		} else {
+			date = d
+		}
+	}
 
 	// NOTE: Importing just the first body part matches API behaviour but sucks!
 	return s.b.CreateMessage(
@@ -468,6 +479,7 @@ func (s *Server) importBody(
 		string(body[0]),
 		rfc822.MIMEType(mimeType),
 		flags,
+		date,
 		unread, starred,
 	)
 }
