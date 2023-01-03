@@ -3,6 +3,7 @@ package backend
 import (
 	"net/mail"
 	"strings"
+	"time"
 
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
@@ -24,6 +25,7 @@ type message struct {
 	toList  []*mail.Address
 	ccList  []*mail.Address
 	bccList []*mail.Address
+	date    time.Time
 
 	armBody  string
 	mimeType rfc822.MIMEType
@@ -41,6 +43,7 @@ func newMessage(
 	armBody string,
 	mimeType rfc822.MIMEType,
 	externalID string,
+	date time.Time,
 ) *message {
 	return &message{
 		messageID:  uuid.NewString(),
@@ -53,6 +56,7 @@ func newMessage(
 		toList:  toList,
 		ccList:  ccList,
 		bccList: bccList,
+		date:    date,
 
 		armBody:  armBody,
 		mimeType: mimeType,
@@ -165,6 +169,8 @@ func (msg *message) getHeader() string {
 	if msg.mimeType != "" {
 		builder.WriteString("Content-Type: " + string(msg.mimeType) + "\r\n")
 	}
+
+	builder.WriteString("Date: " + msg.date.Format(time.RFC822) + "\r\n")
 
 	return builder.String()
 }
