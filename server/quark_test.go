@@ -13,6 +13,7 @@ func TestServer_Quark_CreateUser(t *testing.T) {
 		// Create two users, one with keys and one without.
 		require.NoError(t, m.Quark(ctx, "user:create", "--name", "user-no-keys", "--password", "test", "--create-address"))
 		require.NoError(t, m.Quark(ctx, "user:create", "--name", "user-keys", "--password", "test", "--gen-keys", "rsa2048"))
+		require.NoError(t, m.Quark(ctx, "user:create", "--name", "user-disabled", "--password", "test", "--gen-keys", "rsa2048", "--status", "1"))
 
 		{
 			// The address should be created but should have no keys.
@@ -36,6 +37,19 @@ func TestServer_Quark_CreateUser(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, addr, 1)
 			require.Len(t, addr[0].Keys, 1)
+		}
+
+		{
+			// The address should be created and should be disabled
+			c, _, err := m.NewClientWithLogin(ctx, "user-disabled", []byte("test"))
+			require.NoError(t, err)
+			defer c.Close()
+
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+			require.Len(t, addr, 1)
+			require.Len(t, addr[0].Keys, 1)
+			require.Equal(t, addr[0].Status, proton.AddressStatusDisabled)
 		}
 	})
 }

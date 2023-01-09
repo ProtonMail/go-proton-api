@@ -96,7 +96,7 @@ func (s *Server) CreateUser(username string, password []byte) (string, string, e
 		return "", "", err
 	}
 
-	addrID, err := s.b.CreateAddress(userID, username+"@"+s.domain, password, true)
+	addrID, err := s.b.CreateAddress(userID, username+"@"+s.domain, password, true, proton.AddressStatusEnabled)
 	if err != nil {
 		return "", "", err
 	}
@@ -132,7 +132,7 @@ func (s *Server) RemoveUserKey(userID, keyID string) error {
 }
 
 func (s *Server) CreateAddress(userID, email string, password []byte) (string, error) {
-	return s.b.CreateAddress(userID, email, password, true)
+	return s.b.CreateAddress(userID, email, password, true, proton.AddressStatusEnabled)
 }
 
 func (s *Server) RemoveAddress(userID, addrID string) error {
