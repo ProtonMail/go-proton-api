@@ -192,7 +192,7 @@ func (b *Backend) RemoveUserKey(userID, keyID string) error {
 	return nil
 }
 
-func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool) (string, error) {
+func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus) (string, error) {
 	return withAcc(b, userID, func(acc *account) (string, error) {
 		var keys []key
 
@@ -236,7 +236,7 @@ func (b *Backend) CreateAddress(userID, email string, password []byte, withKey b
 			addrID: addressID,
 			email:  email,
 			order:  len(acc.addresses) + 1,
-			status: proton.AddressStatusEnabled,
+			status: status,
 			keys:   keys,
 		}
 

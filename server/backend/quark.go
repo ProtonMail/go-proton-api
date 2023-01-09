@@ -54,8 +54,14 @@ func (s *Backend) quarkUserCreate(args ...string) (proton.User, error) {
 	pass := fs.String("password", "", "new user's password")
 	newAddr := fs.Bool("create-address", false, "create the user's default address, will not automatically setup the address key")
 	genKeys := fs.String("gen-keys", "", "generate new address keys for the user")
+	status := fs.Int("status", 2, "User status")
 
 	if err := fs.Parse(args); err != nil {
+		return proton.User{}, err
+	}
+
+	addressStatus, err := quarkStatusToAddressStatus(*status)
+	if err != nil {
 		return proton.User{}, err
 	}
 
@@ -66,7 +72,7 @@ func (s *Backend) quarkUserCreate(args ...string) (proton.User, error) {
 
 	// TODO: Create keys of different types (we always use RSA2048).
 	if *newAddr || *genKeys != "" {
-		if _, err := s.CreateAddress(userID, *name+"@"+s.domain, []byte(*pass), *genKeys != ""); err != nil {
+		if _, err := s.CreateAddress(userID, *name+"@"+s.domain, []byte(*pass), *genKeys != "", addressStatus); err != nil {
 			return proton.User{}, fmt.Errorf("failed to create address with keys: %w", err)
 		}
 	}
@@ -84,13 +90,19 @@ func (s *Backend) quarkUserCreateAddress(args ...string) (proton.Address, error)
 
 	// Flag arguments.
 	genKeys := fs.String("gen-keys", "", "generate new address keys for the user")
+	status := fs.Int("status", 2, "User status")
 
 	if err := fs.Parse(args); err != nil {
 		return proton.Address{}, err
 	}
 
+	addressStatus, err := quarkStatusToAddressStatus(*status)
+	if err != nil {
+		return proton.Address{}, err
+	}
+
 	// TODO: Create keys of different types (we always use RSA2048).
-	addrID, err := s.CreateAddress(fs.Arg(0), fs.Arg(2), []byte(fs.Arg(1)), *genKeys != "")
+	addrID, err := s.CreateAddress(fs.Arg(0), fs.Arg(2), []byte(fs.Arg(1)), *genKeys != "", addressStatus)
 	if err != nil {
 		return proton.Address{}, fmt.Errorf("failed to create address with keys: %w", err)
 	}
@@ -116,4 +128,23 @@ func (s *Backend) quarkUserCreateSubscription(args ...string) (any, error) {
 	}
 
 	return nil, nil
+}
+
+func quarkStatusToAddressStatus(status int) (proton.AddressStatus, error) {
+	switch status {
+	case 0:
+		return proton.AddressStatusDeleting, nil
+	case 1:
+		return proton.AddressStatusDisabled, nil
+	case 2:
+		fallthrough
+	case 3:
+		fallthrough
+	case 4:
+		fallthrough
+	case 5:
+		return proton.AddressStatusEnabled, nil
+	}
+
+	return 0, fmt.Errorf("invalid status value")
 }
