@@ -347,7 +347,7 @@ func (b *Backend) CreateMessage(
 	userID, addrID string,
 	subject string,
 	sender *mail.Address,
-	toList, ccList, bccList []*mail.Address,
+	toList, ccList, bccList, replytos []*mail.Address,
 	armBody string,
 	mimeType rfc822.MIMEType,
 	flags proton.MessageFlag,
@@ -356,7 +356,7 @@ func (b *Backend) CreateMessage(
 ) (string, error) {
 	return withAcc(b, userID, func(acc *account) (string, error) {
 		return withMessages(b, func(messages map[string]*message) (string, error) {
-			msg := newMessage(addrID, subject, sender, toList, ccList, bccList, armBody, mimeType, "", date)
+			msg := newMessage(addrID, subject, sender, toList, ccList, bccList, replytos, armBody, mimeType, "", date)
 
 			msg.flags |= flags
 			msg.unread = unread

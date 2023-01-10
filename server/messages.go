@@ -459,6 +459,7 @@ func (s *Server) importBody(
 	toList := tryParseAddressList(header.Get("To"))
 	ccList := tryParseAddressList(header.Get("Cc"))
 	bccList := tryParseAddressList(header.Get("Bcc"))
+	replytos := tryParseAddressList(header.Get("Reply-To"))
 	date := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	headerDate := header.Get("Date")
@@ -470,12 +471,22 @@ func (s *Server) importBody(
 		}
 	}
 
+	// NOTE: Importing without sender adds empty sender on API side
+	if sender == nil {
+		sender = &mail.Address{}
+	}
+
+	// NOTE: Importing without sender adds empty reply to on API side
+	if len(replytos) == 0 {
+		replytos = []*mail.Address{{}}
+	}
+
 	// NOTE: Importing just the first body part matches API behaviour but sucks!
 	return s.b.CreateMessage(
 		userID, addrID,
 		subject,
 		sender,
-		toList, ccList, bccList,
+		toList, ccList, bccList, replytos,
 		string(body[0]),
 		rfc822.MIMEType(mimeType),
 		flags,
