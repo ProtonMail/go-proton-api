@@ -20,12 +20,13 @@ type message struct {
 	sysLabel   *string
 	attIDs     []string
 
-	subject string
-	sender  *mail.Address
-	toList  []*mail.Address
-	ccList  []*mail.Address
-	bccList []*mail.Address
-	date    time.Time
+	subject  string
+	sender   *mail.Address
+	toList   []*mail.Address
+	ccList   []*mail.Address
+	bccList  []*mail.Address
+	replytos []*mail.Address
+	date     time.Time
 
 	armBody  string
 	mimeType rfc822.MIMEType
@@ -39,7 +40,7 @@ func newMessage(
 	addrID string,
 	subject string,
 	sender *mail.Address,
-	toList, ccList, bccList []*mail.Address,
+	toList, ccList, bccList, replytos []*mail.Address,
 	armBody string,
 	mimeType rfc822.MIMEType,
 	externalID string,
@@ -51,12 +52,13 @@ func newMessage(
 		addrID:     addrID,
 		sysLabel:   pointer(""),
 
-		subject: subject,
-		sender:  sender,
-		toList:  toList,
-		ccList:  ccList,
-		bccList: bccList,
-		date:    date,
+		subject:  subject,
+		sender:   sender,
+		toList:   toList,
+		ccList:   ccList,
+		bccList:  bccList,
+		replytos: replytos,
+		date:     date,
 
 		armBody:  armBody,
 		mimeType: mimeType,
@@ -134,11 +136,12 @@ func (msg *message) toMetadata() proton.MessageMetadata {
 		AddressID:  msg.addrID,
 		LabelIDs:   append(msg.labelIDs, labelIDs...),
 
-		Subject: msg.subject,
-		Sender:  msg.sender,
-		ToList:  msg.toList,
-		CCList:  msg.ccList,
-		BCCList: msg.bccList,
+		Subject:  msg.subject,
+		Sender:   msg.sender,
+		ToList:   msg.toList,
+		CCList:   msg.ccList,
+		BCCList:  msg.bccList,
+		ReplyTos: msg.replytos,
 
 		Flags:  msg.flags,
 		Unread: proton.Bool(msg.unread),
@@ -150,7 +153,7 @@ func (msg *message) getHeader() string {
 
 	builder.WriteString("Subject: " + msg.subject + "\r\n")
 
-	if msg.sender != nil {
+	if msg.sender != nil && (msg.sender.Name != "" || msg.sender.Address != "") {
 		builder.WriteString("From: " + msg.sender.String() + "\r\n")
 	}
 

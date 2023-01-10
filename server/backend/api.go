@@ -577,6 +577,7 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 									msg.toList,
 									msg.ccList,
 									nil, // BCC is not sent to the recipient
+									msg.replytos,
 									armBody,
 									msg.mimeType,
 									msg.externalID,
