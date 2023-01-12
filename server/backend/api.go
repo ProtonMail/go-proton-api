@@ -334,15 +334,21 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 				})
 			}
 
+			if filter.Subject != "" {
+				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
+					return filter.Subject == metadata.Subject
+				})
+			}
+
 			if len(filter.AddressID) != 0 {
 				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
 					return filter.AddressID == metadata.AddressID
 				})
 			}
 
-			if len(filter.ExternalID) != 0 {
+			if filter.ExternalID != "" {
 				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
-					return filter.ExternalID != metadata.ExternalID
+					return filter.ExternalID == metadata.ExternalID
 				})
 			}
 
@@ -505,6 +511,18 @@ func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate)
 }
 
 func (b *Backend) UpdateDraft(userID, draftID string, changes proton.DraftTemplate) (proton.Message, error) {
+	if changes.Sender == nil {
+		return proton.Message{}, errors.New("the Sender is required")
+	}
+
+	if changes.Sender.Address == "" {
+		return proton.Message{}, errors.New("the Address is required")
+	}
+
+	if changes.MIMEType != rfc822.TextPlain && changes.MIMEType != rfc822.TextHTML {
+		return proton.Message{}, errors.New("the MIMEType must be text/plain or text/html")
+	}
+
 	return withAcc(b, userID, func(acc *account) (proton.Message, error) {
 		return withMessages(b, func(messages map[string]*message) (proton.Message, error) {
 			return withAtts(b, func(atts map[string]*attachment) (proton.Message, error) {

@@ -202,7 +202,7 @@ func (msg *message) applyChanges(changes proton.DraftTemplate) {
 	}
 
 	if changes.Sender != nil {
-		panic("sender change probably not allowed by API on existing draft")
+		msg.sender = changes.Sender
 	}
 
 	if changes.ToList != nil {
