@@ -45,6 +45,7 @@ func (meta MessageMetadata) IsDraft() bool {
 type MessageFilter struct {
 	ID []string `json:",omitempty"`
 
+	Subject    string `json:",omitempty"`
 	AddressID  string `json:",omitempty"`
 	ExternalID string `json:",omitempty"`
 	LabelID    string `json:",omitempty"`

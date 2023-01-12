@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/iterator"
@@ -648,8 +649,10 @@ func TestServer_UpdateDraft(t *testing.T) {
 			// Update the draft subject/to-list.
 			msg, err := c.UpdateDraft(ctx, draft.ID, addrKRs[addr[0].ID], proton.UpdateDraftReq{
 				Message: proton.DraftTemplate{
-					Subject: "Edited subject",
-					ToList:  []*mail.Address{{Address: "edited@example.com"}},
+					Subject:  "Edited subject",
+					Sender:   &mail.Address{Address: addr[0].Email},
+					ToList:   []*mail.Address{{Address: "edited@example.com"}},
+					MIMEType: rfc822.TextPlain,
 				},
 			})
 			require.NoError(t, err)
