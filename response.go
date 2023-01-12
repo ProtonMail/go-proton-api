@@ -20,6 +20,7 @@ const (
 	InvalidValue              Code = 2001
 	AppVersionMissingCode     Code = 5001
 	AppVersionBadCode         Code = 5003
+	UsernameInvalid           Code = 6003 // Deprecated, but still used.
 	PasswordWrong             Code = 8002
 	HumanVerificationRequired Code = 9001
 	PaidPlanRequired          Code = 10004
