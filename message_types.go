@@ -188,5 +188,5 @@ func (res LabelMessagesRes) ok() bool {
 
 type LabelMessageRes struct {
 	ID       string
-	Response Error
+	Response APIError
 }

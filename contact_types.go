@@ -153,7 +153,7 @@ type CreateContactsRes struct {
 	Index int
 
 	Response struct {
-		Error
+		APIError
 		Contact Contact
 	}
 }

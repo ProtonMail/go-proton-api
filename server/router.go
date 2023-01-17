@@ -140,12 +140,12 @@ func (s *Server) requireValidAppVersion() gin.HandlerFunc {
 		appVersion := c.Request.Header.Get("x-pm-appversion")
 
 		if appVersion == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, proton.Error{
+			c.AbortWithStatusJSON(http.StatusBadRequest, proton.APIError{
 				Code:    proton.AppVersionMissingCode,
 				Message: "Missing x-pm-appversion header",
 			})
 		} else if ok := s.validateAppVersion(appVersion); !ok {
-			c.AbortWithStatusJSON(http.StatusBadRequest, proton.Error{
+			c.AbortWithStatusJSON(http.StatusBadRequest, proton.APIError{
 				Code:    proton.AppVersionBadCode,
 				Message: "This version of the app is no longer supported, please update to continue using the app",
 			})

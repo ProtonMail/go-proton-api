@@ -137,7 +137,7 @@ func (c *Client) doRes(ctx context.Context, fn func(*resty.Request) (*resty.Resp
 	if res != nil {
 		// If we receive no response, we can't do anything.
 		if res.RawResponse == nil {
-			return nil, fmt.Errorf("received no response from API: %w", err)
+			return nil, newNetError(err, "received no response from API")
 		}
 
 		// If we receive a 401, we need to refresh the auth.
