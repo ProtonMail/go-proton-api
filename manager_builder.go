@@ -92,7 +92,7 @@ func (builder *managerBuilder) build() *Manager {
 	m.rc.SetRetryAfter(catchRetryAfter)
 
 	// Set the data type of API errors.
-	m.rc.SetError(&Error{})
+	m.rc.SetError(&APIError{})
 
 	return m
 }

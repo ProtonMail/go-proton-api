@@ -65,7 +65,7 @@ func (m *Manager) handleError(req *resty.Request, err error) {
 		return
 	}
 
-	apiErr, ok := resErr.Response.Error().(*Error)
+	apiErr, ok := resErr.Response.Error().(*APIError)
 	if !ok {
 		return
 	}

@@ -29,7 +29,7 @@ func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, wor
 
 			for _, res := range res {
 				if res.Code != SuccessCode {
-					return nil, fmt.Errorf("failed to import message: %w", res.Error)
+					return nil, fmt.Errorf("failed to import message: %w", res.APIError)
 				}
 			}
 

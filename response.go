@@ -27,13 +27,46 @@ const (
 	AuthRefreshTokenInvalid   Code = 10013
 )
 
-type Error struct {
-	Code    Code
+// APIError represents an error returned by the API.
+type APIError struct {
+	// Status is the HTTP status code of the response that caused the error.
+	Status int
+
+	// Code is the error code returned by the API.
+	Code Code
+
+	// Message is the error message returned by the API.
 	Message string `json:"Error"`
 }
 
-func (err Error) Error() string {
+func (err APIError) Error() string {
 	return err.Message
+}
+
+// NetError represents a network error. It is returned when the API is unreachable.
+type NetError struct {
+	// Cause is the underlying error that caused the network error.
+	Cause error
+
+	// Message is an additional message that describes the network error.
+	Message string
+}
+
+func newNetError(err error, message string) *NetError {
+	return &NetError{Cause: err, Message: message}
+}
+
+func (err *NetError) Error() string {
+	return fmt.Sprintf("%s: %v", err.Message, err.Cause)
+}
+
+func (err *NetError) Unwrap() error {
+	return err.Cause
+}
+
+func (err *NetError) Is(target error) bool {
+	_, ok := target.(*NetError)
+	return ok
 }
 
 func catchAPIError(_ *resty.Client, res *resty.Response) error {
@@ -43,7 +76,8 @@ func catchAPIError(_ *resty.Client, res *resty.Response) error {
 
 	var err error
 
-	if apiErr, ok := res.Error().(*Error); ok {
+	if apiErr, ok := res.Error().(*APIError); ok {
+		apiErr.Status = res.StatusCode()
 		err = apiErr
 	} else {
 		err = fmt.Errorf("%v", res.Status())
