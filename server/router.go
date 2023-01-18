@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -21,6 +22,7 @@ func initRouter(s *Server) {
 	s.r.Use(
 		s.requireValidAppVersion(),
 		s.setSessionCookie(),
+		s.applyStatusHooks(),
 		s.applyRateLimit(),
 	)
 
@@ -169,6 +171,24 @@ func (s *Server) setSessionCookie() gin.HandlerFunc {
 			c.SetCookie("Session-Id", uuid.NewString(), int(90*24*time.Hour.Seconds()), "/", host, true, true)
 		} else {
 			c.SetCookie("Session-Id", cookie.Value, int(90*24*time.Hour.Seconds()), "/", host, true, true)
+		}
+	}
+}
+
+func (s *Server) applyStatusHooks() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		s.statusHooksLock.RLock()
+		defer s.statusHooksLock.RUnlock()
+
+		for _, hook := range s.statusHooks {
+			if status, ok := hook(c.Request); ok {
+				c.AbortWithStatusJSON(status, proton.APIError{
+					Code:    proton.InvalidValue,
+					Message: fmt.Sprintf("Request failed with status %d", status),
+				})
+
+				return
+			}
 		}
 	}
 }

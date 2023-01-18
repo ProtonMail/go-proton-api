@@ -20,6 +20,9 @@ type AuthCacher interface {
 	SetAuth(username string, auth proton.Auth)
 }
 
+// StatusHook is a function that can be used to modify the response code of a call.
+type StatusHook func(*http.Request) (int, bool)
+
 type Server struct {
 	// r is the gin router.
 	r *gin.Engine
@@ -33,6 +36,10 @@ type Server struct {
 	// callWatchers records callWatchers received by the server.
 	callWatchers     []callWatcher
 	callWatchersLock sync.RWMutex
+
+	// statusHooks are hooks that can be used to modify the response code of a call.
+	statusHooks     []StatusHook
+	statusHooksLock sync.RWMutex
 
 	// domain is the test server domain.
 	domain string
@@ -81,11 +88,20 @@ func (s *Server) GetDomain() string {
 	return s.domain
 }
 
+// AddCallWatcher adds a call watcher to the server.
 func (s *Server) AddCallWatcher(fn func(Call), paths ...string) {
 	s.callWatchersLock.Lock()
 	defer s.callWatchersLock.Unlock()
 
 	s.callWatchers = append(s.callWatchers, newCallWatcher(fn, paths...))
+}
+
+// AddStatusHook adds a status hook to the server.
+func (s *Server) AddStatusHook(fn StatusHook) {
+	s.statusHooksLock.Lock()
+	defer s.statusHooksLock.Unlock()
+
+	s.statusHooks = append(s.statusHooks, fn)
 }
 
 // CreateUser creates a new server user with the given username and password.

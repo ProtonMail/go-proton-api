@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -1667,6 +1668,30 @@ func TestServer_Domains(t *testing.T) {
 		domains, err := m.GetDomains(ctx)
 		require.NoError(t, err)
 		require.Equal(t, []string{s.GetDomain()}, domains)
+	})
+}
+
+func TestServer_StatusHooks(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		s.AddStatusHook(func(req *http.Request) (int, bool) {
+			if req.URL.Path == "/core/v4/addresses" {
+				return http.StatusBadRequest, true
+			}
+
+			return 0, false
+		})
+
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			addr, err := c.GetAddresses(context.Background())
+			require.Error(t, err)
+			require.Nil(t, addr)
+
+			if apiErr := new(proton.APIError); errors.As(err, &apiErr) {
+				require.Equal(t, http.StatusBadRequest, apiErr.Status)
+			} else {
+				require.Fail(t, "expected APIError")
+			}
+		})
 	})
 }
 
