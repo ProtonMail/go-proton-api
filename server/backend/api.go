@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
@@ -505,11 +504,18 @@ func (b *Backend) DeleteMessage(userID, messageID string) error {
 	})
 }
 
-func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate) (proton.Message, error) {
+func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate, parentID string) (proton.Message, error) {
 	return withAcc(b, userID, func(acc *account) (proton.Message, error) {
 		return withMessages(b, func(messages map[string]*message) (proton.Message, error) {
 			return withLabels(b, func(labels map[string]*label) (proton.Message, error) {
-				msg := newMessageFromTemplate(addrID, draft)
+				// Convert the parentID into externalRef.
+				if parentID != ""  {
+					parentMsg, ok := messages[parentID]
+					if ok {
+						parentID = "<"+ parentMsg.externalID + ">"
+					}
+				}
+				msg := newMessageFromTemplate(addrID, draft, parentID)
 
 				// Drafts automatically get the sysLabel "Drafts".
 				msg.addLabel(proton.DraftsLabel, labels)
@@ -608,19 +614,7 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 									return err
 								}
 
-								newMsg := newMessage(
-									addrID,
-									msg.subject,
-									msg.sender,
-									msg.toList,
-									msg.ccList,
-									nil, // BCC is not sent to the recipient
-									msg.replytos,
-									armBody,
-									msg.mimeType,
-									msg.externalID,
-									time.Now(),
-								)
+								newMsg := newMessageFromSent(addrID, armBody, msg)
 								newMsg.flags |= proton.MessageFlagReceived
 								newMsg.addLabel(proton.InboxLabel, labels)
 								newMsg.unread = true

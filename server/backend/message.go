@@ -19,6 +19,8 @@ type message struct {
 	labelIDs   []string
 	sysLabel   *string
 	attIDs     []string
+	references []string
+	inReplyTo  string
 
 	subject  string
 	sender   *mail.Address
@@ -65,12 +67,38 @@ func newMessage(
 	}
 }
 
-func newMessageFromTemplate(addrID string, template proton.DraftTemplate) *message {
+func newMessageFromSent(addrID, armBody string, msg *message) *message {
+	return &message{
+		messageID:  uuid.NewString(),
+		externalID: msg.externalID,
+		addrID:     addrID,
+		sysLabel:   pointer(""),
+
+		subject:  msg.subject,
+		sender:   msg.sender,
+		toList:   msg.toList,
+		ccList:   msg.ccList,
+		bccList:  nil,  // BCC is not sent to the recipient
+		replytos: msg.replytos,
+		date:     time.Now(),
+
+		armBody:  armBody,
+		mimeType: msg.mimeType,
+		references: msg.references,
+		inReplyTo: msg.inReplyTo,
+	}
+}
+
+func newMessageFromTemplate(addrID string, template proton.DraftTemplate, parentID string) *message {
+	var ref []string
+	ref = append(ref, parentID)
 	return &message{
 		messageID:  uuid.NewString(),
 		externalID: template.ExternalID,
 		addrID:     addrID,
 		sysLabel:   pointer(""),
+		references: ref,
+		inReplyTo:  parentID,
 
 		subject: template.Subject,
 		sender:  template.Sender,
@@ -177,6 +205,14 @@ func (msg *message) getHeader() string {
 
 	if msg.mimeType != "" {
 		builder.WriteString("Content-Type: " + string(msg.mimeType) + "\r\n")
+	}
+
+	if len(msg.references) > 0 {
+		builder.WriteString("References: " + strings.Join(msg.references, ", ") + "\r\n")
+	}
+
+	if msg.inReplyTo != "" {
+		builder.WriteString("In-Reply-To: " + msg.inReplyTo + "\r\n")
 	}
 
 	builder.WriteString("Date: " + msg.date.Format(time.RFC822) + "\r\n")
