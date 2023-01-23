@@ -1,6 +1,7 @@
 package proton
 
 import (
+	"bytes"
 	"net/mail"
 
 	"github.com/ProtonMail/gluon/rfc822"
@@ -155,7 +156,8 @@ func (m Message) Decrypt(kr *crypto.KeyRing) ([]byte, error) {
 type FullMessage struct {
 	Message
 
-	AttData [][]byte
+	AttDataBuffers []*bytes.Buffer
+	AttData        [][]byte
 }
 
 type Signature struct {
