@@ -184,6 +184,14 @@ func (s *Server) UnlabelMessage(userID, msgID, labelID string) error {
 	return s.b.UnlabelMessages(userID, labelID, msgID)
 }
 
+func (s *Server) AddLabelCreatedEvent(userID, labelID string) error {
+	return s.b.AddLabelCreatedUpdate(userID, labelID)
+}
+
+func (s *Server) AddMessageCreatedEvent(userID, messageID string) error {
+	return s.b.AddMessageCreatedUpdate(userID, messageID)
+}
+
 func (s *Server) SetAuthLife(authLife time.Duration) {
 	s.b.SetAuthLife(authLife)
 }

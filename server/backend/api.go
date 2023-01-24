@@ -776,6 +776,32 @@ func getLabelIDsToDelete(labelID string, labels map[string]*label) []string {
 	return labelIDs
 }
 
+func (b *Backend) AddLabelCreatedUpdate(userID, labelID string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		updateID, err := b.newUpdate(&labelCreated{labelID: labelID})
+		if err != nil {
+			return err
+		}
+
+		acc.updateIDs = append(acc.updateIDs, updateID)
+
+		return nil
+	})
+}
+
+func (b *Backend) AddMessageCreatedUpdate(userID, messageID string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		updateID, err := b.newUpdate(&messageCreated{messageID: messageID})
+		if err != nil {
+			return err
+		}
+
+		acc.updateIDs = append(acc.updateIDs, updateID)
+
+		return nil
+	})
+}
+
 func buildEvent(
 	updates []update,
 	addresses map[string]*address,
