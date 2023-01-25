@@ -396,8 +396,15 @@ func (b *Backend) SetMessagesRead(userID string, read bool, messageIDs ...string
 		})
 	})
 }
-
 func (b *Backend) LabelMessages(userID, labelID string, messageIDs ...string) error {
+	return b.labelMessages(userID, labelID, true, messageIDs...)
+}
+
+func (b *Backend) LabelMessagesNoEvents(userID, labelID string, messageIDs ...string) error {
+	return b.labelMessages(userID, labelID, false, messageIDs...)
+}
+
+func (b *Backend) labelMessages(userID, labelID string, doEvents bool, messageIDs ...string) error {
 	if labelID == proton.AllMailLabel || labelID == proton.AllDraftsLabel || labelID == proton.AllSentLabel {
 		return fmt.Errorf("not allowed")
 	}
@@ -413,12 +420,14 @@ func (b *Backend) LabelMessages(userID, labelID string, messageIDs ...string) er
 
 					message.addLabel(labelID, labels)
 
-					updateID, err := b.newUpdate(&messageUpdated{messageID: messageID})
-					if err != nil {
-						return err
-					}
+					if doEvents {
+						updateID, err := b.newUpdate(&messageUpdated{messageID: messageID})
+						if err != nil {
+							return err
+						}
 
-					acc.updateIDs = append(acc.updateIDs, updateID)
+						acc.updateIDs = append(acc.updateIDs, updateID)
+					}
 				}
 
 				return nil
@@ -774,6 +783,19 @@ func getLabelIDsToDelete(labelID string, labels map[string]*label) []string {
 	}
 
 	return labelIDs
+}
+
+func (b *Backend) AddAddressCreatedUpdate(userID, addrID string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		updateID, err := b.newUpdate(&addressCreated{addressID: addrID})
+		if err != nil {
+			return err
+		}
+
+		acc.updateIDs = append(acc.updateIDs, updateID)
+
+		return nil
+	})
 }
 
 func (b *Backend) AddLabelCreatedUpdate(userID, labelID string) error {
