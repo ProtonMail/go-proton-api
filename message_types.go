@@ -2,8 +2,10 @@ package proton
 
 import (
 	"bytes"
+	"io"
 	"net/mail"
 
+	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"golang.org/x/exp/slices"
@@ -151,6 +153,24 @@ func (m Message) Decrypt(kr *crypto.KeyRing) ([]byte, error) {
 	}
 
 	return dec.GetBinary(), nil
+}
+
+func (m Message) DecryptInto(kr *crypto.KeyRing, buffer io.ReaderFrom) error {
+	armored, err := armor.Decode(bytes.NewReader([]byte(m.Body)))
+	if err != nil {
+		return err
+	}
+
+	stream, err := kr.DecryptStream(armored.Body, nil, crypto.GetUnixTime())
+	if err != nil {
+		return err
+	}
+
+	if _, err := buffer.ReadFrom(stream); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type FullMessage struct {
