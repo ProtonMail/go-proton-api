@@ -2,6 +2,7 @@ package proton
 
 import (
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -20,6 +21,7 @@ type managerBuilder struct {
 	hostURL      string
 	appVersion   string
 	transport    http.RoundTripper
+	attPoolSize  int
 	verifyProofs bool
 	cookieJar    http.CookieJar
 	retryCount   int
@@ -32,6 +34,7 @@ func newManagerBuilder() *managerBuilder {
 		hostURL:      DefaultHostURL,
 		appVersion:   DefaultAppVersion,
 		transport:    http.DefaultTransport,
+		attPoolSize:  runtime.NumCPU(),
 		verifyProofs: true,
 		cookieJar:    nil,
 		retryCount:   3,
@@ -45,6 +48,8 @@ func (builder *managerBuilder) build() *Manager {
 		rc: resty.New(),
 
 		errHandlers: make(map[Code][]Handler),
+
+		attPoolSize: builder.attPoolSize,
 
 		verifyProofs: builder.verifyProofs,
 	}

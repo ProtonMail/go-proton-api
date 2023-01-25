@@ -4,21 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/go-resty/resty/v2"
 )
 
 func (c *Client) GetAttachment(ctx context.Context, attachmentID string) ([]byte, error) {
-	buffer := bytes.NewBuffer(nil)
-	if err := c.getAttachment(ctx, attachmentID, buffer); err != nil {
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
-}
-
-func (c *Client) GetAttachmentInto(ctx context.Context, attachmentID string, buffer *bytes.Buffer) error {
-	return c.getAttachment(ctx, attachmentID, buffer)
+	return c.attPool().ProcessOne(ctx, attachmentID)
 }
 
 func (c *Client) UploadAttachment(ctx context.Context, addrKR *crypto.KeyRing, req CreateAttachmentReq) (Attachment, error) {
@@ -78,18 +71,14 @@ func (c *Client) UploadAttachment(ctx context.Context, addrKR *crypto.KeyRing, r
 	return res.Attachment, nil
 }
 
-func (c *Client) getAttachment(ctx context.Context, attachmentID string, buffer *bytes.Buffer) error {
+func (c *Client) getAttachment(ctx context.Context, attachmentID string) ([]byte, error) {
 	res, err := c.doRes(ctx, func(r *resty.Request) (*resty.Response, error) {
 		return r.SetDoNotParseResponse(true).Get("/mail/v4/attachments/" + attachmentID)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to request attachmetn: %w", err)
+		return nil, err
 	}
 	defer res.RawBody().Close()
 
-	if _, err = buffer.ReadFrom(res.RawBody()); err != nil {
-		return err
-	}
-
-	return nil
+	return io.ReadAll(res.RawBody())
 }

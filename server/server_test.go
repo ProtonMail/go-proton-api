@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bradenaw/juniper/parallel"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -1327,7 +1326,7 @@ func TestServer_Messages_Fetch(t *testing.T) {
 				defer cc.Close()
 
 				total := countBytesRead(ctl, func() {
-					res, err := stream.Collect(ctx, getFullMessages(ctx, cc, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
+					res, err := stream.Collect(ctx, cc.GetFullMessages(ctx, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
 					require.NoError(t, err)
 					require.NotEmpty(t, res)
 				})
@@ -1335,7 +1334,7 @@ func TestServer_Messages_Fetch(t *testing.T) {
 				ctl.SetReadLimit(total / 2)
 
 				require.Less(t, countBytesRead(ctl, func() {
-					res, err := stream.Collect(ctx, getFullMessages(ctx, cc, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
+					res, err := stream.Collect(ctx, cc.GetFullMessages(ctx, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
 					require.Error(t, err)
 					require.Empty(t, res)
 				}), total)
@@ -1343,7 +1342,7 @@ func TestServer_Messages_Fetch(t *testing.T) {
 				ctl.SetReadLimit(0)
 
 				require.Equal(t, countBytesRead(ctl, func() {
-					res, err := stream.Collect(ctx, getFullMessages(ctx, cc, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
+					res, err := stream.Collect(ctx, cc.GetFullMessages(ctx, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
 					require.NoError(t, err)
 					require.NotEmpty(t, res)
 				}), total)
@@ -1375,14 +1374,14 @@ func TestServer_Messages_Status(t *testing.T) {
 				defer cc.Close()
 
 				total := countBytesRead(ctl, func() {
-					res, err := stream.Collect(ctx, getFullMessages(ctx, cc, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
+					res, err := stream.Collect(ctx, cc.GetFullMessages(ctx, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
 					require.NoError(t, err)
 					require.NotEmpty(t, res)
 				})
 
 				ctl.SetReadLimit(total / 2)
 
-				res, err := stream.Collect(ctx, getFullMessages(ctx, cc, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
+				res, err := stream.Collect(ctx, cc.GetFullMessages(ctx, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
 				require.Error(t, err)
 				require.Empty(t, res)
 
@@ -1833,21 +1832,4 @@ func elementsMatch[T comparable](want, got []T) bool {
 	}
 
 	return true
-}
-
-func getFullMessages(ctx context.Context,
-	c *proton.Client,
-	workers, buffer int,
-	messageIDs ...string) stream.Stream[proton.FullMessage] {
-	scheduler := proton.NewSequentialScheduler()
-	attachmentStorageProvider := proton.NewDefaultAttachmentAllocator()
-	return parallel.MapStream(
-		ctx,
-		stream.FromIterator(iterator.Slice(messageIDs)),
-		workers,
-		buffer,
-		func(ctx context.Context, messageID string) (proton.FullMessage, error) {
-			return c.GetFullMessage(ctx, messageID, scheduler, attachmentStorageProvider)
-		},
-	)
 }
