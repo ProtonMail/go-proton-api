@@ -53,6 +53,20 @@ func (opt withTransport) config(builder *managerBuilder) {
 	builder.transport = opt.transport
 }
 
+type withAttPoolSize struct {
+	attPoolSize int
+}
+
+func (opt withAttPoolSize) config(builder *managerBuilder) {
+	builder.attPoolSize = opt.attPoolSize
+}
+
+func WithAttPoolSize(attPoolSize int) Option {
+	return &withAttPoolSize{
+		attPoolSize: attPoolSize,
+	}
+}
+
 type withSkipVerifyProofs struct {
 	skipVerifyProofs bool
 }

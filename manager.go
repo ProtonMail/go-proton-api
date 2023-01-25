@@ -17,6 +17,8 @@ type Manager struct {
 
 	errHandlers map[Code][]Handler
 
+	attPoolSize int
+
 	verifyProofs bool
 }
 
