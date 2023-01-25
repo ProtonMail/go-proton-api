@@ -364,7 +364,7 @@ func (s *Server) importMessage(
 	}
 
 	for _, labelID := range labelIDs {
-		if err := s.b.LabelMessages(userID, labelID, messageID); err != nil {
+		if err := s.b.LabelMessagesNoEvents(userID, labelID, messageID); err != nil {
 			return "", fmt.Errorf("failed to label message: %w", err)
 		}
 	}

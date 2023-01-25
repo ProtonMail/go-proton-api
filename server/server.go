@@ -184,6 +184,10 @@ func (s *Server) UnlabelMessage(userID, msgID, labelID string) error {
 	return s.b.UnlabelMessages(userID, labelID, msgID)
 }
 
+func (s *Server) AddAddressCreatedEvent(userID, addrID string) error {
+	return s.b.AddAddressCreatedUpdate(userID, addrID)
+}
+
 func (s *Server) AddLabelCreatedEvent(userID, labelID string) error {
 	return s.b.AddLabelCreatedUpdate(userID, labelID)
 }
