@@ -17,18 +17,33 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+const (
+	defaultPage     = 0
+	defaultPageSize = 100
+)
+
 func (s *Server) handleGetMailMessages() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		s.getMailMessages(
 			c,
-			mustParseInt(c.DefaultQuery("Page", "0")),
-			mustParseInt(c.DefaultQuery("PageSize", "100")),
+			mustParseInt(c.DefaultQuery("Page", strconv.Itoa(defaultPage))),
+			mustParseInt(c.DefaultQuery("PageSize", strconv.Itoa(defaultPageSize))),
 			proton.MessageFilter{ID: c.QueryArray("ID")},
 		)
 	}
 }
 
 func (s *Server) getMailMessages(c *gin.Context, page, pageSize int, filter proton.MessageFilter) {
+	// Set default page.
+	if page <= 0 {
+		page = defaultPage
+	}
+
+	// Set default page size.
+	if pageSize <= 0 {
+		pageSize = defaultPageSize
+	}
+
 	messages, err := s.b.GetMessages(c.GetString("UserID"), page, pageSize, filter)
 	if err != nil {
 		_ = c.AbortWithError(http.StatusInternalServerError, err)
