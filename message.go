@@ -59,36 +59,16 @@ func (c *Client) GetMessage(ctx context.Context, messageID string) (Message, err
 }
 
 func (c *Client) CountMessages(ctx context.Context) (int, error) {
-	var res struct {
-		Total int
-	}
-
-	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetQueryParams(map[string]string{
-			"Limit": strconv.Itoa(0),
-		}).SetResult(&res).Get("/mail/v4/messages")
-	}); err != nil {
-		return 0, err
-	}
-
-	return res.Total, nil
+	return c.countMessages(ctx, MessageFilter{})
 }
 
 func (c *Client) GetMessageMetadata(ctx context.Context, filter MessageFilter) ([]MessageMetadata, error) {
-	var total int
-
-	if count := len(filter.ID); count > 0 {
-		total = count
-	} else {
-		count, err := c.CountMessages(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		total = count
+	count, err := c.countMessages(ctx, filter)
+	if err != nil {
+		return nil, err
 	}
 
-	return fetchPaged(ctx, total, maxPageSize, func(ctx context.Context, page, pageSize int) ([]MessageMetadata, error) {
+	return fetchPaged(ctx, count, maxPageSize, func(ctx context.Context, page, pageSize int) ([]MessageMetadata, error) {
 		return c.getMessageMetadata(ctx, page, pageSize, filter)
 	})
 }
@@ -240,6 +220,30 @@ func (c *Client) getMessageIDs(ctx context.Context, afterID string) ([]string, e
 	}
 
 	return res.IDs, nil
+}
+
+func (c *Client) countMessages(ctx context.Context, filter MessageFilter) (int, error) {
+	var res struct {
+		Total int
+	}
+
+	req := struct {
+		MessageFilter
+
+		Limit int `json:",,string"`
+	}{
+		MessageFilter: filter,
+
+		Limit: 0,
+	}
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetBody(req).SetResult(&res).SetHeader("X-HTTP-Method-Override", "GET").Post("/mail/v4/messages")
+	}); err != nil {
+		return 0, err
+	}
+
+	return res.Total, nil
 }
 
 func (c *Client) getMessageMetadata(ctx context.Context, page, pageSize int, filter MessageFilter) ([]MessageMetadata, error) {
