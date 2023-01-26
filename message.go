@@ -75,9 +75,17 @@ func (c *Client) CountMessages(ctx context.Context) (int, error) {
 }
 
 func (c *Client) GetMessageMetadata(ctx context.Context, filter MessageFilter) ([]MessageMetadata, error) {
-	total, err := c.CountMessages(ctx)
-	if err != nil {
-		return nil, err
+	var total int
+
+	if count := len(filter.ID); count > 0 {
+		total = count
+	} else {
+		count, err := c.CountMessages(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		total = count
 	}
 
 	return fetchPaged(ctx, total, maxPageSize, func(ctx context.Context, page, pageSize int) ([]MessageMetadata, error) {
