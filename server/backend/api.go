@@ -324,9 +324,14 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 				return nil, nil
 			}
 
-			metadata := xslices.Map(xslices.Chunk(acc.messageIDs, pageSize)[page], func(messageID string) proton.MessageMetadata {
-				return messages[messageID].toMetadata()
+			metadata, err := withAtts(b, func(atts map[string]*attachment) ([]proton.MessageMetadata, error) {
+				return xslices.Map(xslices.Chunk(acc.messageIDs, pageSize)[page], func(messageID string) proton.MessageMetadata {
+					return messages[messageID].toMetadata(b.attData, atts)
+				}), nil
 			})
+			if err != nil {
+				return nil, err
+			}
 
 			if len(filter.ID) > 0 {
 				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
@@ -372,7 +377,7 @@ func (b *Backend) GetMessage(userID, messageID string) (proton.Message, error) {
 					return proton.Message{}, errors.New("no such message")
 				}
 
-				return message.toMessage(atts), nil
+				return message.toMessage(b.attData, atts), nil
 			})
 		})
 	})
@@ -513,7 +518,7 @@ func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate)
 				acc.messageIDs = append(acc.messageIDs, msg.messageID)
 				acc.updateIDs = append(acc.updateIDs, updateID)
 
-				return msg.toMessage(nil), nil
+				return msg.toMessage(nil, nil), nil
 			})
 		})
 	})
@@ -548,7 +553,7 @@ func (b *Backend) UpdateDraft(userID, draftID string, changes proton.DraftTempla
 
 				acc.updateIDs = append(acc.updateIDs, updateID)
 
-				return messages[draftID].toMessage(atts), nil
+				return messages[draftID].toMessage(b.attData, atts), nil
 			})
 		})
 	})
@@ -648,7 +653,7 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 						}
 					}
 
-					return msg.toMessage(atts), nil
+					return msg.toMessage(b.attData, atts), nil
 				})
 			})
 		})
@@ -729,16 +734,18 @@ func (b *Backend) GetEvent(userID, rawEventID string) (proton.Event, error) {
 	return withAcc(b, userID, func(acc *account) (proton.Event, error) {
 		return withMessages(b, func(messages map[string]*message) (proton.Event, error) {
 			return withLabels(b, func(labels map[string]*label) (proton.Event, error) {
-				updates, err := withUpdates(b, func(updates map[ID]update) ([]update, error) {
-					return merge(xslices.Map(acc.updateIDs[xslices.Index(acc.updateIDs, eventID)+1:], func(updateID ID) update {
-						return updates[updateID]
-					})), nil
-				})
-				if err != nil {
-					return proton.Event{}, fmt.Errorf("failed to merge updates: %w", err)
-				}
+				return withAtts(b, func(attachments map[string]*attachment) (proton.Event, error) {
+					updates, err := withUpdates(b, func(updates map[ID]update) ([]update, error) {
+						return merge(xslices.Map(acc.updateIDs[xslices.Index(acc.updateIDs, eventID)+1:], func(updateID ID) update {
+							return updates[updateID]
+						})), nil
+					})
+					if err != nil {
+						return proton.Event{}, fmt.Errorf("failed to merge updates: %w", err)
+					}
 
-				return buildEvent(updates, acc.addresses, messages, labels, acc.updateIDs[len(acc.updateIDs)-1].String()), nil
+					return buildEvent(updates, acc.addresses, messages, labels, acc.updateIDs[len(acc.updateIDs)-1].String(), b.attData, attachments), nil
+				})
 			})
 		})
 	})
@@ -830,6 +837,9 @@ func buildEvent(
 	messages map[string]*message,
 	labels map[string]*label,
 	eventID string,
+	attachmentData map[string][]byte,
+	attachments map[string]*attachment,
+
 ) proton.Event {
 	event := proton.Event{EventID: eventID}
 
@@ -845,7 +855,7 @@ func buildEvent(
 					Action: proton.EventCreate,
 				},
 
-				Message: messages[update.messageID].toMetadata(),
+				Message: messages[update.messageID].toMetadata(attachmentData, attachments),
 			})
 
 		case *messageUpdated:
@@ -855,7 +865,7 @@ func buildEvent(
 					Action: proton.EventUpdate,
 				},
 
-				Message: messages[update.messageID].toMetadata(),
+				Message: messages[update.messageID].toMetadata(attachmentData, attachments),
 			})
 
 		case *messageDeleted:
