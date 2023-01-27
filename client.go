@@ -7,7 +7,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/bradenaw/juniper/xsync"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -27,9 +26,6 @@ type Client struct {
 	// clientID is this client's unique ID.
 	clientID uint64
 
-	// attPool is the (lazy-initialized) pool of goroutines that fetch attachments.
-	attPool func() *Pool[string, []byte]
-
 	uid      string
 	acc      string
 	ref      string
@@ -48,10 +44,6 @@ func newClient(m *Manager, uid string) *Client {
 		uid:      uid,
 		clientID: atomic.AddUint64(&clientID, 1),
 	}
-
-	c.attPool = xsync.Lazy(func() *Pool[string, []byte] {
-		return NewPool(m.attPoolSize, c.getAttachment)
-	})
 
 	return c
 }
@@ -97,8 +89,6 @@ func (c *Client) AddPostRequestHook(hook resty.ResponseMiddleware) {
 }
 
 func (c *Client) Close() {
-	c.attPool().Done()
-
 	c.authLock.Lock()
 	defer c.authLock.Unlock()
 

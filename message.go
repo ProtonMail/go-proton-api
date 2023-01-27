@@ -1,47 +1,41 @@
 package proton
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"runtime"
 	"strconv"
 
-	"github.com/bradenaw/juniper/iterator"
 	"github.com/bradenaw/juniper/parallel"
-	"github.com/bradenaw/juniper/stream"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/go-resty/resty/v2"
 )
 
 const maxMessageIDs = 1000
 
-func (c *Client) GetFullMessage(ctx context.Context, messageID string) (FullMessage, error) {
+func (c *Client) GetFullMessage(ctx context.Context, messageID string, scheduler Scheduler, storageProvider AttachmentAllocator) (FullMessage, error) {
 	message, err := c.GetMessage(ctx, messageID)
 	if err != nil {
 		return FullMessage{}, err
 	}
 
-	attData, err := c.attPool().ProcessAll(ctx, xslices.Map(message.Attachments, func(att Attachment) string {
+	attDataBuffers, err := scheduler.Schedule(ctx, xslices.Map(message.Attachments, func(att Attachment) string {
 		return att.ID
-	}))
+	}), storageProvider, func(s string, buffer *bytes.Buffer) error {
+		return c.GetAttachmentInto(ctx, s, buffer)
+	})
 	if err != nil {
 		return FullMessage{}, err
 	}
 
 	return FullMessage{
-		Message: message,
-		AttData: attData,
+		Message:        message,
+		AttDataBuffers: attDataBuffers,
+		AttData: xslices.Map(attDataBuffers, func(b *bytes.Buffer) []byte {
+			return b.Bytes()
+		}),
 	}, nil
-}
-
-func (c *Client) GetFullMessages(ctx context.Context, workers, buffer int, messageIDs ...string) stream.Stream[FullMessage] {
-	return parallel.MapStream(
-		ctx,
-		stream.FromIterator(iterator.Slice(messageIDs)),
-		workers,
-		buffer,
-		c.GetFullMessage,
-	)
 }
 
 func (c *Client) GetMessage(ctx context.Context, messageID string) (Message, error) {
