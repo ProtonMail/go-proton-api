@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/go-resty/resty/v2"
+	"io"
 )
 
 func (c *Client) GetAttachment(ctx context.Context, attachmentID string) ([]byte, error) {
@@ -13,12 +14,11 @@ func (c *Client) GetAttachment(ctx context.Context, attachmentID string) ([]byte
 	if err := c.getAttachment(ctx, attachmentID, buffer); err != nil {
 		return nil, err
 	}
-
 	return buffer.Bytes(), nil
 }
 
-func (c *Client) GetAttachmentInto(ctx context.Context, attachmentID string, buffer *bytes.Buffer) error {
-	return c.getAttachment(ctx, attachmentID, buffer)
+func (c *Client) GetAttachmentInto(ctx context.Context, attachmentID string, reader io.ReaderFrom) error {
+	return c.getAttachment(ctx, attachmentID, reader)
 }
 
 func (c *Client) UploadAttachment(ctx context.Context, addrKR *crypto.KeyRing, req CreateAttachmentReq) (Attachment, error) {
@@ -78,7 +78,7 @@ func (c *Client) UploadAttachment(ctx context.Context, addrKR *crypto.KeyRing, r
 	return res.Attachment, nil
 }
 
-func (c *Client) getAttachment(ctx context.Context, attachmentID string, buffer *bytes.Buffer) error {
+func (c *Client) getAttachment(ctx context.Context, attachmentID string, reader io.ReaderFrom) error {
 	res, err := c.doRes(ctx, func(r *resty.Request) (*resty.Response, error) {
 		return r.SetDoNotParseResponse(true).Get("/mail/v4/attachments/" + attachmentID)
 	})
@@ -87,7 +87,7 @@ func (c *Client) getAttachment(ctx context.Context, attachmentID string, buffer 
 	}
 	defer res.RawBody().Close()
 
-	if _, err = buffer.ReadFrom(res.RawBody()); err != nil {
+	if _, err = reader.ReadFrom(res.RawBody()); err != nil {
 		return err
 	}
 
