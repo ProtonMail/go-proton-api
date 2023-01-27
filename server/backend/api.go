@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ProtonMail/gluon/rfc822"
@@ -320,12 +321,8 @@ func (b *Backend) GetMessageIDs(userID string, afterID string, limit int) ([]str
 func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.MessageFilter) ([]proton.MessageMetadata, error) {
 	return withAcc(b, userID, func(acc *account) ([]proton.MessageMetadata, error) {
 		return withMessages(b, func(messages map[string]*message) ([]proton.MessageMetadata, error) {
-			if len(acc.messageIDs) == 0 {
-				return nil, nil
-			}
-
 			metadata, err := withAtts(b, func(atts map[string]*attachment) ([]proton.MessageMetadata, error) {
-				return xslices.Map(xslices.Chunk(acc.messageIDs, pageSize)[page], func(messageID string) proton.MessageMetadata {
+				return xslices.Map(acc.messageIDs, func(messageID string) proton.MessageMetadata {
 					return messages[messageID].toMetadata(b.attData, atts)
 				}), nil
 			})
@@ -333,37 +330,41 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 				return nil, err
 			}
 
-			if len(filter.ID) > 0 {
-				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
-					return slices.Contains(filter.ID, metadata.ID)
-				})
-			}
+			metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
+				if len(filter.ID) > 0 {
+					if !slices.Contains(filter.ID, metadata.ID) {
+						return false
+					}
+				}
 
-			if filter.Subject != "" {
-				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
-					return filter.Subject == metadata.Subject
-				})
-			}
+				if filter.Subject != "" {
+					if !strings.Contains(metadata.Subject, filter.Subject) {
+						return false
+					}
+				}
 
-			if len(filter.AddressID) != 0 {
-				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
-					return filter.AddressID == metadata.AddressID
-				})
-			}
+				if filter.AddressID != "" {
+					if filter.AddressID != metadata.AddressID {
+						return false
+					}
+				}
 
-			if filter.ExternalID != "" {
-				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
-					return filter.ExternalID == metadata.ExternalID
-				})
-			}
+				if filter.ExternalID != "" {
+					if filter.ExternalID != metadata.ExternalID {
+						return false
+					}
+				}
 
-			if len(filter.LabelID) != 0 {
-				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
-					return slices.Contains(metadata.LabelIDs, filter.LabelID)
-				})
-			}
+				if filter.LabelID != "" {
+					if !slices.Contains(metadata.LabelIDs, filter.LabelID) {
+						return false
+					}
+				}
 
-			return metadata, nil
+				return true
+			})
+
+			return xslices.Chunk(metadata, pageSize)[page], nil
 		})
 	})
 }

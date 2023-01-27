@@ -63,7 +63,7 @@ func (c *Client) GetMessageMetadata(ctx context.Context, filter MessageFilter) (
 	}
 
 	return fetchPaged(ctx, count, maxPageSize, func(ctx context.Context, page, pageSize int) ([]MessageMetadata, error) {
-		return c.GetMessageMetadataPaged(ctx, page, pageSize, filter)
+		return c.GetMessageMetadataPage(ctx, page, pageSize, filter)
 	})
 }
 
@@ -240,7 +240,7 @@ func (c *Client) countMessages(ctx context.Context, filter MessageFilter) (int, 
 	return res.Total, nil
 }
 
-func (c *Client) GetMessageMetadataPaged(ctx context.Context, page, pageSize int, filter MessageFilter) ([]MessageMetadata, error) {
+func (c *Client) GetMessageMetadataPage(ctx context.Context, page, pageSize int, filter MessageFilter) ([]MessageMetadata, error) {
 	var res struct {
 		Messages []MessageMetadata
 		Stale    Bool

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bradenaw/juniper/parallel"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -16,6 +15,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/bradenaw/juniper/parallel"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/ProtonMail/gluon/rfc822"
@@ -176,6 +177,26 @@ func TestServer_Messages(t *testing.T) {
 
 				// Put them in inbox.
 				require.NoError(t, c.LabelMessages(ctx, []string{messageIDs[0], messageIDs[1], messageIDs[2]}, proton.ArchiveLabel))
+			})
+		})
+	})
+}
+
+func TestServer_GetMessageMetadataPage(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			withMessages(ctx, t, c, "pass", 1000, func(messageIDs []string) {
+				for _, chunk := range xslices.Chunk(messageIDs, 150) {
+					// Get the messages.
+					metadata, err := c.GetMessageMetadataPage(ctx, 0, 150, proton.MessageFilter{ID: chunk})
+					require.NoError(t, err)
+
+					// The messages should be the ones we created.
+					require.ElementsMatch(t, chunk, xslices.Map(metadata, func(metadata proton.MessageMetadata) string {
+						return metadata.ID
+					}))
+
+				}
 			})
 		})
 	})
