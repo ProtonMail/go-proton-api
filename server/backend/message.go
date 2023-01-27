@@ -84,9 +84,9 @@ func newMessageFromTemplate(addrID string, template proton.DraftTemplate) *messa
 	}
 }
 
-func (msg *message) toMessage(att map[string]*attachment) proton.Message {
+func (msg *message) toMessage(attData map[string][]byte, att map[string]*attachment) proton.Message {
 	return proton.Message{
-		MessageMetadata: msg.toMetadata(),
+		MessageMetadata: msg.toMetadata(attData, att),
 
 		Header:        msg.getHeader(),
 		ParsedHeaders: msg.getParsedHeaders(),
@@ -98,7 +98,7 @@ func (msg *message) toMessage(att map[string]*attachment) proton.Message {
 	}
 }
 
-func (msg *message) toMetadata() proton.MessageMetadata {
+func (msg *message) toMetadata(attData map[string][]byte, att map[string]*attachment) proton.MessageMetadata {
 	labelIDs := []string{proton.AllMailLabel}
 
 	if msg.flags.Has(proton.MessageFlagSent) {
@@ -130,6 +130,11 @@ func (msg *message) toMetadata() proton.MessageMetadata {
 		}
 	}
 
+	messageSize := len(msg.armBody)
+	for _, a := range msg.attIDs {
+		messageSize += len(attData[att[a].attDataID])
+	}
+
 	return proton.MessageMetadata{
 		ID:         msg.messageID,
 		ExternalID: msg.externalID,
@@ -142,6 +147,7 @@ func (msg *message) toMetadata() proton.MessageMetadata {
 		CCList:   msg.ccList,
 		BCCList:  msg.bccList,
 		ReplyTos: msg.replytos,
+		Size:     messageSize,
 
 		Flags:  msg.flags,
 		Unread: proton.Bool(msg.unread),
