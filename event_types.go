@@ -21,6 +21,8 @@ type Event struct {
 	Labels []LabelEvent
 
 	Addresses []AddressEvent
+
+	UsedSpace *int
 }
 
 func (event Event) String() string {
