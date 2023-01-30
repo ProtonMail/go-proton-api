@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/mail"
 
-	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/gluon/rfc822"
+	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"golang.org/x/exp/slices"
 )
@@ -176,8 +176,7 @@ func (m Message) DecryptInto(kr *crypto.KeyRing, buffer io.ReaderFrom) error {
 type FullMessage struct {
 	Message
 
-	AttDataBuffers []*bytes.Buffer
-	AttData        [][]byte
+	AttData [][]byte
 }
 
 type Signature struct {
