@@ -22,7 +22,7 @@ func (c *Client) GetFullMessage(ctx context.Context, messageID string, scheduler
 
 	attDataBuffers, err := scheduler.Schedule(ctx, xslices.Map(message.Attachments, func(att Attachment) string {
 		return att.ID
-	}), storageProvider, func(s string, buffer *bytes.Buffer) error {
+	}), storageProvider, func(ctx context.Context, s string, buffer *bytes.Buffer) error {
 		return c.GetAttachmentInto(ctx, s, buffer)
 	})
 	if err != nil {
@@ -30,8 +30,7 @@ func (c *Client) GetFullMessage(ctx context.Context, messageID string, scheduler
 	}
 
 	return FullMessage{
-		Message:        message,
-		AttDataBuffers: attDataBuffers,
+		Message: message,
 		AttData: xslices.Map(attDataBuffers, func(b *bytes.Buffer) []byte {
 			return b.Bytes()
 		}),

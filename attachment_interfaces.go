@@ -24,7 +24,7 @@ func (DefaultAttachmentAllocator) NewBuffer() *bytes.Buffer {
 
 // Scheduler allows the user to specify how the attachment data for the message should be downloaded.
 type Scheduler interface {
-	Schedule(ctx context.Context, attachmentIDs []string, storageProvider AttachmentAllocator, downloader func(string, *bytes.Buffer) error) ([]*bytes.Buffer, error)
+	Schedule(ctx context.Context, attachmentIDs []string, storageProvider AttachmentAllocator, downloader func(context.Context, string, *bytes.Buffer) error) ([]*bytes.Buffer, error)
 }
 
 // SequentialScheduler downloads the attachments one by one.
@@ -34,7 +34,7 @@ func NewSequentialScheduler() *SequentialScheduler {
 	return &SequentialScheduler{}
 }
 
-func (SequentialScheduler) Schedule(ctx context.Context, attachmentIDs []string, storageProvider AttachmentAllocator, downloader func(string, *bytes.Buffer) error) ([]*bytes.Buffer, error) {
+func (SequentialScheduler) Schedule(ctx context.Context, attachmentIDs []string, storageProvider AttachmentAllocator, downloader func(context.Context, string, *bytes.Buffer) error) ([]*bytes.Buffer, error) {
 	result := make([]*bytes.Buffer, len(attachmentIDs))
 	for i, v := range attachmentIDs {
 
@@ -45,7 +45,7 @@ func (SequentialScheduler) Schedule(ctx context.Context, attachmentIDs []string,
 		}
 
 		buffer := storageProvider.NewBuffer()
-		if err := downloader(v, buffer); err != nil {
+		if err := downloader(ctx, v, buffer); err != nil {
 			return nil, err
 		}
 
@@ -67,7 +67,7 @@ func NewParallelScheduler(workers int) *ParallelScheduler {
 	return &ParallelScheduler{workers: workers}
 }
 
-func (p ParallelScheduler) Schedule(ctx context.Context, attachmentIDs []string, storageProvider AttachmentAllocator, downloader func(string, *bytes.Buffer) error) ([]*bytes.Buffer, error) {
+func (p ParallelScheduler) Schedule(ctx context.Context, attachmentIDs []string, storageProvider AttachmentAllocator, downloader func(context.Context, string, *bytes.Buffer) error) ([]*bytes.Buffer, error) {
 	// If we have less attachments than the maximum works, reduce worker count to match attachment count.
 	workers := p.workers
 	if len(attachmentIDs) < workers {
@@ -76,7 +76,7 @@ func (p ParallelScheduler) Schedule(ctx context.Context, attachmentIDs []string,
 
 	return parallel.MapContext(ctx, workers, attachmentIDs, func(ctx context.Context, id string) (*bytes.Buffer, error) {
 		buffer := storageProvider.NewBuffer()
-		if err := downloader(id, buffer); err != nil {
+		if err := downloader(ctx, id, buffer); err != nil {
 			return nil, err
 		}
 

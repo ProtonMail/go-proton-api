@@ -10,8 +10,8 @@ import (
 )
 
 func (c *Client) GetAttachment(ctx context.Context, attachmentID string) ([]byte, error) {
-	buffer := bytes.NewBuffer(nil)
-	if err := c.getAttachment(ctx, attachmentID, buffer); err != nil {
+	var buffer bytes.Buffer
+	if err := c.getAttachment(ctx, attachmentID, &buffer); err != nil {
 		return nil, err
 	}
 	return buffer.Bytes(), nil
@@ -83,7 +83,7 @@ func (c *Client) getAttachment(ctx context.Context, attachmentID string, reader 
 		return r.SetDoNotParseResponse(true).Get("/mail/v4/attachments/" + attachmentID)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to request attachmetn: %w", err)
+		return fmt.Errorf("failed to request attachment: %w", err)
 	}
 	defer res.RawBody().Close()
 
