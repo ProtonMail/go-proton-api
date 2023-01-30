@@ -25,8 +25,6 @@ github.com/andybalholm/cascadia v1.3.1 h1:nhxRkql1kdYCc8Snf7D5/D3spOX+dBgjA6u8x0
 github.com/andybalholm/cascadia v1.3.1/go.mod h1:R4bJ1UQfqADjvDa4P6HZHLh/3OxWWEqc0Sk8XGwHqvA=
 github.com/bradenaw/juniper v0.8.0 h1:sdanLNdJbLjcLj993VYIwUHlUVkLzvgiD/x9O7cvvxk=
 github.com/bradenaw/juniper v0.8.0/go.mod h1:Z2B7aJlQ7xbfWsnMLROj5t/5FQ94/MkIdKC30J4WvzI=
-github.com/bradenaw/juniper v0.10.1 h1:x1GDQPWS8KjKc7O9mc9oGdF8JveFLdmlkfCswhfHIww=
-github.com/bradenaw/juniper v0.10.1/go.mod h1:Z2B7aJlQ7xbfWsnMLROj5t/5FQ94/MkIdKC30J4WvzI=
 github.com/bwesterb/go-ristretto v1.2.0/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/bwesterb/go-ristretto v1.2.1/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
