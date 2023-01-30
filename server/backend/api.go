@@ -364,7 +364,12 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 				return true
 			})
 
-			return xslices.Chunk(metadata, pageSize)[page], nil
+			pages := xslices.Chunk(metadata, pageSize)
+			if page >= len(pages) {
+				return nil, nil
+			}
+
+			return pages[page], nil
 		})
 	})
 }
