@@ -508,14 +508,15 @@ func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate,
 	return withAcc(b, userID, func(acc *account) (proton.Message, error) {
 		return withMessages(b, func(messages map[string]*message) (proton.Message, error) {
 			return withLabels(b, func(labels map[string]*label) (proton.Message, error) {
-				// Convert the parentID into externalRef.
-				if parentID != ""  {
+				// Convert the parentID into externalRef.\
+				var parentRef string
+				if parentID != "" {
 					parentMsg, ok := messages[parentID]
 					if ok {
-						parentID = "<"+ parentMsg.externalID + ">"
+						parentRef = "<" + parentMsg.externalID + ">"
 					}
 				}
-				msg := newMessageFromTemplate(addrID, draft, parentID)
+				msg := newMessageFromTemplate(addrID, draft, parentRef)
 
 				// Drafts automatically get the sysLabel "Drafts".
 				msg.addLabel(proton.DraftsLabel, labels)
