@@ -917,6 +917,12 @@ func TestServer_Labels(t *testing.T) {
 			actions:      []any{add(proton.TrashLabel), rem(proton.TrashLabel)},
 			wantLabelIDs: []string{proton.AllMailLabel, proton.AllSentLabel},
 		},
+		{
+			name:         "received flag, add inbox, add trash, remove inbox",
+			flags:        proton.MessageFlagReceived,
+			actions:      []any{add(proton.InboxLabel), add(proton.TrashLabel), rem(proton.InboxLabel)},
+			wantLabelIDs: []string{proton.AllMailLabel, proton.TrashLabel},
+		},
 	}
 
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
