@@ -17,9 +17,14 @@ type message struct {
 	externalID string
 	addrID     string
 	labelIDs   []string
-	sysLabel   *string
 	attIDs     []string
 	inReplyTo  string
+
+	// sysLabel is the system label for the message.
+	// If nil, the message's flags are used to determine the system label (inbox, sent, drafts).
+	// If "", the message has no system label (e.g. is in a custom folder or all mail).
+	// If non-nil and non-empty, the message has the system label with the given ID (e.g. spam, trash).
+	sysLabel *string
 
 	subject  string
 	sender   *mail.Address
@@ -334,7 +339,9 @@ func (msg *message) remLabel(labelID string, labels map[string]*label) {
 }
 
 func (msg *message) remFlagLabel(labelID string, labels map[string]*label) {
-	msg.sysLabel = pointer("")
+	if msg.sysLabel == nil {
+		msg.sysLabel = pointer("")
+	}
 }
 
 func (msg *message) remSystemLabel(labelID string, labels map[string]*label) {
