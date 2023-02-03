@@ -75,6 +75,7 @@ func initRouter(s *Server) {
 	if mail := s.r.Group("/mail/v4", s.requireAuth()); mail != nil {
 		if settings := mail.Group("/settings"); settings != nil {
 			settings.GET("", s.handleGetMailSettings())
+			settings.PUT("/attachpublic", s.handlePutMailSettingsAttachPublicKey())
 		}
 
 		if messages := mail.Group("/messages"); messages != nil {

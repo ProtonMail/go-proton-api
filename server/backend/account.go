@@ -10,9 +10,10 @@ import (
 )
 
 type account struct {
-	userID    string
-	username  string
-	addresses map[string]*address
+	userID       string
+	username     string
+	addresses    map[string]*address
+	mailSettings *mailSettings
 
 	auth     map[string]auth
 	authLock sync.RWMutex
@@ -28,9 +29,10 @@ type account struct {
 
 func newAccount(userID, username string, armKey string, salt, verifier []byte) *account {
 	return &account{
-		userID:    userID,
-		username:  username,
-		addresses: make(map[string]*address),
+		userID:       userID,
+		username:     username,
+		addresses:    make(map[string]*address),
+		mailSettings: newMailSettings(username),
 
 		auth:     make(map[string]auth),
 		keys:     []key{{keyID: uuid.NewString(), key: armKey}},
