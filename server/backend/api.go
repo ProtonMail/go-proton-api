@@ -33,10 +33,14 @@ func (b *Backend) GetKeySalts(userID string) ([]proton.Salt, error) {
 
 func (b *Backend) GetMailSettings(userID string) (proton.MailSettings, error) {
 	return withAcc(b, userID, func(acc *account) (proton.MailSettings, error) {
-		return proton.MailSettings{
-			DisplayName:   acc.username,
-			DraftMIMEType: rfc822.TextHTML,
-		}, nil
+		return acc.mailSettings.toMailSettings(), nil
+	})
+}
+
+func (b *Backend) SetMailSettingsAttachPublicKey(userID string, attach bool) (proton.MailSettings, error) {
+	return withAcc(b, userID, func(acc *account) (proton.MailSettings, error) {
+		acc.mailSettings.attachPubKey = attach
+		return acc.mailSettings.toMailSettings(), nil
 	})
 }
 
