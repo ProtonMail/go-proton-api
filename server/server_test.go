@@ -1694,6 +1694,20 @@ func TestServer_AddressOrder(t *testing.T) {
 	})
 }
 
+func TestServer_MailSettings(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			settings, err := c.GetMailSettings(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, proton.Bool(false), settings.AttachPublicKey)
+
+			updated, err := c.SetAttachPublicKey(context.Background(), proton.SetAttachPublicKeyReq{AttachPublicKey: true})
+			require.NoError(t, err)
+			require.Equal(t, proton.Bool(true), updated.AttachPublicKey)
+		})
+	})
+}
+
 func TestServer_Domains(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		domains, err := m.GetDomains(ctx)

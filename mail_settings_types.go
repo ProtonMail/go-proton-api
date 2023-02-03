@@ -6,17 +6,10 @@ type MailSettings struct {
 	DisplayName     string
 	Signature       string
 	DraftMIMEType   rfc822.MIMEType
-	AttachPublicKey AttachPublicKey
+	AttachPublicKey Bool
 	Sign            SignExternalMessages
 	PGPScheme       EncryptionScheme
 }
-
-type AttachPublicKey int
-
-const (
-	AttachPublicKeyDisabled AttachPublicKey = iota
-	AttachPublicKeyEnabled
-)
 
 type SignExternalMessages int
 
@@ -38,7 +31,7 @@ type SetDraftMIMETypeReq struct {
 }
 
 type SetAttachPublicKeyReq struct {
-	AttachPublicKey AttachPublicKey
+	AttachPublicKey Bool
 }
 
 type SetSignExternalMessagesReq struct {
