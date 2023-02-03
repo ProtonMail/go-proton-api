@@ -13,7 +13,7 @@ import (
 type ID uint64
 
 func (v ID) String() string {
-	return base64.StdEncoding.EncodeToString(v.Bytes())
+	return base64.URLEncoding.EncodeToString(v.Bytes())
 }
 
 func (v ID) Bytes() []byte {
@@ -25,7 +25,7 @@ func (v ID) Bytes() []byte {
 }
 
 func (v *ID) FromString(s string) error {
-	b, err := base64.StdEncoding.DecodeString(s)
+	b, err := base64.URLEncoding.DecodeString(s)
 	if err != nil {
 		return err
 	}
