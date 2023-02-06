@@ -344,7 +344,7 @@ func (s *Server) importMessage(
 
 	for _, labelID := range labelIDs {
 		switch labelID {
-		case proton.AllDraftsLabel, proton.AllSentLabel, proton.AllMailLabel, proton.OutboxLabel:
+		case proton.AllDraftsLabel, proton.AllSentLabel, proton.AllMailLabel, proton.OutboxLabel, proton.AllScheduledLabel:
 			return "", fmt.Errorf("invalid label ID: %s", labelID)
 		}
 

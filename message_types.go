@@ -67,34 +67,38 @@ type Message struct {
 type MessageFlag int64
 
 const (
-	MessageFlagReceived MessageFlag = 1 << iota
-	MessageFlagSent
-	MessageFlagInternal
-	MessageFlagE2E
-	MessageFlagAuto
-	MessageFlagReplied
-	MessageFlagRepliedAll
-	MessageFlagForwarded
-	MessageFlagAutoReplied
-	MessageFlagImported
-	MessageFlagOpened
-	MessageFlagReceiptSent
-	MessageFlagNotified
-	MessageFlagTouched
-	MessageFlagReceipt
-	MessageFlagProton
-	MessageFlagReceiptRequest
-	MessageFlagPublicKey
-	MessageFlagSign
-	MessageFlagUnsubscribed
-	MessageFlagSPFFail
-	MessageFlagDKIMFail
-	MessageFlagDMARCFail
-	MessageFlagHamManual
-	MessageFlagSpamAuto
-	MessageFlagSpamManual
-	MessageFlagPhishingAuto
-	MessageFlagPhishingManual
+	MessageFlagReceived    MessageFlag = 1 << 0
+	MessageFlagSent        MessageFlag = 1 << 1
+	MessageFlagInternal    MessageFlag = 1 << 2
+	MessageFlagE2E         MessageFlag = 1 << 3
+	MessageFlagAuto        MessageFlag = 1 << 4
+	MessageFlagReplied     MessageFlag = 1 << 5
+	MessageFlagRepliedAll  MessageFlag = 1 << 6
+	MessageFlagForwarded   MessageFlag = 1 << 7
+	MessageFlagAutoReplied MessageFlag = 1 << 8
+	MessageFlagImported    MessageFlag = 1 << 9
+	MessageFlagOpened      MessageFlag = 1 << 10
+	MessageFlagReceiptSent MessageFlag = 1 << 11
+	MessageFlagNotified    MessageFlag = 1 << 12
+	MessageFlagTouched     MessageFlag = 1 << 13
+	MessageFlagReceipt     MessageFlag = 1 << 14
+
+	MessageFlagReceiptRequest MessageFlag = 1 << 16
+	MessageFlagPublicKey      MessageFlag = 1 << 17
+	MessageFlagSign           MessageFlag = 1 << 18
+	MessageFlagUnsubscribed   MessageFlag = 1 << 19
+	MessageFlagScheduledSend  MessageFlag = 1 << 20
+	MessageFlagAlias          MessageFlag = 1 << 21
+
+	MessageFlagDMARCPass      MessageFlag = 1 << 23
+	MessageFlagSPFFail        MessageFlag = 1 << 24
+	MessageFlagDKIMFail       MessageFlag = 1 << 25
+	MessageFlagDMARCFail      MessageFlag = 1 << 26
+	MessageFlagHamManual      MessageFlag = 1 << 27
+	MessageFlagSpamAuto       MessageFlag = 1 << 28
+	MessageFlagSpamManual     MessageFlag = 1 << 29
+	MessageFlagPhishingAuto   MessageFlag = 1 << 30
+	MessageFlagPhishingManual MessageFlag = 1 << 31
 )
 
 func (f MessageFlag) Has(flag MessageFlag) bool {

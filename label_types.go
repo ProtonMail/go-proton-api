@@ -6,17 +6,18 @@ import (
 )
 
 const (
-	InboxLabel     = "0"
-	AllDraftsLabel = "1"
-	AllSentLabel   = "2"
-	TrashLabel     = "3"
-	SpamLabel      = "4"
-	AllMailLabel   = "5"
-	ArchiveLabel   = "6"
-	SentLabel      = "7"
-	DraftsLabel    = "8"
-	OutboxLabel    = "9"
-	StarredLabel   = "10"
+	InboxLabel        = "0"
+	AllDraftsLabel    = "1"
+	AllSentLabel      = "2"
+	TrashLabel        = "3"
+	SpamLabel         = "4"
+	AllMailLabel      = "5"
+	ArchiveLabel      = "6"
+	SentLabel         = "7"
+	DraftsLabel       = "8"
+	OutboxLabel       = "9"
+	StarredLabel      = "10"
+	AllScheduledLabel = "12"
 )
 
 type Label struct {
