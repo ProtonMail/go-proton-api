@@ -625,6 +625,7 @@ func TestServer_CreateMessage(t *testing.T) {
 			require.Equal(t, "My subject", draft.Subject)
 			require.Equal(t, &mail.Address{Address: "user@" + s.GetDomain()}, draft.Sender)
 			require.Equal(t, []*mail.Address{{Address: "recipient@example.com"}}, draft.ToList)
+			require.Equal(t, []*mail.Address([]*mail.Address(nil)), draft.ReplyTos)
 			require.ElementsMatch(t, []string{proton.AllMailLabel, proton.AllDraftsLabel, proton.DraftsLabel}, draft.LabelIDs)
 		})
 	})
