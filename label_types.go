@@ -28,6 +28,7 @@ type Label struct {
 	Path  []string
 	Color string
 	Type  LabelType
+	Order int
 }
 
 func (label *Label) UnmarshalJSON(data []byte) error {
