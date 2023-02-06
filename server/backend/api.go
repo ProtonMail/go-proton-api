@@ -185,6 +185,7 @@ func (b *Backend) GetLabels(userID string, types ...proton.LabelType) ([]proton.
 				"Drafts":    proton.DraftsLabel,
 				"Outbox":    proton.OutboxLabel,
 				"Starred":   proton.StarredLabel,
+				"Scheduled": proton.AllScheduledLabel,
 			} {
 				res = append(res, proton.Label{
 					ID:   labelID,
