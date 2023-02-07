@@ -136,7 +136,11 @@ func (s *Server) handleGetMailMessage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		message, err := s.b.GetMessage(c.GetString("UserID"), c.Param("messageID"))
 		if err != nil {
-			c.AbortWithStatus(http.StatusUnprocessableEntity)
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, proton.APIError{
+				Code:    proton.InvalidValue,
+				Message: fmt.Sprintf("Message %s not found", c.Param("messageID")),
+			})
+
 			return
 		}
 
