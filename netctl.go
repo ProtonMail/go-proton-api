@@ -12,6 +12,91 @@ import (
 	"time"
 )
 
+// DropListener wraps a net.Listener.
+// It can be configured to spawn connections that drop all reads or writes.
+type DropListener struct {
+	net.Listener
+
+	canRead, canWrite bool
+}
+
+// NewDropListener returns a new DropListener.
+func NewDropListener(l net.Listener) *DropListener {
+	return &DropListener{
+		Listener: l,
+		canRead:  true,
+		canWrite: true,
+	}
+}
+
+func (l *DropListener) Accept() (net.Conn, error) {
+	conn, err := l.Listener.Accept()
+	if err != nil {
+		return nil, err
+	}
+
+	return newDropConn(conn, l), nil
+}
+
+// SetCanRead sets whether the connections spawned by this listener can read.
+func (l *DropListener) SetCanRead(canRead bool) {
+	l.canRead = canRead
+}
+
+// SetCanWrite sets whether the connections spawned by this listener can write.
+func (l *DropListener) SetCanWrite(canWrite bool) {
+	l.canWrite = canWrite
+}
+
+type dropConn struct {
+	net.Conn
+
+	l *DropListener
+}
+
+func newDropConn(c net.Conn, l *DropListener) *dropConn {
+	return &dropConn{
+		Conn: c,
+		l:    l,
+	}
+}
+
+func (c *dropConn) Read(b []byte) (int, error) {
+	if c.l.canRead {
+		return c.Conn.Read(b)
+	}
+
+	if tcpConn, ok := c.Conn.(*net.TCPConn); ok {
+		if err := tcpConn.SetLinger(0); err != nil {
+			return 0, err
+		}
+	}
+
+	if err := c.Close(); err != nil {
+		return 0, err
+	}
+
+	return 0, errors.New("read dropped")
+}
+
+func (c *dropConn) Write(b []byte) (int, error) {
+	if c.l.canWrite {
+		return c.Conn.Write(b)
+	}
+
+	if tcpConn, ok := c.Conn.(*net.TCPConn); ok {
+		if err := tcpConn.SetLinger(0); err != nil {
+			return 0, err
+		}
+	}
+
+	if err := c.Close(); err != nil {
+		return 0, err
+	}
+
+	return 0, errors.New("write dropped")
+}
+
 // InsecureTransport returns an http.Transport with InsecureSkipVerify set to true.
 func InsecureTransport() *http.Transport {
 	return &http.Transport{

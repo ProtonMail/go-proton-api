@@ -2,6 +2,7 @@ package server
 
 import (
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,6 +14,8 @@ import (
 )
 
 type serverBuilder struct {
+	config         *http.Server
+	listener       net.Listener
 	withTLS        bool
 	domain         string
 	logger         io.Writer
@@ -32,6 +35,7 @@ func newServerBuilder() *serverBuilder {
 	}
 
 	return &serverBuilder{
+		config:         &http.Server{},
 		withTLS:        true,
 		domain:         "proton.local",
 		logger:         logger,
@@ -54,10 +58,32 @@ func (builder *serverBuilder) build() *Server {
 		proxyTransport: builder.proxyTransport,
 	}
 
-	if builder.withTLS {
-		s.s = httptest.NewTLSServer(s.r)
+	var l net.Listener
+
+	if builder.listener == nil {
+		var err error
+
+		if l, err = net.Listen("tcp", "127.0.0.1:0"); err != nil {
+			panic(err)
+		}
 	} else {
-		s.s = httptest.NewServer(s.r)
+		l = builder.listener
+	}
+
+	// Create the test server.
+	s.s = &httptest.Server{
+		Listener: l,
+		Config:   builder.config,
+	}
+
+	// Set the server to use the custom handler.
+	s.s.Config.Handler = s.r
+
+	// Start the server.
+	if builder.withTLS {
+		s.s.StartTLS()
+	} else {
+		s.s.Start()
 	}
 
 	s.r.Use(
@@ -178,4 +204,34 @@ type withProxyTransport struct {
 
 func (opt withProxyTransport) config(builder *serverBuilder) {
 	builder.proxyTransport = opt.transport
+}
+
+type withServerConfig struct {
+	cfg *http.Server
+}
+
+func (opt withServerConfig) config(builder *serverBuilder) {
+	builder.config = opt.cfg
+}
+
+// WithServerConfig allows you to configure the underlying HTTP server.
+func WithServerConfig(cfg *http.Server) Option {
+	return withServerConfig{
+		cfg: cfg,
+	}
+}
+
+type withNetListener struct {
+	listener net.Listener
+}
+
+func (opt withNetListener) config(builder *serverBuilder) {
+	builder.listener = opt.listener
+}
+
+// WithListener allows you to set the net.Listener to use.
+func WithListener(listener net.Listener) Option {
+	return withNetListener{
+		listener: listener,
+	}
 }
