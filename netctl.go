@@ -12,27 +12,34 @@ import (
 	"time"
 )
 
-// DropListener wraps a net.Listener.
+// Listener wraps a net.Listener.
 // It can be configured to spawn connections that drop all reads or writes.
-type DropListener struct {
+type Listener struct {
 	net.Listener
 
 	canRead, canWrite bool
 
+	newConn func(net.Conn, *Listener) net.Conn
+
 	conns    []net.Conn
 	connLock sync.RWMutex
+
+	done     chan struct{}
+	doneOnce sync.Once
 }
 
-// NewDropListener returns a new DropListener.
-func NewDropListener(l net.Listener) *DropListener {
-	return &DropListener{
+// NewListener returns a new DropListener.
+func NewListener(l net.Listener, newConn func(net.Conn, *Listener) net.Conn) *Listener {
+	return &Listener{
 		Listener: l,
 		canRead:  true,
 		canWrite: true,
+		newConn:  newConn,
+		done:     make(chan struct{}),
 	}
 }
 
-func (l *DropListener) Accept() (net.Conn, error) {
+func (l *Listener) Accept() (net.Conn, error) {
 	conn, err := l.Listener.Accept()
 	if err != nil {
 		return nil, err
@@ -41,7 +48,7 @@ func (l *DropListener) Accept() (net.Conn, error) {
 	l.connLock.Lock()
 	defer l.connLock.Unlock()
 
-	dropConn := newDropConn(conn, l)
+	dropConn := l.newConn(conn, l)
 
 	l.conns = append(l.conns, dropConn)
 
@@ -49,17 +56,31 @@ func (l *DropListener) Accept() (net.Conn, error) {
 }
 
 // SetCanRead sets whether the connections spawned by this listener can read.
-func (l *DropListener) SetCanRead(canRead bool) {
+func (l *Listener) SetCanRead(canRead bool) {
 	l.canRead = canRead
 }
 
 // SetCanWrite sets whether the connections spawned by this listener can write.
-func (l *DropListener) SetCanWrite(canWrite bool) {
+func (l *Listener) SetCanWrite(canWrite bool) {
 	l.canWrite = canWrite
 }
 
+// Close closes the listener.
+func (l *Listener) Close() error {
+	defer l.doneOnce.Do(func() {
+		close(l.done)
+	})
+
+	return l.Listener.Close()
+}
+
+// Done returns a channel that is closed when the listener is closed.
+func (l *Listener) Done() <-chan struct{} {
+	return l.done
+}
+
 // DropAll closes all connections spawned by this listener.
-func (l *DropListener) DropAll() {
+func (l *Listener) DropAll() {
 	l.connLock.RLock()
 	defer l.connLock.RUnlock()
 
@@ -68,13 +89,42 @@ func (l *DropListener) DropAll() {
 	}
 }
 
+type hangConn struct {
+	net.Conn
+
+	l *Listener
+}
+
+func NewHangConn(c net.Conn, l *Listener) net.Conn {
+	return &hangConn{
+		Conn: c,
+		l:    l,
+	}
+}
+
+func (c *hangConn) Read(b []byte) (int, error) {
+	if !c.l.canRead {
+		<-c.l.Done()
+	}
+
+	return c.Conn.Read(b)
+}
+
+func (c *hangConn) Write(b []byte) (int, error) {
+	if !c.l.canWrite {
+		<-c.l.Done()
+	}
+
+	return c.Conn.Write(b)
+}
+
 type dropConn struct {
 	net.Conn
 
-	l *DropListener
+	l *Listener
 }
 
-func newDropConn(c net.Conn, l *DropListener) *dropConn {
+func NewDropConn(c net.Conn, l *Listener) net.Conn {
 	return &dropConn{
 		Conn: c,
 		l:    l,

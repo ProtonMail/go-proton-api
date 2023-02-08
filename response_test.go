@@ -16,7 +16,7 @@ func TestNetError_DropOnWrite(t *testing.T) {
 	l, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
 
-	dropListener := proton.NewDropListener(l)
+	dropListener := proton.NewListener(l, proton.NewDropConn)
 
 	// Use a custom listener that drops all writes.
 	dropListener.SetCanWrite(false)
