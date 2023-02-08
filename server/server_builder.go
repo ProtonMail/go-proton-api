@@ -58,6 +58,14 @@ func (builder *serverBuilder) build() *Server {
 		proxyTransport: builder.proxyTransport,
 	}
 
+	s.r.Use(gin.CustomRecovery(func(c *gin.Context, recovered any) {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"Code":    http.StatusInternalServerError,
+			"Error":   "Internal server error",
+			"Details": recovered,
+		})
+	}))
+
 	var l net.Listener
 
 	if builder.listener == nil {

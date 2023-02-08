@@ -12,49 +12,139 @@ import (
 	"time"
 )
 
-// DropListener wraps a net.Listener.
+// Listener wraps a net.Listener.
 // It can be configured to spawn connections that drop all reads or writes.
-type DropListener struct {
+type Listener struct {
 	net.Listener
 
-	canRead, canWrite bool
+	canRead bool
+	rlock   sync.RWMutex
+
+	canWrite bool
+	wlock    sync.RWMutex
+
+	conns    []net.Conn
+	connLock sync.RWMutex
+
+	done     chan struct{}
+	doneOnce sync.Once
+
+	newConn func(net.Conn, *Listener) net.Conn
 }
 
-// NewDropListener returns a new DropListener.
-func NewDropListener(l net.Listener) *DropListener {
-	return &DropListener{
+// NewListener returns a new DropListener.
+func NewListener(l net.Listener, newConn func(net.Conn, *Listener) net.Conn) *Listener {
+	return &Listener{
 		Listener: l,
 		canRead:  true,
 		canWrite: true,
+		done:     make(chan struct{}),
+		newConn:  newConn,
 	}
 }
 
-func (l *DropListener) Accept() (net.Conn, error) {
+func (l *Listener) Accept() (net.Conn, error) {
 	conn, err := l.Listener.Accept()
 	if err != nil {
 		return nil, err
 	}
 
-	return newDropConn(conn, l), nil
+	l.connLock.Lock()
+	defer l.connLock.Unlock()
+
+	dropConn := l.newConn(conn, l)
+
+	l.conns = append(l.conns, dropConn)
+
+	return dropConn, nil
 }
 
 // SetCanRead sets whether the connections spawned by this listener can read.
-func (l *DropListener) SetCanRead(canRead bool) {
+func (l *Listener) SetCanRead(canRead bool) {
+	l.rlock.Lock()
+	defer l.rlock.Unlock()
+
 	l.canRead = canRead
 }
 
 // SetCanWrite sets whether the connections spawned by this listener can write.
-func (l *DropListener) SetCanWrite(canWrite bool) {
+func (l *Listener) SetCanWrite(canWrite bool) {
+	l.wlock.Lock()
+	defer l.wlock.Unlock()
+
 	l.canWrite = canWrite
+}
+
+// Close closes the listener.
+func (l *Listener) Close() error {
+	defer l.doneOnce.Do(func() {
+		close(l.done)
+	})
+
+	return l.Listener.Close()
+}
+
+// Done returns a channel that is closed when the listener is closed.
+func (l *Listener) Done() <-chan struct{} {
+	return l.done
+}
+
+// DropAll closes all connections spawned by this listener.
+func (l *Listener) DropAll() {
+	l.connLock.RLock()
+	defer l.connLock.RUnlock()
+
+	for _, conn := range l.conns {
+		_ = conn.Close()
+	}
+}
+
+type hangConn struct {
+	net.Conn
+
+	l *Listener
+}
+
+func NewHangConn(c net.Conn, l *Listener) net.Conn {
+	return &hangConn{
+		Conn: c,
+		l:    l,
+	}
+}
+
+func (c *hangConn) Read(b []byte) (int, error) {
+	c.l.rlock.RLock()
+	defer c.l.rlock.RUnlock()
+
+	if !c.l.canRead {
+		c.l.rlock.RUnlock()
+		<-c.l.Done()
+		c.l.rlock.RLock()
+	}
+
+	return c.Conn.Read(b)
+}
+
+func (c *hangConn) Write(b []byte) (int, error) {
+	c.l.wlock.RLock()
+	defer c.l.wlock.RUnlock()
+
+	if !c.l.canWrite {
+		c.l.wlock.RUnlock()
+		<-c.l.Done()
+		c.l.wlock.RLock()
+	}
+
+	return c.Conn.Write(b)
 }
 
 type dropConn struct {
 	net.Conn
 
-	l *DropListener
+	l *Listener
 }
 
-func newDropConn(c net.Conn, l *DropListener) *dropConn {
+func NewDropConn(c net.Conn, l *Listener) net.Conn {
 	return &dropConn{
 		Conn: c,
 		l:    l,
@@ -62,39 +152,55 @@ func newDropConn(c net.Conn, l *DropListener) *dropConn {
 }
 
 func (c *dropConn) Read(b []byte) (int, error) {
+	c.l.rlock.RLock()
+	defer c.l.rlock.RUnlock()
+
 	if c.l.canRead {
 		return c.Conn.Read(b)
 	}
 
-	if tcpConn, ok := c.Conn.(*net.TCPConn); ok {
-		if err := tcpConn.SetLinger(0); err != nil {
-			return 0, err
-		}
+	// Read half the length of the buffer.
+	n, err := c.Conn.Read(b[:len(b)/2])
+	if err != nil {
+		return n, fmt.Errorf("read: %w", err)
 	}
 
 	if err := c.Close(); err != nil {
-		return 0, err
+		return n, fmt.Errorf("close: %w", err)
 	}
 
-	return 0, errors.New("read dropped")
+	return n, errors.New("read: connection closed")
 }
 
 func (c *dropConn) Write(b []byte) (int, error) {
+	c.l.wlock.RLock()
+	defer c.l.wlock.RUnlock()
+
 	if c.l.canWrite {
 		return c.Conn.Write(b)
 	}
 
-	if tcpConn, ok := c.Conn.(*net.TCPConn); ok {
-		if err := tcpConn.SetLinger(0); err != nil {
-			return 0, err
-		}
+	// Write half the length of the buffer.
+	n, err := c.Conn.Write(b[:len(b)/2])
+	if err != nil {
+		return n, fmt.Errorf("write: %w", err)
 	}
 
 	if err := c.Close(); err != nil {
-		return 0, err
+		return n, fmt.Errorf("close: %w", err)
 	}
 
-	return 0, errors.New("write dropped")
+	return n, errors.New("write: connection closed")
+}
+
+func (c *dropConn) Close() error {
+	if tcpConn, ok := c.Conn.(*net.TCPConn); ok {
+		if err := tcpConn.SetLinger(0); err != nil {
+			return err
+		}
+	}
+
+	return c.Conn.Close()
 }
 
 // InsecureTransport returns an http.Transport with InsecureSkipVerify set to true.

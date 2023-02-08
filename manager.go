@@ -3,6 +3,7 @@ package proton
 import (
 	"context"
 	"errors"
+	"net"
 	"sync"
 
 	"github.com/go-resty/resty/v2"
@@ -87,8 +88,14 @@ func (m *Manager) checkConnDown(req *resty.Request, err error) {
 		return
 	}
 
-	if res, ok := err.(*resty.ResponseError); ok && res.Response.RawResponse != nil {
-		m.onConnUp()
+	if res, ok := err.(*resty.ResponseError); ok {
+		if res.Response.RawResponse == nil {
+			m.onConnDown()
+		} else if netErr := new(net.OpError); errors.As(res.Err, &netErr) {
+			m.onConnDown()
+		} else {
+			m.onConnUp()
+		}
 	} else {
 		m.onConnDown()
 	}
