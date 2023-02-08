@@ -18,6 +18,9 @@ type DropListener struct {
 	net.Listener
 
 	canRead, canWrite bool
+
+	conns    []net.Conn
+	connLock sync.RWMutex
 }
 
 // NewDropListener returns a new DropListener.
@@ -35,7 +38,14 @@ func (l *DropListener) Accept() (net.Conn, error) {
 		return nil, err
 	}
 
-	return newDropConn(conn, l), nil
+	l.connLock.Lock()
+	defer l.connLock.Unlock()
+
+	dropConn := newDropConn(conn, l)
+
+	l.conns = append(l.conns, dropConn)
+
+	return dropConn, nil
 }
 
 // SetCanRead sets whether the connections spawned by this listener can read.
@@ -46,6 +56,16 @@ func (l *DropListener) SetCanRead(canRead bool) {
 // SetCanWrite sets whether the connections spawned by this listener can write.
 func (l *DropListener) SetCanWrite(canWrite bool) {
 	l.canWrite = canWrite
+}
+
+// DropAll closes all connections spawned by this listener.
+func (l *DropListener) DropAll() {
+	l.connLock.RLock()
+	defer l.connLock.RUnlock()
+
+	for _, conn := range l.conns {
+		_ = conn.Close()
+	}
 }
 
 type dropConn struct {
@@ -66,17 +86,17 @@ func (c *dropConn) Read(b []byte) (int, error) {
 		return c.Conn.Read(b)
 	}
 
-	if tcpConn, ok := c.Conn.(*net.TCPConn); ok {
-		if err := tcpConn.SetLinger(0); err != nil {
-			return 0, err
-		}
+	// Read half the length of the buffer.
+	n, err := c.Conn.Read(b[:len(b)/2])
+	if err != nil {
+		return n, fmt.Errorf("read: %w", err)
 	}
 
 	if err := c.Close(); err != nil {
-		return 0, err
+		return n, fmt.Errorf("close: %w", err)
 	}
 
-	return 0, errors.New("read dropped")
+	return n, errors.New("read: connection closed")
 }
 
 func (c *dropConn) Write(b []byte) (int, error) {
@@ -84,17 +104,27 @@ func (c *dropConn) Write(b []byte) (int, error) {
 		return c.Conn.Write(b)
 	}
 
-	if tcpConn, ok := c.Conn.(*net.TCPConn); ok {
-		if err := tcpConn.SetLinger(0); err != nil {
-			return 0, err
-		}
+	// Write half the length of the buffer.
+	n, err := c.Conn.Write(b[:len(b)/2])
+	if err != nil {
+		return n, fmt.Errorf("write: %w", err)
 	}
 
 	if err := c.Close(); err != nil {
-		return 0, err
+		return n, fmt.Errorf("close: %w", err)
 	}
 
-	return 0, errors.New("write dropped")
+	return n, errors.New("write: connection closed")
+}
+
+func (c *dropConn) Close() error {
+	if tcpConn, ok := c.Conn.(*net.TCPConn); ok {
+		if err := tcpConn.SetLinger(0); err != nil {
+			return err
+		}
+	}
+
+	return c.Conn.Close()
 }
 
 // InsecureTransport returns an http.Transport with InsecureSkipVerify set to true.
