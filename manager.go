@@ -87,7 +87,9 @@ func (m *Manager) checkConnDown(req *resty.Request, err error) {
 	}
 
 	if res, ok := err.(*resty.ResponseError); ok {
-		if netErr := new(net.OpError); errors.As(res.Err, &netErr) {
+		if res.Response.RawResponse == nil {
+			m.onConnDown()
+		} else if netErr := new(net.OpError); errors.As(res.Err, &netErr) {
 			m.onConnDown()
 		} else {
 			m.onConnUp()
