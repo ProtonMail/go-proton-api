@@ -17,15 +17,19 @@ import (
 type Listener struct {
 	net.Listener
 
-	canRead, canWrite bool
+	canRead bool
+	rlock   sync.RWMutex
 
-	newConn func(net.Conn, *Listener) net.Conn
+	canWrite bool
+	wlock    sync.RWMutex
 
 	conns    []net.Conn
 	connLock sync.RWMutex
 
 	done     chan struct{}
 	doneOnce sync.Once
+
+	newConn func(net.Conn, *Listener) net.Conn
 }
 
 // NewListener returns a new DropListener.
@@ -34,8 +38,8 @@ func NewListener(l net.Listener, newConn func(net.Conn, *Listener) net.Conn) *Li
 		Listener: l,
 		canRead:  true,
 		canWrite: true,
-		newConn:  newConn,
 		done:     make(chan struct{}),
+		newConn:  newConn,
 	}
 }
 
@@ -57,11 +61,17 @@ func (l *Listener) Accept() (net.Conn, error) {
 
 // SetCanRead sets whether the connections spawned by this listener can read.
 func (l *Listener) SetCanRead(canRead bool) {
+	l.rlock.Lock()
+	defer l.rlock.Unlock()
+
 	l.canRead = canRead
 }
 
 // SetCanWrite sets whether the connections spawned by this listener can write.
 func (l *Listener) SetCanWrite(canWrite bool) {
+	l.wlock.Lock()
+	defer l.wlock.Unlock()
+
 	l.canWrite = canWrite
 }
 
@@ -103,16 +113,26 @@ func NewHangConn(c net.Conn, l *Listener) net.Conn {
 }
 
 func (c *hangConn) Read(b []byte) (int, error) {
+	c.l.rlock.RLock()
+	defer c.l.rlock.RUnlock()
+
 	if !c.l.canRead {
+		c.l.rlock.RUnlock()
 		<-c.l.Done()
+		c.l.rlock.RLock()
 	}
 
 	return c.Conn.Read(b)
 }
 
 func (c *hangConn) Write(b []byte) (int, error) {
+	c.l.wlock.RLock()
+	defer c.l.wlock.RUnlock()
+
 	if !c.l.canWrite {
+		c.l.wlock.RUnlock()
 		<-c.l.Done()
+		c.l.wlock.RLock()
 	}
 
 	return c.Conn.Write(b)
@@ -132,6 +152,9 @@ func NewDropConn(c net.Conn, l *Listener) net.Conn {
 }
 
 func (c *dropConn) Read(b []byte) (int, error) {
+	c.l.rlock.RLock()
+	defer c.l.rlock.RUnlock()
+
 	if c.l.canRead {
 		return c.Conn.Read(b)
 	}
@@ -150,6 +173,9 @@ func (c *dropConn) Read(b []byte) (int, error) {
 }
 
 func (c *dropConn) Write(b []byte) (int, error) {
+	c.l.wlock.RLock()
+	defer c.l.wlock.RUnlock()
+
 	if c.l.canWrite {
 		return c.Conn.Write(b)
 	}
