@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"net"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server"
@@ -21,6 +23,7 @@ func TestStatus(t *testing.T) {
 		proton.WithHostURL(s.GetHostURL()),
 		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
+	defer m.Close()
 
 	var (
 		called int
@@ -69,6 +72,7 @@ func TestStatus_NoDial(t *testing.T) {
 		proton.WithHostURL(s.GetHostURL()),
 		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
+	defer m.Close()
 
 	var (
 		called int
@@ -101,6 +105,7 @@ func TestStatus_NoRead(t *testing.T) {
 		proton.WithHostURL(s.GetHostURL()),
 		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
+	defer m.Close()
 
 	var (
 		called int
@@ -133,6 +138,7 @@ func TestStatus_NoWrite(t *testing.T) {
 		proton.WithHostURL(s.GetHostURL()),
 		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
+	defer m.Close()
 
 	var (
 		called int
@@ -174,6 +180,7 @@ func TestStatus_NoReadExistingConn(t *testing.T) {
 		proton.WithHostURL(s.GetHostURL()),
 		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 	)
+	defer m.Close()
 
 	// This should succeed.
 	c, _, err := m.NewClientWithLogin(context.Background(), "user", []byte("pass"))
@@ -210,6 +217,7 @@ func TestStatus_NoWriteExistingConn(t *testing.T) {
 		proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
 		proton.WithRetryCount(0),
 	)
+	defer m.Close()
 
 	// This should succeed.
 	c, _, err := m.NewClientWithLogin(context.Background(), "user", []byte("pass"))
@@ -234,6 +242,7 @@ func TestStatus_ContextCancel(t *testing.T) {
 	defer s.Close()
 
 	m := proton.New(proton.WithHostURL(s.GetHostURL()))
+	defer m.Close()
 
 	var called int
 
@@ -257,6 +266,7 @@ func TestStatus_ContextTimeout(t *testing.T) {
 	defer s.Close()
 
 	m := proton.New(proton.WithHostURL(s.GetHostURL()))
+	defer m.Close()
 
 	var called int
 
@@ -273,6 +283,123 @@ func TestStatus_ContextTimeout(t *testing.T) {
 
 	// Status should have been called; this was a network error (took too long).
 	require.NotZero(t, called)
+}
+
+func TestStatus_ServerDrop(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	// Create a listener that will drop connections.
+	dropListener := proton.NewListener(l, proton.NewDropConn)
+	defer dropListener.Close()
+
+	s := server.New(server.WithListener(dropListener), server.WithTLS(true))
+	defer s.Close()
+
+	userID, _, err := s.CreateUser("user", []byte("pass"))
+	require.NoError(t, err)
+
+	m := proton.New(proton.WithHostURL(s.GetHostURL()), proton.WithTransport(proton.InsecureTransport()))
+	defer m.Close()
+
+	var status []proton.Status
+
+	// Track the status as it changes.
+	m.AddStatusObserver(func(s proton.Status) {
+		status = append(status, s)
+	})
+
+	// Login the new user.
+	c, auth, err := m.NewClientWithLogin(context.Background(), "user", []byte("pass"))
+	require.NoError(t, err)
+	require.Equal(t, userID, auth.UserID)
+
+	// This should succeed.
+	user, err := c.GetUser(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, userID, user.ID)
+
+	// Status should be empty.
+	require.Empty(t, status)
+
+	// Drop all existing connections and prevent new connections from writing (simulating server kicking off client).
+	dropListener.DropAll()
+	dropListener.SetCanWrite(false)
+
+	// This should fail because the connection will be dropped.
+	require.ErrorIs(t, getErr(c.GetUser(context.Background())), new(proton.NetError))
+
+	// Status should be down.
+	require.Equal(t, []proton.Status{proton.StatusDown}, status)
+
+	// Allow new connections to write.
+	dropListener.SetCanWrite(true)
+
+	// This should succeed.
+	require.NoError(t, getErr(c.GetUser(context.Background())))
+
+	// Status should be up.
+	require.Equal(t, []proton.Status{proton.StatusDown, proton.StatusUp}, status)
+}
+
+func TestStatus_ServerHang(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	// Create a listener that will hang on reads/writes.
+	hangListener := proton.NewListener(l, proton.NewHangConn)
+	defer hangListener.Close()
+
+	s := server.New(server.WithListener(hangListener), server.WithTLS(false))
+	defer s.Close()
+
+	userID, _, err := s.CreateUser("user", []byte("pass"))
+	require.NoError(t, err)
+
+	m := proton.New(
+		proton.WithHostURL(s.GetHostURL()),
+		proton.WithTransport(&http.Transport{ResponseHeaderTimeout: time.Second}),
+	)
+	defer m.Close()
+
+	var status []proton.Status
+
+	// Track the status as it changes.
+	m.AddStatusObserver(func(s proton.Status) {
+		status = append(status, s)
+	})
+
+	// Login the new user.
+	c, auth, err := m.NewClientWithLogin(context.Background(), "user", []byte("pass"))
+	require.NoError(t, err)
+	require.Equal(t, userID, auth.UserID)
+
+	// This should succeed.
+	user, err := c.GetUser(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, userID, user.ID)
+
+	// Status should be empty.
+	require.Empty(t, status)
+
+	// Drop all existing connections and hang on writing to new connections.
+	hangListener.DropAll()
+	hangListener.SetCanWrite(false)
+
+	// This should fail because the connection will hang.
+	require.ErrorIs(t, getErr(c.GetUser(context.Background())), new(proton.NetError))
+
+	// Status should be down.
+	require.Equal(t, []proton.Status{proton.StatusDown}, status)
+
+	// Allow new connections to write.
+	hangListener.SetCanWrite(true)
+
+	// This should succeed.
+	require.NoError(t, getErr(c.GetUser(context.Background())))
+
+	// Status should be up.
+	require.Equal(t, []proton.Status{proton.StatusDown, proton.StatusUp}, status)
 }
 
 func getErr[T any](_ T, err error) error {
