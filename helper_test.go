@@ -45,7 +45,10 @@ func createTestMessages(t *testing.T, c *proton.Client, pass string, count int) 
 		}
 	}))
 
-	res, err := stream.Collect(ctx, c.ImportMessages(ctx, addrKRs[addr[0].ID], runtime.NumCPU(), runtime.NumCPU(), req...))
+	str, err := c.ImportMessages(ctx, addrKRs[addr[0].ID], runtime.NumCPU(), runtime.NumCPU(), req...)
+	require.NoError(t, err)
+
+	res, err := stream.Collect(ctx, str)
 	require.NoError(t, err)
 
 	for _, res := range res {

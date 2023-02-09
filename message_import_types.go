@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"github.com/ProtonMail/gluon/rfc822"
-	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -32,7 +31,7 @@ type ImportRes struct {
 	MessageID string
 }
 
-func buildImportReqFields(addrKR *crypto.KeyRing, req []namedImportReq) ([]*resty.MultipartField, error) {
+func buildImportReqFields(req []namedImportReq) ([]*resty.MultipartField, error) {
 	var fields []*resty.MultipartField
 
 	metadata := make(map[string]ImportMetadata, len(req))
@@ -40,16 +39,11 @@ func buildImportReqFields(addrKR *crypto.KeyRing, req []namedImportReq) ([]*rest
 	for _, req := range req {
 		metadata[req.Name] = req.Metadata
 
-		enc, err := EncryptRFC822(addrKR, req.Message)
-		if err != nil {
-			return nil, err
-		}
-
 		fields = append(fields, &resty.MultipartField{
 			Param:       req.Name,
 			FileName:    req.Name + ".eml",
 			ContentType: string(rfc822.MessageRFC822),
-			Reader:      bytes.NewReader(append(enc, "\r\n"...)),
+			Reader:      bytes.NewReader(append(req.Message, "\r\n"...)),
 		})
 	}
 
