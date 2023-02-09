@@ -1,8 +1,10 @@
 package proton
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -130,4 +132,12 @@ func catchTooManyRequests(res *resty.Response, _ error) bool {
 
 func catchDialError(res *resty.Response, err error) bool {
 	return res.RawResponse == nil
+}
+
+func catchDropError(_ *resty.Response, err error) bool {
+	if netErr := new(net.OpError); errors.As(err, &netErr) {
+		return true
+	}
+
+	return false
 }

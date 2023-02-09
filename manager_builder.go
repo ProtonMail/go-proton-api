@@ -84,6 +84,7 @@ func (builder *managerBuilder) build() *Manager {
 	m.rc.SetRetryMaxWaitTime(time.Minute)
 	m.rc.AddRetryCondition(catchTooManyRequests)
 	m.rc.AddRetryCondition(catchDialError)
+	m.rc.AddRetryCondition(catchDropError)
 	m.rc.SetRetryAfter(catchRetryAfter)
 
 	// Set the data type of API errors.
