@@ -48,21 +48,6 @@ func Test_chunkSized(t *testing.T) {
 				{2},
 			},
 		},
-		{
-			name: "single values larger than max",
-			args: args{
-				vals:    []int{1, 2, 3, 100, 200, 1, 2, 3, 4},
-				maxLen:  100,
-				maxSize: 10, // Split into chunks of at most 10, but let single values larger than max through
-				getSize: func(i int) int { return i },
-			},
-			want: [][]int{
-				{1, 2, 3}, // Attempting to add 100 to this chunk would exceed the max size
-				{100},     // Single value larger than max
-				{200},     // Single value larger than max
-				{1, 2, 3, 4},
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

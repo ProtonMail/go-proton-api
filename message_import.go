@@ -22,6 +22,7 @@ const (
 )
 
 func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, workers, buffer int, req ...ImportReq) (stream.Stream[ImportRes], error) {
+	// Encrypt each message.
 	for idx := range req {
 		enc, err := EncryptRFC822(addrKR, req[idx].Message)
 		if err != nil {
@@ -29,6 +30,11 @@ func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, wor
 		}
 
 		req[idx].Message = enc
+	}
+
+	// If any of the messages exceed the maximum import size, return an error.
+	if xslices.Any(req, func(req ImportReq) bool { return len(req.Message) > maxImportSize }) {
+		return nil, fmt.Errorf("message size exceeds maximum import size of %v", maxImportSize)
 	}
 
 	return stream.Flatten(parallel.MapStream(
@@ -101,6 +107,7 @@ func (c *Client) importMessages(ctx context.Context, req []ImportReq) ([]ImportR
 }
 
 // chunkSized splits a slice into chunks of maximum size and length.
+// It is assumed that the size of each element is less than the maximum size.
 func chunkSized[T any](vals []T, maxLen, maxSize int, getSize func(T) int) [][]T {
 	var chunks [][]T
 
@@ -113,17 +120,13 @@ func chunkSized[T any](vals []T, maxLen, maxSize int, getSize func(T) int) [][]T
 		for len(vals) > 0 && len(curChunk) < maxLen && curSize < maxSize {
 			val, size := vals[0], getSize(vals[0])
 
-			if curSize+size <= maxSize {
-				curChunk = append(curChunk, val)
-				curSize += size
-				vals = vals[1:]
-			} else if len(curChunk) == 0 {
-				curChunk = append(curChunk, val)
-				curSize += size
-				vals = vals[1:]
-			} else {
+			if curSize+size > maxSize {
 				break
 			}
+
+			curChunk = append(curChunk, val)
+			curSize += size
+			vals = vals[1:]
 		}
 
 		chunks = append(chunks, curChunk)
