@@ -1111,14 +1111,17 @@ func TestServer_Import_FlagsAndLabels(t *testing.T) {
 
 			for _, tt := range tests {
 				t.Run(tt.name, func(t *testing.T) {
-					res, err := stream.Collect(ctx, c.ImportMessages(ctx, addrKRs[addr[0].ID], runtime.NumCPU(), runtime.NumCPU(), []proton.ImportReq{{
+					str, err := c.ImportMessages(ctx, addrKRs[addr[0].ID], runtime.NumCPU(), runtime.NumCPU(), []proton.ImportReq{{
 						Metadata: proton.ImportMetadata{
 							AddressID: addr[0].ID,
 							Flags:     tt.flags,
 							LabelIDs:  tt.labelIDs,
 						},
 						Message: newMessageLiteral("sender@example.com", "recipient@example.com"),
-					}}...))
+					}}...)
+					require.NoError(t, err)
+
+					res, err := stream.Collect(ctx, str)
 					if tt.wantError {
 						require.Error(t, err)
 					} else {
@@ -1811,7 +1814,10 @@ func importMessages(
 		}
 	}))
 
-	res, err := stream.Collect(ctx, c.ImportMessages(ctx, addrKR, runtime.NumCPU(), runtime.NumCPU(), req...))
+	str, err := c.ImportMessages(ctx, addrKR, runtime.NumCPU(), runtime.NumCPU(), req...)
+	require.NoError(t, err)
+
+	res, err := stream.Collect(ctx, str)
 	require.NoError(t, err)
 
 	return res
