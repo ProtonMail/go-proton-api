@@ -1740,6 +1740,47 @@ func TestServer_StatusHooks(t *testing.T) {
 	})
 }
 
+func TestServer_SystemLabelFilter(t *testing.T) {
+	filterScheduled := func(labelID string) bool {
+		return labelID != proton.AllScheduledLabel
+	}
+
+	hasScheduledLabel := func(labels []proton.Label) bool {
+		return xslices.Any(labels, func(label proton.Label) bool {
+			return label.ID == proton.AllScheduledLabel
+		})
+	}
+
+	// Server created without a system label filter.
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			// The label list contains the 'Scheduled' system label.
+			labels, err := c.GetLabels(ctx, proton.LabelTypeSystem)
+			require.NoError(t, err)
+			require.True(t, hasScheduledLabel(labels))
+
+			// Add a filter that exclude the 'Scheduled' system label and check it's not listed anymore.
+			labelCount := len(labels)
+			s.SetSystemLabelFilter(filterScheduled)
+			labels, err = c.GetLabels(ctx, proton.LabelTypeSystem)
+			require.NoError(t, err)
+			require.False(t, hasScheduledLabel(labels))
+			require.Equal(t, labelCount-1, len(labels))
+		})
+	})
+
+	// Server created with a filter excluding the 'Scheduled' system label.
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			labels, err := c.GetLabels(ctx, proton.LabelTypeSystem)
+			require.NoError(t, err)
+
+			// The label list does not contain the 'Scheduled' system label.
+			require.False(t, hasScheduledLabel(labels))
+		})
+	}, WithSystemLabelFilter(filterScheduled))
+}
+
 func withServer(t *testing.T, fn func(ctx context.Context, s *Server, m *proton.Manager), opts ...Option) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

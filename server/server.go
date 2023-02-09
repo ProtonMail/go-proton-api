@@ -20,6 +20,8 @@ type AuthCacher interface {
 	SetAuth(username string, auth proton.Auth)
 }
 
+type SystemLabelFilter backend.SystemLabelFilter
+
 // StatusHook is a function that can be used to modify the response code of a call.
 type StatusHook func(*http.Request) (int, bool)
 
@@ -221,6 +223,10 @@ func (s *Server) RevokeUser(userID string) error {
 	}
 
 	return nil
+}
+
+func (s *Server) SetSystemLabelFilter(filter SystemLabelFilter) {
+	s.b.SetSystemLabelFilter(filter)
 }
 
 func (s *Server) Close() {

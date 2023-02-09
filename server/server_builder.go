@@ -14,15 +14,16 @@ import (
 )
 
 type serverBuilder struct {
-	config         *http.Server
-	listener       net.Listener
-	withTLS        bool
-	domain         string
-	logger         io.Writer
-	origin         string
-	proxyTransport *http.Transport
-	cacher         AuthCacher
-	rateLimiter    *rateLimiter
+	config            *http.Server
+	listener          net.Listener
+	withTLS           bool
+	domain            string
+	logger            io.Writer
+	origin            string
+	proxyTransport    *http.Transport
+	cacher            AuthCacher
+	rateLimiter       *rateLimiter
+	systemLabelFilter SystemLabelFilter
 }
 
 func newServerBuilder() *serverBuilder {
@@ -35,12 +36,13 @@ func newServerBuilder() *serverBuilder {
 	}
 
 	return &serverBuilder{
-		config:         &http.Server{},
-		withTLS:        true,
-		domain:         "proton.local",
-		logger:         logger,
-		origin:         proton.DefaultHostURL,
-		proxyTransport: &http.Transport{},
+		config:            &http.Server{},
+		withTLS:           true,
+		domain:            "proton.local",
+		logger:            logger,
+		origin:            proton.DefaultHostURL,
+		proxyTransport:    &http.Transport{},
+		systemLabelFilter: func(string) bool { return true },
 	}
 }
 
@@ -58,6 +60,7 @@ func (builder *serverBuilder) build() *Server {
 		proxyTransport: builder.proxyTransport,
 	}
 
+	s.b.SetSystemLabelFilter(builder.systemLabelFilter)
 	s.r.Use(gin.CustomRecovery(func(c *gin.Context, recovered any) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"Code":    http.StatusInternalServerError,
@@ -241,5 +244,20 @@ func (opt withNetListener) config(builder *serverBuilder) {
 func WithListener(listener net.Listener) Option {
 	return withNetListener{
 		listener: listener,
+	}
+}
+
+type withSystemLabelFilter struct {
+	systemLabelFilter SystemLabelFilter
+}
+
+func (opt withSystemLabelFilter) config(builder *serverBuilder) {
+	builder.systemLabelFilter = opt.systemLabelFilter
+}
+
+// WithSystemLabelFilter allows you the set the system label filter
+func WithSystemLabelFilter(systemLabelFilter SystemLabelFilter) Option {
+	return withSystemLabelFilter{
+		systemLabelFilter: systemLabelFilter,
 	}
 }

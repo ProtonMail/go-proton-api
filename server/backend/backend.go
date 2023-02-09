@@ -30,8 +30,9 @@ type Backend struct {
 	messages map[string]*message
 	msgLock  sync.Mutex
 
-	labels  map[string]*label
-	lblLock sync.Mutex
+	labels            map[string]*label
+	systemLabelFilter SystemLabelFilter
+	lblLock           sync.Mutex
 
 	updates     map[ID]update
 	updatesLock sync.RWMutex
@@ -44,15 +45,16 @@ type Backend struct {
 
 func New(authLife time.Duration, domain string) *Backend {
 	return &Backend{
-		domain:      domain,
-		accounts:    make(map[string]*account),
-		attachments: make(map[string]*attachment),
-		attData:     make(map[string][]byte),
-		messages:    make(map[string]*message),
-		labels:      make(map[string]*label),
-		updates:     make(map[ID]update),
-		srp:         make(map[string]*srp.Server),
-		authLife:    authLife,
+		domain:            domain,
+		accounts:          make(map[string]*account),
+		attachments:       make(map[string]*attachment),
+		attData:           make(map[string][]byte),
+		messages:          make(map[string]*message),
+		labels:            make(map[string]*label),
+		updates:           make(map[ID]update),
+		srp:               make(map[string]*srp.Server),
+		authLife:          authLife,
+		systemLabelFilter: func(label string) bool { return true },
 	}
 }
 

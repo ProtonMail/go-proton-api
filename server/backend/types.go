@@ -106,3 +106,5 @@ func (key key) getPubKey() (*crypto.Key, error) {
 
 	return crypto.NewKey(pubKeyBin)
 }
+
+type SystemLabelFilter func(labelID string) bool

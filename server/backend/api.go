@@ -173,20 +173,7 @@ func (b *Backend) GetLabels(userID string, types ...proton.LabelType) ([]proton.
 				return labels[labelID].toLabel(labels)
 			})
 
-			for labelName, labelID := range map[string]string{
-				"Inbox":     proton.InboxLabel,
-				"AllDrafts": proton.AllDraftsLabel,
-				"AllSent":   proton.AllSentLabel,
-				"Trash":     proton.TrashLabel,
-				"Spam":      proton.SpamLabel,
-				"All Mail":  proton.AllMailLabel,
-				"Archive":   proton.ArchiveLabel,
-				"Sent":      proton.SentLabel,
-				"Drafts":    proton.DraftsLabel,
-				"Outbox":    proton.OutboxLabel,
-				"Starred":   proton.StarredLabel,
-				"Scheduled": proton.AllScheduledLabel,
-			} {
+			for labelName, labelID := range b.systemLabels() {
 				res = append(res, proton.Label{
 					ID:   labelID,
 					Name: labelName,
@@ -837,6 +824,13 @@ func (b *Backend) AddMessageCreatedUpdate(userID, messageID string) error {
 	})
 }
 
+func (b *Backend) SetSystemLabelFilter(filter func(labelID string) bool) {
+	b.lblLock.Lock()
+	defer b.lblLock.Unlock()
+
+	b.systemLabelFilter = filter
+}
+
 func buildEvent(
 	updates []update,
 	addresses map[string]*address,
@@ -941,4 +935,29 @@ func buildEvent(
 	}
 
 	return event
+}
+
+func (b *Backend) systemLabels() map[string]string {
+	labels := map[string]string{
+		"Inbox":     proton.InboxLabel,
+		"AllDrafts": proton.AllDraftsLabel,
+		"AllSent":   proton.AllSentLabel,
+		"Trash":     proton.TrashLabel,
+		"Spam":      proton.SpamLabel,
+		"All Mail":  proton.AllMailLabel,
+		"Archive":   proton.ArchiveLabel,
+		"Sent":      proton.SentLabel,
+		"Drafts":    proton.DraftsLabel,
+		"Outbox":    proton.OutboxLabel,
+		"Starred":   proton.StarredLabel,
+		"Scheduled": proton.AllScheduledLabel,
+	}
+
+	for key, value := range labels {
+		if !b.systemLabelFilter(value) {
+			delete(labels, key)
+		}
+	}
+
+	return labels
 }
