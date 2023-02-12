@@ -129,11 +129,11 @@ func (msg *message) toMessage(attData map[string][]byte, att map[string]*attachm
 func (msg *message) toMetadata(attData map[string][]byte, att map[string]*attachment) proton.MessageMetadata {
 	labelIDs := []string{proton.AllMailLabel}
 
-	if msg.flags.Has(proton.MessageFlagSent) {
+	if msg.flags.HasAny(proton.MessageFlagSent, proton.MessageFlagScheduledSend) {
 		labelIDs = append(labelIDs, proton.AllSentLabel)
 	}
 
-	if !msg.flags.HasAny(proton.MessageFlagSent, proton.MessageFlagReceived) {
+	if !msg.flags.HasAny(proton.MessageFlagSent, proton.MessageFlagScheduledSend, proton.MessageFlagReceived) {
 		labelIDs = append(labelIDs, proton.AllDraftsLabel)
 	}
 
@@ -152,6 +152,9 @@ func (msg *message) toMetadata(attData map[string][]byte, att map[string]*attach
 
 		case msg.flags.Has(proton.MessageFlagSent):
 			labelIDs = append(labelIDs, proton.SentLabel)
+
+		case msg.flags.Has(proton.MessageFlagScheduledSend):
+			labelIDs = append(labelIDs, proton.AllScheduledLabel)
 
 		default:
 			labelIDs = append(labelIDs, proton.DraftsLabel)
@@ -274,7 +277,7 @@ func (msg *message) applyChanges(changes proton.DraftTemplate) {
 
 func (msg *message) addLabel(labelID string, labels map[string]*label) {
 	switch labelID {
-	case proton.InboxLabel, proton.SentLabel, proton.DraftsLabel:
+	case proton.InboxLabel, proton.SentLabel, proton.DraftsLabel, proton.AllScheduledLabel:
 		msg.addFlagLabel(labelID, labels)
 
 	case proton.TrashLabel, proton.SpamLabel, proton.ArchiveLabel:
@@ -322,7 +325,7 @@ func (msg *message) addUserLabel(label *label, labels map[string]*label) {
 
 func (msg *message) remLabel(labelID string, labels map[string]*label) {
 	switch labelID {
-	case proton.InboxLabel, proton.SentLabel, proton.DraftsLabel:
+	case proton.InboxLabel, proton.SentLabel, proton.DraftsLabel, proton.AllScheduledLabel:
 		msg.remFlagLabel(labelID, labels)
 
 	case proton.TrashLabel, proton.SpamLabel, proton.ArchiveLabel:
