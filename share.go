@@ -6,9 +6,9 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func (c *Client) ListShares(ctx context.Context, all bool) ([]Share, error) {
+func (c *Client) ListShares(ctx context.Context, all bool) ([]ShareMetadata, error) {
 	var res struct {
-		Shares []Share
+		Shares []ShareMetadata
 	}
 
 	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {

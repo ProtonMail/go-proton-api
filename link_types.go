@@ -1,5 +1,184 @@
 package proton
 
-import "github.com/ProtonMail/gopenpgp/v2/crypto"
+import (
+	"encoding/base64"
+	"errors"
+
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
+)
 
 type LinkWalkFunc func([]string, Link, *crypto.KeyRing) error
+
+// Link holds the tree structure, for the clients, they represent the files and folders of a given volume.
+// They have a ParentLinkID that points to parent folders.
+// Links also hold the file name (encrypted) and a hash of the name for name collisions.
+// Link data is encrypted with its owning Share keyring.
+type Link struct {
+	LinkID       string // Encrypted file/folder ID
+	ParentLinkID string // Encrypted parent folder ID (LinkID). Root link has null ParentLinkID.
+
+	Type     LinkType
+	Name     string // Encrypted file name
+	Hash     string // HMAC of name encrypted with parent hash key
+	Size     int64
+	MIMEType string
+
+	CreateTime     int64 // Link creation time
+	ModifyTime     int64 // Link modification time (on API, real modify date is stored in XAttr)
+	ExpirationTime int64 // Link expiration time
+
+	NodeKey                 string // The private NodeKey, used to decrypt any file/folder content.
+	NodePassphrase          string // The passphrase used to unlock the NodeKey, encrypted by the owning Link/Share keyring.
+	NodePassphraseSignature string
+
+	FileProperties   *FileProperties
+	FolderProperties *FolderProperties
+}
+
+func (l Link) GetName(parentNodeKR, addrKR *crypto.KeyRing) (string, error) {
+	encName, err := crypto.NewPGPMessageFromArmored(l.Name)
+	if err != nil {
+		return "", err
+	}
+
+	decName, err := parentNodeKR.Decrypt(encName, addrKR, crypto.GetUnixTime())
+	if err != nil {
+		return "", err
+	}
+
+	return decName.GetString(), nil
+}
+
+func (l Link) GetKeyRing(parentNodeKR, addrKR *crypto.KeyRing) (*crypto.KeyRing, error) {
+	enc, err := crypto.NewPGPMessageFromArmored(l.NodePassphrase)
+	if err != nil {
+		return nil, err
+	}
+
+	dec, err := parentNodeKR.Decrypt(enc, nil, crypto.GetUnixTime())
+	if err != nil {
+		return nil, err
+	}
+
+	sig, err := crypto.NewPGPSignatureFromArmored(l.NodePassphraseSignature)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := addrKR.VerifyDetached(dec, sig, crypto.GetUnixTime()); err != nil {
+		return nil, err
+	}
+
+	lockedKey, err := crypto.NewKeyFromArmored(l.NodeKey)
+	if err != nil {
+		return nil, err
+	}
+
+	unlockedKey, err := lockedKey.Unlock(dec.GetBinary())
+	if err != nil {
+		return nil, err
+	}
+
+	return crypto.NewKeyRing(unlockedKey)
+}
+
+func (l Link) GetHashKey(nodeKR *crypto.KeyRing) ([]byte, error) {
+	if l.Type != LinkTypeFolder {
+		return nil, errors.New("link is not a folder")
+	}
+
+	enc, err := crypto.NewPGPMessageFromArmored(l.FolderProperties.NodeHashKey)
+	if err != nil {
+		return nil, err
+	}
+
+	dec, err := nodeKR.Decrypt(enc, nodeKR, crypto.GetUnixTime())
+	if err != nil {
+		return nil, err
+	}
+
+	return dec.GetBinary(), nil
+}
+
+func (l Link) GetSessionKey(nodeKR *crypto.KeyRing) (*crypto.SessionKey, error) {
+	if l.Type != LinkTypeFile {
+		return nil, errors.New("link is not a file")
+	}
+
+	dec, err := base64.StdEncoding.DecodeString(l.FileProperties.ContentKeyPacket)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := nodeKR.DecryptSessionKey(dec)
+	if err != nil {
+		return nil, err
+	}
+
+	sig, err := crypto.NewPGPSignatureFromArmored(l.FileProperties.ContentKeyPacketSignature)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := nodeKR.VerifyDetached(crypto.NewPlainMessage(key.Key), sig, crypto.GetUnixTime()); err != nil {
+		return nil, err
+	}
+
+	return key, nil
+}
+
+type FileProperties struct {
+	ContentKeyPacket          string           // The block's key packet, encrypted with the node key.
+	ContentKeyPacketSignature string           // Signature of the content key packet. Signature of the session key, signed with the NodeKey.
+	ActiveRevision            RevisionMetadata // The active revision of the file.
+}
+
+type FolderProperties struct {
+	NodeHashKey string // HMAC key used to hash the folder's children names.
+}
+
+type LinkType int
+
+const (
+	LinkTypeFolder LinkType = iota + 1
+	LinkTypeFile
+)
+
+type RevisionMetadata struct {
+	ID         string        // Encrypted Revision ID
+	CreateTime int64         // Unix timestamp of the revision creation time
+	Size       int64         // Size of the revision in bytes
+	State      RevisionState // State of revision
+}
+
+// Revisions are only for files, they represent “versions” of files.
+// Each file can have 1 active revision and n obsolete revisions.
+type Revision struct {
+	RevisionMetadata
+
+	Blocks []Block
+}
+
+type RevisionState int
+
+const (
+	RevisionStateDraft RevisionState = iota
+	RevisionStateActive
+	RevisionStateObsolete
+	RevisionStateDeleted
+)
+
+type LinkEvent struct {
+	EventID    string        // Encrypted ID of the Event
+	CreateTime int64         // Time stamp of the creation time of the Event
+	EventType  LinkEventType // Type of event
+}
+
+type LinkEventType int
+
+const (
+	DeleteLinkEvent LinkEventType = iota
+	CreateLinkEvent
+	UpdateContentsLinkEvent
+	UpdateMetadataLinkEvent
+)
