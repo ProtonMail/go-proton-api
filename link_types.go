@@ -145,10 +145,14 @@ const (
 )
 
 type RevisionMetadata struct {
-	ID         string        // Encrypted Revision ID
-	CreateTime int64         // Unix timestamp of the revision creation time
-	Size       int64         // Size of the revision in bytes
-	State      RevisionState // State of revision
+	ID         string // Encrypted Revision ID
+	Size       int64  // Size of the revision in bytes
+	CreateTime int64  // Unix timestamp of the revision creation time
+
+	ManifestSignature string // Signature of the manifest, signed with the user's address associated with the share, SignatureEmail.
+	SignatureEmail    string // User's email associated with the share, signs the manifest and block contents.
+
+	State RevisionState // State of revision
 }
 
 // Revisions are only for files, they represent “versions” of files.
