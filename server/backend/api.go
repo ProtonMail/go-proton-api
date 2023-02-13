@@ -411,17 +411,30 @@ func (b *Backend) SetMessagesRead(userID string, read bool, messageIDs ...string
 		})
 	})
 }
+
+// LabelMessages adds the given label to the given messages.
 func (b *Backend) LabelMessages(userID, labelID string, messageIDs ...string) error {
-	return b.labelMessages(userID, labelID, true, messageIDs...)
+	return b.labelMessages(userID, labelID, true, true, messageIDs...)
 }
 
+// LabelMessagesUnchecked adds the given label to the given messages, even if it is not allowed or does not exist.
+func (b *Backend) LabelMessagesUnchecked(userID, labelID string, messageIDs ...string) error {
+	return b.labelMessages(userID, labelID, true, false, messageIDs...)
+}
+
+// LabelMessagesNoEvents adds the given label to the given messages, but does not generate events.
 func (b *Backend) LabelMessagesNoEvents(userID, labelID string, messageIDs ...string) error {
-	return b.labelMessages(userID, labelID, false, messageIDs...)
+	return b.labelMessages(userID, labelID, false, true, messageIDs...)
 }
 
-func (b *Backend) labelMessages(userID, labelID string, doEvents bool, messageIDs ...string) error {
-	if labelID == proton.AllMailLabel || labelID == proton.AllDraftsLabel || labelID == proton.AllSentLabel {
-		return fmt.Errorf("not allowed")
+// labelMessages adds the given label to the given messages.
+// If doEvents is false, no events are generated.
+// If doCheck is false, the label is added even if it is not allowed or does not exist.
+func (b *Backend) labelMessages(userID, labelID string, doEvents, doCheck bool, messageIDs ...string) error {
+	if doCheck {
+		if labelID == proton.AllMailLabel || labelID == proton.AllDraftsLabel || labelID == proton.AllSentLabel {
+			return fmt.Errorf("not allowed")
+		}
 	}
 
 	return b.withAcc(userID, func(acc *account) error {
@@ -433,7 +446,7 @@ func (b *Backend) labelMessages(userID, labelID string, doEvents bool, messageID
 						continue
 					}
 
-					message.addLabel(labelID, labels)
+					message.addLabel(labelID, labels, doCheck)
 
 					if doEvents {
 						updateID, err := b.newUpdate(&messageUpdated{messageID: messageID})
@@ -451,23 +464,50 @@ func (b *Backend) labelMessages(userID, labelID string, doEvents bool, messageID
 	})
 }
 
+// UnlabelMessages removes the given label from the given messages.
 func (b *Backend) UnlabelMessages(userID, labelID string, messageIDs ...string) error {
-	if labelID == proton.AllMailLabel || labelID == proton.AllDraftsLabel || labelID == proton.AllSentLabel {
-		return fmt.Errorf("not allowed")
+	return b.unlabelMessages(userID, labelID, true, true, messageIDs...)
+}
+
+// UnlabelMessagesUnchecked removes the given label from the given messages, even if it is not allowed or does not exist.
+func (b *Backend) UnlabelMessagesUnchecked(userID, labelID string, messageIDs ...string) error {
+	return b.unlabelMessages(userID, labelID, true, false, messageIDs...)
+}
+
+// UnlabelMessagesNoEvents removes the given label from the given messages, but does not generate events.
+func (b *Backend) UnlabelMessagesNoEvents(userID, labelID string, messageIDs ...string) error {
+	return b.unlabelMessages(userID, labelID, false, true, messageIDs...)
+}
+
+// unlabelMessages removes the given label from the given messages.
+// If doEvents is false, no events are generated.
+// If doCheck is false, the label is removed even if it is not allowed or does not exist.
+func (b *Backend) unlabelMessages(userID, labelID string, doEvents, doCheck bool, messageIDs ...string) error {
+	if doCheck {
+		if labelID == proton.AllMailLabel || labelID == proton.AllDraftsLabel || labelID == proton.AllSentLabel {
+			return fmt.Errorf("not allowed")
+		}
 	}
 
 	return b.withAcc(userID, func(acc *account) error {
 		return b.withMessages(func(messages map[string]*message) error {
 			return b.withLabels(func(labels map[string]*label) error {
 				for _, messageID := range messageIDs {
-					messages[messageID].remLabel(labelID, labels)
-
-					updateID, err := b.newUpdate(&messageUpdated{messageID: messageID})
-					if err != nil {
-						return err
+					message, ok := messages[messageID]
+					if !ok {
+						continue
 					}
 
-					acc.updateIDs = append(acc.updateIDs, updateID)
+					message.remLabel(labelID, labels, doCheck)
+
+					if doEvents {
+						updateID, err := b.newUpdate(&messageUpdated{messageID: messageID})
+						if err != nil {
+							return err
+						}
+
+						acc.updateIDs = append(acc.updateIDs, updateID)
+					}
 				}
 
 				return nil
@@ -513,18 +553,20 @@ func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate,
 	return withAcc(b, userID, func(acc *account) (proton.Message, error) {
 		return withMessages(b, func(messages map[string]*message) (proton.Message, error) {
 			return withLabels(b, func(labels map[string]*label) (proton.Message, error) {
-				// Convert the parentID into externalRef.\
 				var parentRef string
+
+				// Convert the parentID into externalRef.
 				if parentID != "" {
 					parentMsg, ok := messages[parentID]
 					if ok {
 						parentRef = "<" + parentMsg.externalID + ">"
 					}
 				}
+
 				msg := newMessageFromTemplate(addrID, draft, parentRef)
 
 				// Drafts automatically get the sysLabel "Drafts".
-				msg.addLabel(proton.DraftsLabel, labels)
+				msg.addLabel(proton.DraftsLabel, labels, true)
 
 				messages[msg.messageID] = msg
 
@@ -584,7 +626,7 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 				return withAtts(b, func(atts map[string]*attachment) (proton.Message, error) {
 					msg := messages[messageID]
 					msg.flags |= proton.MessageFlagSent
-					msg.addLabel(proton.SentLabel, labels)
+					msg.addLabel(proton.SentLabel, labels, true)
 
 					updateID, err := b.newUpdate(&messageUpdated{messageID: messageID})
 					if err != nil {
@@ -622,7 +664,7 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 
 								newMsg := newMessageFromSent(addrID, armBody, msg)
 								newMsg.flags |= proton.MessageFlagReceived
-								newMsg.addLabel(proton.InboxLabel, labels)
+								newMsg.addLabel(proton.InboxLabel, labels, true)
 								newMsg.unread = true
 								messages[newMsg.messageID] = newMsg
 

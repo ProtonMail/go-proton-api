@@ -177,11 +177,11 @@ func (s *Server) GetLabels(userID string) ([]proton.Label, error) {
 }
 
 func (s *Server) LabelMessage(userID, msgID, labelID string) error {
-	return s.b.LabelMessages(userID, labelID, msgID)
+	return s.b.LabelMessagesUnchecked(userID, labelID, msgID)
 }
 
 func (s *Server) UnlabelMessage(userID, msgID, labelID string) error {
-	return s.b.UnlabelMessages(userID, labelID, msgID)
+	return s.b.UnlabelMessagesUnchecked(userID, labelID, msgID)
 }
 
 func (s *Server) AddAddressCreatedEvent(userID, addrID string) error {

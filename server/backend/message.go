@@ -272,7 +272,7 @@ func (msg *message) applyChanges(changes proton.DraftTemplate) {
 	}
 }
 
-func (msg *message) addLabel(labelID string, labels map[string]*label) {
+func (msg *message) addLabel(labelID string, labels map[string]*label, doCheck bool) {
 	switch labelID {
 	case proton.InboxLabel, proton.SentLabel, proton.DraftsLabel:
 		msg.addFlagLabel(labelID, labels)
@@ -284,7 +284,7 @@ func (msg *message) addLabel(labelID string, labels map[string]*label) {
 		msg.starred = true
 
 	default:
-		if label, ok := labels[labelID]; ok {
+		if label, ok := labels[labelID]; ok || !doCheck {
 			msg.addUserLabel(label, labels)
 		}
 	}
@@ -320,7 +320,7 @@ func (msg *message) addUserLabel(label *label, labels map[string]*label) {
 	}
 }
 
-func (msg *message) remLabel(labelID string, labels map[string]*label) {
+func (msg *message) remLabel(labelID string, labels map[string]*label, doCheck bool) {
 	switch labelID {
 	case proton.InboxLabel, proton.SentLabel, proton.DraftsLabel:
 		msg.remFlagLabel(labelID, labels)
@@ -332,7 +332,7 @@ func (msg *message) remLabel(labelID string, labels map[string]*label) {
 		msg.starred = false
 
 	default:
-		if label, ok := labels[labelID]; ok {
+		if label, ok := labels[labelID]; ok || !doCheck {
 			msg.remUserLabel(label, labels)
 		}
 	}
