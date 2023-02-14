@@ -844,6 +844,11 @@ func TestServer_Labels(t *testing.T) {
 			wantLabelIDs: []string{proton.AllMailLabel, proton.AllSentLabel},
 		},
 		{
+			name:         "scheduled flag, no actions",
+			flags:        proton.MessageFlagScheduledSend,
+			wantLabelIDs: []string{proton.AllMailLabel, proton.AllSentLabel},
+		},
+		{
 			name:         "received flag, add inbox",
 			flags:        proton.MessageFlagReceived,
 			actions:      []any{add(proton.InboxLabel)},
@@ -856,6 +861,12 @@ func TestServer_Labels(t *testing.T) {
 			wantLabelIDs: []string{proton.SentLabel, proton.AllMailLabel, proton.AllSentLabel},
 		},
 		{
+			name:         "scheduled flag, add scheduled",
+			flags:        proton.MessageFlagScheduledSend,
+			actions:      []any{add(proton.AllScheduledLabel)},
+			wantLabelIDs: []string{proton.AllScheduledLabel, proton.AllMailLabel, proton.AllSentLabel},
+		},
+		{
 			name:         "received flag, add inbox then add archive",
 			flags:        proton.MessageFlagReceived,
 			actions:      []any{add(proton.InboxLabel), add(proton.ArchiveLabel)},
@@ -865,6 +876,12 @@ func TestServer_Labels(t *testing.T) {
 			name:         "sent flag, add sent then add archive",
 			flags:        proton.MessageFlagSent,
 			actions:      []any{add(proton.SentLabel), add(proton.ArchiveLabel)},
+			wantLabelIDs: []string{proton.ArchiveLabel, proton.AllMailLabel, proton.AllSentLabel},
+		},
+		{
+			name:         "scheduled flag, add scheduled then add archive",
+			flags:        proton.MessageFlagScheduledSend,
+			actions:      []any{add(proton.AllScheduledLabel), add(proton.ArchiveLabel)},
 			wantLabelIDs: []string{proton.ArchiveLabel, proton.AllMailLabel, proton.AllSentLabel},
 		},
 		{
@@ -880,6 +897,12 @@ func TestServer_Labels(t *testing.T) {
 			wantLabelIDs: []string{proton.AllMailLabel, proton.AllSentLabel},
 		},
 		{
+			name:         "scheduled flag, add scheduled then remove scheduled",
+			flags:        proton.MessageFlagScheduledSend,
+			actions:      []any{add(proton.AllScheduledLabel), rem(proton.AllScheduledLabel)},
+			wantLabelIDs: []string{proton.AllMailLabel, proton.AllSentLabel},
+		},
+		{
 			name:         "received flag, add inbox then remove archive",
 			flags:        proton.MessageFlagReceived,
 			actions:      []any{add(proton.InboxLabel), rem(proton.ArchiveLabel)},
@@ -890,6 +913,12 @@ func TestServer_Labels(t *testing.T) {
 			flags:        proton.MessageFlagSent,
 			actions:      []any{add(proton.SentLabel), rem(proton.ArchiveLabel)},
 			wantLabelIDs: []string{proton.SentLabel, proton.AllMailLabel, proton.AllSentLabel},
+		},
+		{
+			name:         "scheduled flag, add scheduled then remove archive",
+			flags:        proton.MessageFlagScheduledSend,
+			actions:      []any{add(proton.AllScheduledLabel), rem(proton.ArchiveLabel)},
+			wantLabelIDs: []string{proton.AllScheduledLabel, proton.AllMailLabel, proton.AllSentLabel},
 		},
 		{
 			name:         "received flag, add inbox then remove inbox then add archive",
@@ -904,6 +933,12 @@ func TestServer_Labels(t *testing.T) {
 			wantLabelIDs: []string{proton.ArchiveLabel, proton.AllMailLabel, proton.AllSentLabel},
 		},
 		{
+			name:         "scheduled flag, add scheduled then remove scheduled then add archive",
+			flags:        proton.MessageFlagScheduledSend,
+			actions:      []any{add(proton.AllScheduledLabel), rem(proton.AllScheduledLabel), add(proton.ArchiveLabel)},
+			wantLabelIDs: []string{proton.ArchiveLabel, proton.AllMailLabel, proton.AllSentLabel},
+		},
+		{
 			name:         "received flag, add starred",
 			flags:        proton.MessageFlagReceived,
 			actions:      []any{add(proton.StarredLabel)},
@@ -912,6 +947,12 @@ func TestServer_Labels(t *testing.T) {
 		{
 			name:         "sent flag, add starred",
 			flags:        proton.MessageFlagSent,
+			actions:      []any{add(proton.StarredLabel)},
+			wantLabelIDs: []string{proton.StarredLabel, proton.AllMailLabel, proton.AllSentLabel},
+		},
+		{
+			name:         "scheduled flag, add starred",
+			flags:        proton.MessageFlagScheduledSend,
 			actions:      []any{add(proton.StarredLabel)},
 			wantLabelIDs: []string{proton.StarredLabel, proton.AllMailLabel, proton.AllSentLabel},
 		},
@@ -928,6 +969,12 @@ func TestServer_Labels(t *testing.T) {
 			wantLabelIDs: []string{proton.StarredLabel, proton.AllMailLabel, proton.AllSentLabel},
 		},
 		{
+			name:         "scheduled flag, add scheduled, add starred, remove scheduled",
+			flags:        proton.MessageFlagScheduledSend,
+			actions:      []any{add(proton.AllScheduledLabel), add(proton.StarredLabel), rem(proton.AllScheduledLabel)},
+			wantLabelIDs: []string{proton.StarredLabel, proton.AllMailLabel, proton.AllSentLabel},
+		},
+		{
 			name:         "received flag, add trash, remove trash",
 			flags:        proton.MessageFlagReceived,
 			actions:      []any{add(proton.TrashLabel), rem(proton.TrashLabel)},
@@ -940,10 +987,22 @@ func TestServer_Labels(t *testing.T) {
 			wantLabelIDs: []string{proton.AllMailLabel, proton.AllSentLabel},
 		},
 		{
+			name:         "scheduled flag, add trash, remove trash",
+			flags:        proton.MessageFlagScheduledSend,
+			actions:      []any{add(proton.TrashLabel), rem(proton.TrashLabel)},
+			wantLabelIDs: []string{proton.AllMailLabel, proton.AllSentLabel},
+		},
+		{
 			name:         "received flag, add inbox, add trash, remove inbox",
 			flags:        proton.MessageFlagReceived,
 			actions:      []any{add(proton.InboxLabel), add(proton.TrashLabel), rem(proton.InboxLabel)},
 			wantLabelIDs: []string{proton.AllMailLabel, proton.TrashLabel},
+		},
+		{
+			name:         "scheduled & sent flags, add scheduled, add sent",
+			flags:        proton.MessageFlagScheduledSend | proton.MessageFlagSent,
+			actions:      []any{add(proton.AllScheduledLabel), add(proton.SentLabel)},
+			wantLabelIDs: []string{proton.AllMailLabel, proton.SentLabel, proton.AllSentLabel},
 		},
 	}
 
