@@ -527,12 +527,10 @@ func (s *Server) importAttachment(userID, messageID string, att *rfc822.Section)
 
 	var disposition, filename string
 
-	if header.Has("Content-Disposition") {
-		dispType, dispParams, err := mime.ParseMediaType(header.Get("Content-Disposition"))
-		if err != nil {
-			return proton.Attachment{}, fmt.Errorf("failed to parse attachment content disposition: %w", err)
-		}
-
+	if !header.Has("Content-Disposition") {
+		disposition = "attachment"
+		filename = "attachment.bin"
+	} else if dispType, dispParams, err := mime.ParseMediaType(header.Get("Content-Disposition")); err == nil {
 		disposition = dispType
 		filename = dispParams["filename"]
 	} else {

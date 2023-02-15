@@ -400,7 +400,9 @@ func (c *NetCtl) NewRoundTripper(tlsConfig *tls.Config) http.RoundTripper {
 		DialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			return c.dial(ctx, &tls.Dialer{Config: tlsConfig}, network, addr)
 		},
-		TLSClientConfig: tlsConfig,
+		TLSClientConfig:       tlsConfig,
+		ResponseHeaderTimeout: time.Second,
+		ExpectContinueTimeout: time.Second,
 	}
 }
 
