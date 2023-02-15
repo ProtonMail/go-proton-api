@@ -145,10 +145,13 @@ const (
 )
 
 type RevisionMetadata struct {
-	ID         string        // Encrypted Revision ID
-	CreateTime int64         // Unix timestamp of the revision creation time
-	Size       int64         // Size of the revision in bytes
-	State      RevisionState // State of revision
+	ID                string        // Encrypted Revision ID
+	ClientUID         string        // Client UID
+	CreateTime        int64         // Unix timestamp of the revision creation time
+	Size              int64         // Size of the revision in bytes
+	ManifestSignature string        // Signature of the revision manifest, signed with user's address key of the share.
+	SignatureEmail    string        // Email of the user that signed the revision.
+	State             RevisionState // State of revision
 }
 
 // Revisions are only for files, they represent “versions” of files.
@@ -166,19 +169,4 @@ const (
 	RevisionStateActive
 	RevisionStateObsolete
 	RevisionStateDeleted
-)
-
-type LinkEvent struct {
-	EventID    string        // Encrypted ID of the Event
-	CreateTime int64         // Time stamp of the creation time of the Event
-	EventType  LinkEventType // Type of event
-}
-
-type LinkEventType int
-
-const (
-	DeleteLinkEvent LinkEventType = iota
-	CreateLinkEvent
-	UpdateContentsLinkEvent
-	UpdateMetadataLinkEvent
 )
