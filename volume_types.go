@@ -23,6 +23,6 @@ type VolumeShare struct {
 type VolumeState int
 
 const (
-	ActiveVolumeState VolumeState = 1
-	LockedVolumeState VolumeState = 3
+	VolumeStateActive VolumeState = 1
+	VolumeStateLocked VolumeState = 3
 )
