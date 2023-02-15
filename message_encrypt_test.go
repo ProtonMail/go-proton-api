@@ -10,7 +10,50 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEncryptMessage(t *testing.T) {
+func TestEncryptMessage_Simple(t *testing.T) {
+	const message = `From: Nathaniel Borenstein <nsb@bellcore.com>
+To:  Ned Freed <ned@innosoft.com>
+Subject: Sample message (import 2)
+MIME-Version: 1.0
+Content-type: text/plain
+
+This is explicitly typed plain ASCII text.
+`
+	key, err := crypto.GenerateKey("foobar", "foo@bar.com", "x25519", 0)
+	require.NoError(t, err)
+
+	kr, err := crypto.NewKeyRing(key)
+	require.NoError(t, err)
+
+	encryptedMessage, err := EncryptRFC822(kr, []byte(message))
+	require.NoError(t, err)
+
+	section := rfc822.Parse(encryptedMessage)
+
+	// Check root header:
+	header, err := section.ParseHeader()
+	require.NoError(t, err)
+
+	assert.Equal(t, header.Get("From"), "Nathaniel Borenstein <nsb@bellcore.com>")
+	assert.Equal(t, header.Get("To"), "Ned Freed <ned@innosoft.com>")
+	assert.Equal(t, header.Get("Subject"), "Sample message (import 2)")
+	assert.Equal(t, header.Get("MIME-Version"), "1.0")
+
+	// Read the body.
+	body, err := section.DecodedBody()
+	require.NoError(t, err)
+
+	// Unarmor the PGP message.
+	enc, err := crypto.NewPGPMessageFromArmored(string(body))
+	require.NoError(t, err)
+
+	// Decrypt the PGP message.
+	dec, err := kr.Decrypt(enc, nil, crypto.GetUnixTime())
+	require.NoError(t, err)
+	require.Equal(t, "This is explicitly typed plain ASCII text.\n", dec.GetString())
+}
+
+func TestEncryptMessage_MultipleTextParts(t *testing.T) {
 	const message = `From: Nathaniel Borenstein <nsb@bellcore.com>
 To:  Ned Freed <ned@innosoft.com>
 Subject: Sample message (import 2)
