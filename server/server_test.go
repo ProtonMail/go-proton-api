@@ -1441,42 +1441,41 @@ func TestServer_Messages_Fetch(t *testing.T) {
 	}, WithTLS(false))
 }
 
-func TestServer_Messages_Status(t *testing.T) {
+func TestServer_Status(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
-			withMessages(ctx, t, c, "pass", 1000, func(messageIDs []string) {
-				ctl := proton.NewNetCtl()
+		withUser(ctx, t, s, m, "user", "pass", func(*proton.Client) {
+			ctl := proton.NewNetCtl()
 
-				mm := proton.New(
-					proton.WithHostURL(s.GetHostURL()),
-					proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
-				)
-				defer mm.Close()
+			mm := proton.New(
+				proton.WithHostURL(s.GetHostURL()),
+				proton.WithTransport(ctl.NewRoundTripper(&tls.Config{InsecureSkipVerify: true})),
+			)
+			defer mm.Close()
 
-				statusCh := make(chan proton.Status, 1)
+			statusCh := make(chan proton.Status, 1)
 
-				mm.AddStatusObserver(func(status proton.Status) {
-					statusCh <- status
-				})
-
-				cc, _, err := mm.NewClientWithLogin(ctx, "user", []byte("pass"))
-				require.NoError(t, err)
-				defer cc.Close()
-
-				total := countBytesRead(ctl, func() {
-					res, err := stream.Collect(ctx, getFullMessages(ctx, cc, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
-					require.NoError(t, err)
-					require.NotEmpty(t, res)
-				})
-
-				ctl.SetReadLimit(total / 2)
-
-				res, err := stream.Collect(ctx, getFullMessages(ctx, cc, runtime.NumCPU(), runtime.NumCPU(), messageIDs...))
-				require.Error(t, err)
-				require.Empty(t, res)
-
-				require.Equal(t, proton.StatusDown, <-statusCh)
+			mm.AddStatusObserver(func(status proton.Status) {
+				statusCh <- status
 			})
+
+			cc, _, err := mm.NewClientWithLogin(ctx, "user", []byte("pass"))
+			require.NoError(t, err)
+			defer cc.Close()
+
+			{
+				user, err := cc.GetUser(ctx)
+				require.NoError(t, err)
+				require.Equal(t, "user", user.Name)
+			}
+
+			ctl.SetCanRead(false)
+
+			{
+				_, err := cc.GetUser(ctx)
+				require.Error(t, err)
+			}
+
+			require.Equal(t, proton.StatusDown, <-statusCh)
 		})
 	}, WithTLS(false))
 }
