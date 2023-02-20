@@ -19,3 +19,17 @@ func (c *Client) ListChildren(ctx context.Context, shareID, linkID string) ([]Li
 
 	return res.Links, nil
 }
+
+func (c *Client) CreateFolder(ctx context.Context, shareID string, req CreateFolderReq) (CreateFolderRes, error) {
+	var res struct {
+		File CreateFolderRes
+	}
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetResult(&res).SetBody(req).Post("/drive/shares/" + shareID + "/folders")
+	}); err != nil {
+		return CreateFolderRes{}, err
+	}
+
+	return res.File, nil
+}
