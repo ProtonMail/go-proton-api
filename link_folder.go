@@ -22,7 +22,7 @@ func (c *Client) ListChildren(ctx context.Context, shareID, linkID string) ([]Li
 
 func (c *Client) CreateFolder(ctx context.Context, shareID string, req CreateFolderReq) (CreateFolderRes, error) {
 	var res struct {
-		File CreateFolderRes
+		Folder CreateFolderRes
 	}
 
 	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
@@ -31,5 +31,5 @@ func (c *Client) CreateFolder(ctx context.Context, shareID string, req CreateFol
 		return CreateFolderRes{}, err
 	}
 
-	return res.File, nil
+	return res.Folder, nil
 }
