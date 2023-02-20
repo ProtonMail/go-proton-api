@@ -16,6 +16,5 @@ type CreateFolderReq struct {
 }
 
 type CreateFolderRes struct {
-	ID         string // Encrypted Link ID
-	RevisionID string // Encrypted Revision ID
+	ID string // Encrypted Link ID
 }
