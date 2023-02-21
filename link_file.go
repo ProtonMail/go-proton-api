@@ -6,20 +6,6 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func (c *Client) CreateFile(ctx context.Context, shareID string, req CreateFileReq) (CreateFileRes, error) {
-	var res struct {
-		File CreateFileRes
-	}
-
-	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetResult(&res).SetBody(req).Post("/drive/shares/" + shareID + "/files")
-	}); err != nil {
-		return CreateFileRes{}, err
-	}
-
-	return res.File, nil
-}
-
 func (c *Client) ListRevisions(ctx context.Context, shareID, linkID string) ([]RevisionMetadata, error) {
 	var res struct {
 		Revisions []RevisionMetadata
