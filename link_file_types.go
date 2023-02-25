@@ -14,7 +14,6 @@ type CreateFileReq struct {
 	NodePassphrase          string // The passphrase used to unlock the NodeKey, encrypted by the owning Link/Share keyring.
 	NodePassphraseSignature string // The signature of the NodePassphrase
 
-	ClientUID        string // Client UID (useful for marking client's drafts)
 	SignatureAddress string // Signature email address used to sign passphrase and name
 }
 
