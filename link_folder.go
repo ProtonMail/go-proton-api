@@ -3,6 +3,7 @@ package proton
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/go-resty/resty/v2"
@@ -13,13 +14,29 @@ func (c *Client) ListChildren(ctx context.Context, shareID, linkID string) ([]Li
 		Links []Link
 	}
 
-	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetResult(&res).Get("/drive/shares/" + shareID + "/folders/" + linkID + "/children")
-	}); err != nil {
-		return nil, err
+	var links []Link
+
+	for page := 0; ; page++ {
+		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+			return r.
+				SetQueryParams(map[string]string{
+					"Page":     strconv.Itoa(page),
+					"PageSize": strconv.Itoa(maxPageSize),
+				}).
+				SetResult(&res).
+				Get("/drive/shares/" + shareID + "/folders/" + linkID + "/children")
+		}); err != nil {
+			return nil, err
+		}
+
+		if len(res.Links) == 0 {
+			break
+		}
+
+		links = append(links, res.Links...)
 	}
 
-	return res.Links, nil
+	return links, nil
 }
 
 func (c *Client) TrashChildren(ctx context.Context, shareID, linkID string, childIDs ...string) error {
@@ -34,7 +51,7 @@ func (c *Client) TrashChildren(ctx context.Context, shareID, linkID string, chil
 		}
 	}
 
-	for _, childIDs := range xslices.Chunk(childIDs, 150) {
+	for _, childIDs := range xslices.Chunk(childIDs, maxPageSize) {
 		req := struct {
 			LinkIDs []string
 		}{
@@ -69,7 +86,7 @@ func (c *Client) DeleteChildren(ctx context.Context, shareID, linkID string, chi
 		}
 	}
 
-	for _, childIDs := range xslices.Chunk(childIDs, 150) {
+	for _, childIDs := range xslices.Chunk(childIDs, maxPageSize) {
 		req := struct {
 			LinkIDs []string
 		}{
