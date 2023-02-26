@@ -9,7 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func (c *Client) ListChildren(ctx context.Context, shareID, linkID string) ([]Link, error) {
+func (c *Client) ListChildren(ctx context.Context, shareID, linkID string, all bool) ([]Link, error) {
 	var res struct {
 		Links []Link
 	}
@@ -22,6 +22,7 @@ func (c *Client) ListChildren(ctx context.Context, shareID, linkID string) ([]Li
 				SetQueryParams(map[string]string{
 					"Page":     strconv.Itoa(page),
 					"PageSize": strconv.Itoa(maxPageSize),
+					"ShowAll":  Bool(all).FormatURL(),
 				}).
 				SetResult(&res).
 				Get("/drive/shares/" + shareID + "/folders/" + linkID + "/children")

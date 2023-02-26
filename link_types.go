@@ -21,6 +21,7 @@ type Link struct {
 	Name     string // Encrypted file name
 	Hash     string // HMAC of name encrypted with parent hash key
 	Size     int64
+	State    LinkState
 	MIMEType string
 
 	CreateTime     int64 // Link creation time
@@ -34,6 +35,16 @@ type Link struct {
 	FileProperties   *FileProperties
 	FolderProperties *FolderProperties
 }
+
+type LinkState int
+
+const (
+	LinkStateDraft LinkState = iota
+	LinkStateActive
+	LinkStateTrashed
+	LinkStateDeleted
+	LinkStateRestoring
+)
 
 func (l Link) GetName(parentNodeKR, addrKR *crypto.KeyRing) (string, error) {
 	encName, err := crypto.NewPGPMessageFromArmored(l.Name)
