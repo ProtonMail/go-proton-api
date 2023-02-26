@@ -36,3 +36,19 @@ func (b Bool) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(v)
 }
+
+func (b Bool) String() string {
+	if b {
+		return "true"
+	}
+
+	return "false"
+}
+
+func (b Bool) FormatURL() string {
+	if b {
+		return "1"
+	}
+
+	return "0"
+}
