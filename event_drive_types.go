@@ -15,9 +15,9 @@ type LinkEvent struct {
 
 	CreateTime int
 
-	Data string
-
 	Link Link
+
+	Data any
 }
 
 type LinkEventType int
