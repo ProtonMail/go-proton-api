@@ -1,6 +1,6 @@
 package proton
 
-type VolumeEvent struct {
+type DriveEvent struct {
 	EventID string
 
 	Events []LinkEvent
