@@ -9,7 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func (c *Client) ListChildren(ctx context.Context, shareID, linkID string, all bool) ([]Link, error) {
+func (c *Client) ListChildren(ctx context.Context, shareID, linkID string, showAll bool) ([]Link, error) {
 	var res struct {
 		Links []Link
 	}
@@ -22,7 +22,7 @@ func (c *Client) ListChildren(ctx context.Context, shareID, linkID string, all b
 				SetQueryParams(map[string]string{
 					"Page":     strconv.Itoa(page),
 					"PageSize": strconv.Itoa(maxPageSize),
-					"ShowAll":  Bool(all).FormatURL(),
+					"ShowAll":  Bool(showAll).FormatURL(),
 				}).
 				SetResult(&res).
 				Get("/drive/shares/" + shareID + "/folders/" + linkID + "/children")
@@ -67,7 +67,7 @@ func (c *Client) TrashChildren(ctx context.Context, shareID, linkID string, chil
 
 		for _, res := range res.Responses.Responses {
 			if res.LinkResponse.Response.Code != SuccessCode {
-				return fmt.Errorf("failed to import message: %w", res.LinkResponse.Response)
+				return fmt.Errorf("failed to trash child: %w", res.LinkResponse.Response)
 			}
 		}
 	}
@@ -102,7 +102,7 @@ func (c *Client) DeleteChildren(ctx context.Context, shareID, linkID string, chi
 
 		for _, res := range res.Responses.Responses {
 			if res.LinkResponse.Response.Code != SuccessCode {
-				return fmt.Errorf("failed to import message: %w", res.LinkResponse.Response)
+				return fmt.Errorf("failed to delete child: %w", res.LinkResponse.Response)
 			}
 		}
 	}
