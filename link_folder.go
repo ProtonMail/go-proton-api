@@ -60,7 +60,7 @@ func (c *Client) TrashChildren(ctx context.Context, shareID, linkID string, chil
 		}
 
 		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-			return r.SetBody(req).SetResult(&res).Get("/drive/shares/" + shareID + "/folders/" + linkID + "/trash_multiple")
+			return r.SetBody(req).SetResult(&res).Post("/drive/shares/" + shareID + "/folders/" + linkID + "/trash_multiple")
 		}); err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func (c *Client) DeleteChildren(ctx context.Context, shareID, linkID string, chi
 		}
 
 		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-			return r.SetBody(req).SetResult(&res).Get("/drive/shares/" + shareID + "/folders/" + linkID + "/delete_multiple")
+			return r.SetBody(req).SetResult(&res).Post("/drive/shares/" + shareID + "/folders/" + linkID + "/delete_multiple")
 		}); err != nil {
 			return err
 		}
