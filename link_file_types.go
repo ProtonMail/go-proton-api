@@ -14,7 +14,7 @@ type CreateFileReq struct {
 	NodePassphrase          string // The passphrase used to unlock the NodeKey, encrypted by the owning Link/Share keyring.
 	NodePassphraseSignature string // The signature of the NodePassphrase
 
-	SignatureAddress string // Signature email address used to sign passphrase and name
+	SignatureEmail string // Signature email address used to sign passphrase and name
 }
 
 type CreateFileRes struct {
@@ -26,7 +26,7 @@ type UpdateRevisionReq struct {
 	BlockList         []BlockToken
 	State             RevisionState
 	ManifestSignature string
-	SignatureAddress  string
+	SignatureEmail    string
 }
 
 type BlockToken struct {

@@ -12,7 +12,7 @@ type CreateFolderReq struct {
 	NodePassphrase          string
 	NodePassphraseSignature string
 
-	SignatureAddress string
+	SignatureEmail string
 }
 
 type CreateFolderRes struct {
