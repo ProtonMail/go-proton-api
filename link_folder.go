@@ -42,13 +42,9 @@ func (c *Client) ListChildren(ctx context.Context, shareID, linkID string, showA
 
 func (c *Client) TrashChildren(ctx context.Context, shareID, linkID string, childIDs ...string) error {
 	var res struct {
-		Responses struct {
-			Responses []struct {
-				LinkResponse struct {
-					LinkID   string
-					Response APIError
-				}
-			}
+		Responses []struct {
+			LinkID   string
+			Response APIError
 		}
 	}
 
@@ -65,9 +61,9 @@ func (c *Client) TrashChildren(ctx context.Context, shareID, linkID string, chil
 			return err
 		}
 
-		for _, res := range res.Responses.Responses {
-			if res.LinkResponse.Response.Code != SuccessCode {
-				return fmt.Errorf("failed to trash child: %w", res.LinkResponse.Response)
+		for _, res := range res.Responses {
+			if res.Response.Code != SuccessCode {
+				return fmt.Errorf("failed to trash child: %w", res.Response)
 			}
 		}
 	}
@@ -77,13 +73,9 @@ func (c *Client) TrashChildren(ctx context.Context, shareID, linkID string, chil
 
 func (c *Client) DeleteChildren(ctx context.Context, shareID, linkID string, childIDs ...string) error {
 	var res struct {
-		Responses struct {
-			Responses []struct {
-				LinkResponse struct {
-					LinkID   string
-					Response APIError
-				}
-			}
+		Responses []struct {
+			LinkID   string
+			Response APIError
 		}
 	}
 
@@ -100,9 +92,9 @@ func (c *Client) DeleteChildren(ctx context.Context, shareID, linkID string, chi
 			return err
 		}
 
-		for _, res := range res.Responses.Responses {
-			if res.LinkResponse.Response.Code != SuccessCode {
-				return fmt.Errorf("failed to delete child: %w", res.LinkResponse.Response)
+		for _, res := range res.Responses {
+			if res.Response.Code != SuccessCode {
+				return fmt.Errorf("failed to delete child: %w", res.Response)
 			}
 		}
 	}
