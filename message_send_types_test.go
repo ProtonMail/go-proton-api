@@ -380,3 +380,63 @@ func TestSendDraftReq_AddPackage(t *testing.T) {
 		})
 	}
 }
+
+func TestSendDraftReq_AddClearPackage(t *testing.T) {
+	key, err := crypto.GenerateKey("name", "email", "rsa", 2048)
+	require.NoError(t, err)
+
+	kr, err := crypto.NewKeyRing(key)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name    string
+		body    string
+		prefs   map[string]SendPreferences
+		attKeys map[string]*crypto.SessionKey
+		wantErr bool
+	}{
+		{
+			name: "clear plain text with signature",
+			body: "this is a text/plain body",
+			prefs: map[string]SendPreferences{"clear-plain-with-sig@email.com": {
+				Encrypt:          false,
+				SignatureType:    DetachedSignature,
+				EncryptionScheme: ClearScheme,
+				MIMEType:         rfc822.TextPlain,
+			}},
+			wantErr: false,
+		},
+		{
+			name: "clear plain text with bad scheme (error)",
+			body: "this is a text/plain body",
+			prefs: map[string]SendPreferences{"clear-plain-with-sig@email.com": {
+				Encrypt:          false,
+				SignatureType:    DetachedSignature,
+				EncryptionScheme: PGPInlineScheme,
+				MIMEType:         rfc822.TextPlain,
+			}},
+			wantErr: true,
+		},
+		{
+			name: "clear rich text with signature (error)",
+			body: "this is a text/html body",
+			prefs: map[string]SendPreferences{"clear-plain-with-sig@email.com": {
+				Encrypt:          false,
+				SignatureType:    DetachedSignature,
+				EncryptionScheme: ClearScheme,
+				MIMEType:         rfc822.TextHTML,
+			}},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var req SendDraftReq
+
+			if err := req.AddClearSignedPackage(kr, tt.body, tt.prefs, tt.attKeys); (err != nil) != tt.wantErr {
+				t.Errorf("SendDraftReq.AddPackage() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
