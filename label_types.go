@@ -21,7 +21,9 @@ const (
 )
 
 type Label struct {
-	ID    string
+	ID       string
+	ParentID string
+
 	Name  string
 	Path  []string
 	Color string
