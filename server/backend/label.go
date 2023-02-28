@@ -31,9 +31,10 @@ func (label *label) toLabel(labels map[string]*label) proton.Label {
 	}
 
 	return proton.Label{
-		ID:   label.labelID,
-		Name: label.name,
-		Path: path,
-		Type: label.labelType,
+		ID:       label.labelID,
+		ParentID: label.parentID,
+		Name:     label.name,
+		Path:     path,
+		Type:     label.labelType,
 	}
 }
