@@ -71,26 +71,52 @@ func (event Event) String() string {
 }
 
 // merge combines this event with the other event (assumed to be newer!).
-// TODO: Intelligent merging: if there are multiple EventUpdate(Flags) events, can we just take the latest one?
-func (event *Event) merge(other Event) error {
-	event.EventID = other.EventID
+func (event *Event) merge(next Event) error {
+	event.EventID = next.EventID
 
-	if other.User != nil {
-		event.User = other.User
+	if next.User != nil {
+		event.User = next.User
 	}
 
-	if other.MailSettings != nil {
-		event.MailSettings = other.MailSettings
+	if next.MailSettings != nil {
+		event.MailSettings = next.MailSettings
 	}
 
-	// For now, label events are simply appended.
-	event.Labels = append(event.Labels, other.Labels...)
+	for _, nextLabel := range next.Labels {
+		if nextLabel.Action == EventUpdate {
+			if idx := xslices.IndexFunc(event.Labels, func(old LabelEvent) bool {
+				return old.Action == EventUpdate && old.ID == nextLabel.ID
+			}); idx > 0 {
+				event.Labels = append(xslices.Remove(event.Labels, idx, 1), nextLabel)
+			}
+		} else {
+			event.Labels = append(event.Labels, nextLabel)
+		}
+	}
 
-	// For now, message events are simply appended.
-	event.Messages = append(event.Messages, other.Messages...)
+	for _, nextMsg := range next.Messages {
+		if nextMsg.Action == EventUpdate {
+			if idx := xslices.IndexFunc(event.Messages, func(old MessageEvent) bool {
+				return old.Action == EventUpdate && old.ID == nextMsg.ID
+			}); idx > 0 {
+				event.Messages = append(xslices.Remove(event.Messages, idx, 1), nextMsg)
+			}
+		} else {
+			event.Messages = append(event.Messages, nextMsg)
+		}
+	}
 
-	// For now, address events are simply appended.
-	event.Addresses = append(event.Addresses, other.Addresses...)
+	for _, nextAddr := range next.Addresses {
+		if nextAddr.Action == EventUpdate {
+			if idx := xslices.IndexFunc(event.Addresses, func(old AddressEvent) bool {
+				return old.Action == EventUpdate && old.ID == nextAddr.ID
+			}); idx > 0 {
+				event.Addresses = append(xslices.Remove(event.Addresses, idx, 1), nextAddr)
+			}
+		} else {
+			event.Addresses = append(event.Addresses, nextAddr)
+		}
+	}
 
 	return nil
 }
