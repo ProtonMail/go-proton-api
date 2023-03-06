@@ -141,7 +141,11 @@ func (b *Backend) RefreshUser(userID string, refresh proton.RefreshFlag) error {
 			return err
 		}
 
-		acc.updateIDs = append(acc.updateIDs, updateID)
+		if refresh == proton.RefreshAll {
+			acc.updateIDs = []ID{updateID}
+		} else {
+			acc.updateIDs = append(acc.updateIDs, updateID)
+		}
 
 		return nil
 	})
