@@ -33,8 +33,9 @@ type Backend struct {
 	labels  map[string]*label
 	lblLock sync.Mutex
 
-	updates     map[ID]update
-	updatesLock sync.RWMutex
+	updates            map[ID]update
+	updatesLock        sync.RWMutex
+	maxUpdatesPerEvent int
 
 	srp     map[string]*srp.Server
 	srpLock sync.Mutex
@@ -44,20 +45,25 @@ type Backend struct {
 
 func New(authLife time.Duration, domain string) *Backend {
 	return &Backend{
-		domain:      domain,
-		accounts:    make(map[string]*account),
-		attachments: make(map[string]*attachment),
-		attData:     make(map[string][]byte),
-		messages:    make(map[string]*message),
-		labels:      make(map[string]*label),
-		updates:     make(map[ID]update),
-		srp:         make(map[string]*srp.Server),
-		authLife:    authLife,
+		domain:             domain,
+		accounts:           make(map[string]*account),
+		attachments:        make(map[string]*attachment),
+		attData:            make(map[string][]byte),
+		messages:           make(map[string]*message),
+		labels:             make(map[string]*label),
+		updates:            make(map[ID]update),
+		maxUpdatesPerEvent: 0,
+		srp:                make(map[string]*srp.Server),
+		authLife:           authLife,
 	}
 }
 
 func (b *Backend) SetAuthLife(authLife time.Duration) {
 	b.authLife = authLife
+}
+
+func (b *Backend) SetMaxUpdatesPerEvent(max int) {
+	b.maxUpdatesPerEvent = max
 }
 
 func (b *Backend) CreateUser(username string, password []byte) (string, error) {

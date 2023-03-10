@@ -21,26 +21,37 @@ func (c *Client) GetLatestEventID(ctx context.Context) (string, error) {
 	return res.EventID, nil
 }
 
-func (c *Client) GetEvent(ctx context.Context, eventID string) (Event, error) {
+// maxMergedEvents limits the number of events which are merged per one GetEvent
+// call.
+const maxMergedEvents = 50
+
+func (c *Client) GetEvent(ctx context.Context, eventID string) (Event, bool, error) {
 	event, more, err := c.getEvent(ctx, eventID)
 	if err != nil {
-		return Event{}, err
+		return Event{}, more, err
 	}
 
+	nMerged := 0
+
 	for more {
+		nMerged++
+		if nMerged >= maxMergedEvents {
+			break
+		}
+
 		var next Event
 
 		next, more, err = c.getEvent(ctx, event.EventID)
 		if err != nil {
-			return Event{}, err
+			return Event{}, false, err
 		}
 
 		if err := event.merge(next); err != nil {
-			return Event{}, err
+			return Event{}, false, err
 		}
 	}
 
-	return event, nil
+	return event, more, nil
 }
 
 // NewEventStreamer returns a new event stream.
@@ -63,7 +74,7 @@ func (c *Client) NewEventStream(ctx context.Context, period, jitter time.Duratio
 				// ...
 			}
 
-			event, err := c.GetEvent(ctx, lastEventID)
+			event, _, err := c.GetEvent(ctx, lastEventID)
 			if err != nil {
 				continue
 			}

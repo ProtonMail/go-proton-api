@@ -196,6 +196,11 @@ func (s *Server) AddMessageCreatedEvent(userID, messageID string) error {
 	return s.b.AddMessageCreatedUpdate(userID, messageID)
 }
 
+// SetMaxUpdatesPerEvent
+func (s *Server) SetMaxUpdatesPerEvent(max int) {
+	s.b.SetMaxUpdatesPerEvent(max)
+}
+
 func (s *Server) SetAuthLife(authLife time.Duration) {
 	s.b.SetAuthLife(authLife)
 }

@@ -730,19 +730,32 @@ func (b *Backend) GetLatestEventID(userID string) (string, error) {
 	})
 }
 
-func (b *Backend) GetEvent(userID, rawEventID string) (proton.Event, error) {
+func getLastUpdateIndex(total, first, max int) int {
+	if max <= 0 || first+max > total {
+		return total
+	}
+
+	return first + max
+}
+
+func (b *Backend) GetEvent(userID, rawEventID string) (event proton.Event, more bool, err error) {
 	var eventID ID
 
 	if err := eventID.FromString(rawEventID); err != nil {
-		return proton.Event{}, fmt.Errorf("invalid event ID: %s", rawEventID)
+		return proton.Event{}, false, fmt.Errorf("invalid event ID: %s", rawEventID)
 	}
 
-	return withAcc(b, userID, func(acc *account) (proton.Event, error) {
+	more = false
+
+	event, err = withAcc(b, userID, func(acc *account) (proton.Event, error) {
 		return withMessages(b, func(messages map[string]*message) (proton.Event, error) {
 			return withLabels(b, func(labels map[string]*label) (proton.Event, error) {
 				return withAtts(b, func(attachments map[string]*attachment) (proton.Event, error) {
+					firstUpdate := xslices.Index(acc.updateIDs, eventID) + 1
+					lastUpdate := getLastUpdateIndex(len(acc.updateIDs), firstUpdate, b.maxUpdatesPerEvent)
+
 					updates, err := withUpdates(b, func(updates map[ID]update) ([]update, error) {
-						return merge(xslices.Map(acc.updateIDs[xslices.Index(acc.updateIDs, eventID)+1:], func(updateID ID) update {
+						return merge(xslices.Map(acc.updateIDs[firstUpdate:lastUpdate], func(updateID ID) update {
 							return updates[updateID]
 						})), nil
 					})
@@ -750,11 +763,19 @@ func (b *Backend) GetEvent(userID, rawEventID string) (proton.Event, error) {
 						return proton.Event{}, fmt.Errorf("failed to merge updates: %w", err)
 					}
 
-					return buildEvent(updates, acc.addresses, messages, labels, acc.updateIDs[len(acc.updateIDs)-1].String(), b.attData, attachments), nil
+					more = lastUpdate != len(acc.updateIDs)
+
+					return buildEvent(updates, acc.addresses, messages, labels, acc.updateIDs[lastUpdate-1].String(), b.attData, attachments), nil
 				})
 			})
 		})
 	})
+
+	if err != nil {
+		return proton.Event{}, false, err
+	}
+
+	return event, more, nil
 }
 
 func (b *Backend) GetPublicKeys(email string) ([]proton.PublicKey, error) {

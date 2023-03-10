@@ -7,6 +7,7 @@ import (
 
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,4 +68,48 @@ func TestEventStreamer(t *testing.T) {
 	default:
 		// ...
 	}
+}
+
+func TestMaxEventMerge(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	s := server.New()
+	defer s.Close()
+
+	s.SetMaxUpdatesPerEvent(1)
+
+	m := proton.New(
+		proton.WithHostURL(s.GetHostURL()),
+		proton.WithTransport(proton.InsecureTransport()),
+	)
+
+	_, _, err := s.CreateUser("user", []byte("pass"))
+	require.NoError(t, err)
+
+	c, _, err := m.NewClientWithLogin(ctx, "user", []byte("pass"))
+	require.NoError(t, err)
+
+	latestID, err := c.GetLatestEventID(ctx)
+	require.NoError(t, err)
+
+	label, err := c.CreateLabel(context.Background(), proton.CreateLabelReq{
+		Name:  uuid.NewString(),
+		Color: "#f66",
+		Type:  proton.LabelTypeFolder,
+	})
+	require.NoError(t, err)
+
+	for i := 0; i < 75; i++ {
+		_, err := c.UpdateLabel(ctx, label.ID, proton.UpdateLabelReq{Name: uuid.NewString()})
+		require.NoError(t, err)
+	}
+
+	event, more, err := c.GetEvent(ctx, latestID)
+	require.NoError(t, err)
+	require.True(t, more)
+
+	event, more, err = c.GetEvent(ctx, event.EventID)
+	require.NoError(t, err)
+	require.False(t, more)
 }
