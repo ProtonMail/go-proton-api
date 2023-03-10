@@ -292,8 +292,9 @@ func TestServer_MessagesDeleteAfterUpdate(t *testing.T) {
 				require.NoError(t, c.DeleteMessage(ctx, messageIDs[0:500]...))
 
 				// Get the event reflecting this change.
-				event, err := c.GetEvent(ctx, eventID)
+				event, more, err := c.GetEvent(ctx, eventID)
 				require.NoError(t, err)
+				require.False(t, more)
 
 				// The event should have the correct number of message events.
 				require.Len(t, event.Messages, 500)
@@ -400,15 +401,17 @@ func TestServer_Events_Multi(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, latest, latestAgain)
 
-				event, err := c.GetEvent(ctx, latest)
+				event, more, err := c.GetEvent(ctx, latest)
 				require.NoError(t, err)
+				require.False(t, more)
 
 				// The event should be empty.
 				require.Equal(t, proton.Event{EventID: event.EventID}, event)
 
 				// After fetching an empty event, its ID should still be the latest.
-				eventAgain, err := c.GetEvent(ctx, event.EventID)
+				eventAgain, more, err := c.GetEvent(ctx, event.EventID)
 				require.NoError(t, err)
+				require.False(t, more)
 				require.Equal(t, eventAgain.EventID, event.EventID)
 			})
 		}
