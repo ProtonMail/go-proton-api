@@ -42,7 +42,7 @@ type APIError struct {
 }
 
 func (err APIError) Error() string {
-	return err.Message
+	return fmt.Sprintf("%v (Code=%v, Status=%v)", err.Message, err.Code, err.Status)
 }
 
 // NetError represents a network error. It is returned when the API is unreachable.
