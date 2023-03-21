@@ -82,7 +82,19 @@ func catchAPIError(_ *resty.Client, res *resty.Response) error {
 		apiErr.Status = res.StatusCode()
 		err = apiErr
 	} else {
-		err = fmt.Errorf("%v", res.Status())
+		statusCode := res.StatusCode()
+		statusText := res.Status()
+
+		// Catch error that may slip through when APIError deserialization routine fails for whichever reason.
+		if statusCode >= 400 {
+			err = &APIError{
+				Status:  statusCode,
+				Code:    0,
+				Message: statusText,
+			}
+		} else {
+			err = fmt.Errorf("%v", res.Status())
+		}
 	}
 
 	return fmt.Errorf("%v: %w", res.StatusCode(), err)

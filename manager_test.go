@@ -318,6 +318,28 @@ func TestStatusCallbacks(t *testing.T) {
 	require.Equal(t, proton.StatusUp, <-statusCh)
 }
 
+func Test503IsReportedAsAPIError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer ts.Close()
+
+	m := proton.New(
+		proton.WithHostURL(ts.URL),
+		proton.WithRetryCount(5),
+	)
+
+	c := m.NewClient("", "", "")
+	defer c.Close()
+
+	_, err := c.GetAddresses(context.Background())
+	require.Error(t, err)
+
+	var protonErr *proton.APIError
+	require.True(t, errors.As(err, &protonErr))
+	require.Equal(t, 503, protonErr.Status)
+}
+
 type failingRoundTripper struct {
 	http.RoundTripper
 
