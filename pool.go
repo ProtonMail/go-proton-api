@@ -14,23 +14,26 @@ var ErrJobCancelled = errors.New("job cancelled by surrounding context")
 
 // Pool is a worker pool that handles input of type In and returns results of type Out.
 type Pool[In comparable, Out any] struct {
-	queue *queue.QueuedChannel[*job[In, Out]]
-	wg    sync.WaitGroup
+	queue        *queue.QueuedChannel[*job[In, Out]]
+	wg           sync.WaitGroup
+	panicHandler queue.PanicHandler
 }
 
 // doneFunc must be called to free up pool resources.
 type doneFunc func()
 
 // New returns a new pool.
-func NewPool[In comparable, Out any](size int, work func(context.Context, In) (Out, error)) *Pool[In, Out] {
+func NewPool[In comparable, Out any](size int, panicHandler queue.PanicHandler, work func(context.Context, In) (Out, error)) *Pool[In, Out] {
 	pool := &Pool[In, Out]{
-		queue: queue.NewQueuedChannel[*job[In, Out]](0, 0),
+		queue: queue.NewQueuedChannel[*job[In, Out]](0, 0, panicHandler),
 	}
 
 	for i := 0; i < size; i++ {
 		pool.wg.Add(1)
 
 		go func() {
+			defer pool.handlePanic()
+
 			defer pool.wg.Done()
 
 			for job := range pool.queue.GetChannel() {
@@ -55,6 +58,12 @@ func NewPool[In comparable, Out any](size int, work func(context.Context, In) (O
 	return pool
 }
 
+func (pool *Pool[In, Out]) handlePanic() {
+	if pool.panicHandler != nil {
+		pool.panicHandler.HandlePanic()
+	}
+}
+
 // Process submits jobs to the pool. The callback provides access to the result, or an error if one occurred.
 func (pool *Pool[In, Out]) Process(ctx context.Context, reqs []In, fn func(int, In, Out, error) error) error {
 	ctx, cancel := context.WithCancel(ctx)
@@ -72,6 +81,8 @@ func (pool *Pool[In, Out]) Process(ctx context.Context, reqs []In, fn func(int, 
 		wg.Add(1)
 
 		go func(index int) {
+			defer pool.handlePanic()
+
 			defer wg.Done()
 
 			job, done, err := pool.newJob(ctx, req)

@@ -60,9 +60,11 @@ func (c *Client) NewEventStream(ctx context.Context, period, jitter time.Duratio
 	eventCh := make(chan Event)
 
 	go func() {
+		defer c.m.handlePanic()
+
 		defer close(eventCh)
 
-		ticker := NewTicker(period, jitter)
+		ticker := NewTicker(period, jitter, c.m.panicHandler)
 		defer ticker.Stop()
 
 		for {

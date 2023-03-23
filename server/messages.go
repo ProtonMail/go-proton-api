@@ -483,11 +483,12 @@ func (s *Server) importBody(
 
 	headerDate := header.Get("Date")
 	if len(headerDate) != 0 {
-		if d, err := mail.ParseDate(headerDate); err != nil {
+		d, err := mail.ParseDate(headerDate)
+		if err != nil {
 			return "", err
-		} else {
-			date = d
 		}
+
+		date = d
 	}
 
 	// NOTE: Importing without sender adds empty sender on API side

@@ -1,7 +1,10 @@
 package proton
 
+import "github.com/ProtonMail/gluon/queue"
+
 type Future[T any] struct {
-	resCh chan res[T]
+	resCh        chan res[T]
+	panicHandler queue.PanicHandler
 }
 
 type res[T any] struct {
@@ -9,24 +12,38 @@ type res[T any] struct {
 	err error
 }
 
-func NewFuture[T any](fn func() (T, error)) *Future[T] {
+func NewFuture[T any](panicHandler queue.PanicHandler, fn func() (T, error)) *Future[T] {
 	resCh := make(chan res[T])
+	job := &Future[T]{
+		resCh:        resCh,
+		panicHandler: panicHandler,
+	}
 
 	go func() {
+		defer job.handlePanic()
+
 		val, err := fn()
 
 		resCh <- res[T]{val: val, err: err}
 	}()
 
-	return &Future[T]{resCh: resCh}
+	return job
 }
 
 func (job *Future[T]) Then(fn func(T, error)) {
 	go func() {
+		defer job.handlePanic()
+
 		res := <-job.resCh
 
 		fn(res.val, res.err)
 	}()
+}
+
+func (job *Future[T]) handlePanic() {
+	if job.panicHandler != nil {
+		job.panicHandler.HandlePanic()
+	}
 }
 
 func (job *Future[T]) Get() (T, error) {
@@ -36,15 +53,16 @@ func (job *Future[T]) Get() (T, error) {
 }
 
 type Group[T any] struct {
-	futures []*Future[T]
+	futures      []*Future[T]
+	panicHandler queue.PanicHandler
 }
 
-func NewGroup[T any]() *Group[T] {
-	return &Group[T]{}
+func NewGroup[T any](panicHandler queue.PanicHandler) *Group[T] {
+	return &Group[T]{panicHandler: panicHandler}
 }
 
 func (group *Group[T]) Add(fn func() (T, error)) {
-	group.futures = append(group.futures, NewFuture(fn))
+	group.futures = append(group.futures, NewFuture(group.panicHandler, fn))
 }
 
 func (group *Group[T]) Result() ([]T, error) {

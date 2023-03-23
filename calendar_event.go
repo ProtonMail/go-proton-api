@@ -46,7 +46,7 @@ func (c *Client) GetAllCalendarEvents(ctx context.Context, calendarID string, fi
 		return nil, err
 	}
 
-	return fetchPaged(ctx, total, maxPageSize, func(ctx context.Context, page, pageSize int) ([]CalendarEvent, error) {
+	return fetchPaged(ctx, total, maxPageSize, c, func(ctx context.Context, page, pageSize int) ([]CalendarEvent, error) {
 		return c.GetCalendarEvents(ctx, calendarID, page, pageSize, filter)
 	})
 }

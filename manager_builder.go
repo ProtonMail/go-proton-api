@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ProtonMail/gluon/queue"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -25,6 +26,7 @@ type managerBuilder struct {
 	retryCount   int
 	logger       resty.Logger
 	debug        bool
+	panicHandler queue.PanicHandler
 }
 
 func newManagerBuilder() *managerBuilder {
@@ -37,6 +39,7 @@ func newManagerBuilder() *managerBuilder {
 		retryCount:   3,
 		logger:       nil,
 		debug:        false,
+		panicHandler: queue.NoopPanicHandler{},
 	}
 }
 
@@ -47,6 +50,8 @@ func (builder *managerBuilder) build() *Manager {
 		errHandlers: make(map[Code][]Handler),
 
 		verifyProofs: builder.verifyProofs,
+
+		panicHandler: builder.panicHandler,
 	}
 
 	// Set the API host.

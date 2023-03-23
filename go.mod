@@ -63,3 +63,5 @@ require (
 	google.golang.org/genproto v0.0.0-20230221151758-ace64dc21148 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/ProtonMail/gluon => /home/dev/gopath18/src/gluon

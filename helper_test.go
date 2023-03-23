@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/ProtonMail/gluon/queue"
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/bradenaw/juniper/iterator"
 	"github.com/bradenaw/juniper/stream"
@@ -31,7 +32,7 @@ func createTestMessages(t *testing.T, c *proton.Client, pass string, count int) 
 	keyPass, err := salt.SaltForKey([]byte(pass), user.Keys.Primary().ID)
 	require.NoError(t, err)
 
-	_, addrKRs, err := proton.Unlock(user, addr, keyPass)
+	_, addrKRs, err := proton.Unlock(user, addr, keyPass, queue.NoopPanicHandler{})
 	require.NoError(t, err)
 
 	req := iterator.Collect(iterator.Map(iterator.Counter(count), func(i int) proton.ImportReq {
