@@ -3,6 +3,8 @@ package proton
 import (
 	"math/rand"
 	"time"
+
+	"github.com/ProtonMail/gluon/queue"
 )
 
 type Ticker struct {
@@ -14,7 +16,7 @@ type Ticker struct {
 
 // NewTicker returns a new ticker that ticks at a random time between period and period+jitter.
 // It can be stopped by closing calling Stop().
-func NewTicker(period, jitter time.Duration) *Ticker {
+func NewTicker(period, jitter time.Duration, panicHandler queue.PanicHandler) *Ticker {
 	t := &Ticker{
 		C:      make(chan time.Time),
 		stopCh: make(chan struct{}),
@@ -22,6 +24,12 @@ func NewTicker(period, jitter time.Duration) *Ticker {
 	}
 
 	go func() {
+		defer func() {
+			if panicHandler != nil {
+				panicHandler.HandlePanic()
+			}
+		}()
+
 		defer close(t.doneCh)
 
 		for {

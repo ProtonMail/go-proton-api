@@ -61,7 +61,7 @@ func (c *Client) GetMessageMetadata(ctx context.Context, filter MessageFilter) (
 		return nil, err
 	}
 
-	return fetchPaged(ctx, count, maxPageSize, func(ctx context.Context, page, pageSize int) ([]MessageMetadata, error) {
+	return fetchPaged(ctx, count, maxPageSize, c, func(ctx context.Context, page, pageSize int) ([]MessageMetadata, error) {
 		return c.GetMessageMetadataPage(ctx, page, pageSize, filter)
 	})
 }
@@ -87,6 +87,8 @@ func (c *Client) DeleteMessage(ctx context.Context, messageIDs ...string) error 
 	pages := xslices.Chunk(messageIDs, maxPageSize)
 
 	return parallel.DoContext(ctx, runtime.NumCPU(), len(pages), func(ctx context.Context, idx int) error {
+		defer c.m.handlePanic()
+
 		return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
 			return r.SetBody(MessageActionReq{IDs: pages[idx]}).Put("/mail/v4/messages/delete")
 		})
@@ -97,6 +99,8 @@ func (c *Client) MarkMessagesRead(ctx context.Context, messageIDs ...string) err
 	pages := xslices.Chunk(messageIDs, maxPageSize)
 
 	return parallel.DoContext(ctx, runtime.NumCPU(), len(pages), func(ctx context.Context, idx int) error {
+		defer c.m.handlePanic()
+
 		return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
 			return r.SetBody(MessageActionReq{IDs: pages[idx]}).Put("/mail/v4/messages/read")
 		})
@@ -107,6 +111,8 @@ func (c *Client) MarkMessagesUnread(ctx context.Context, messageIDs ...string) e
 	pages := xslices.Chunk(messageIDs, maxPageSize)
 
 	return parallel.DoContext(ctx, runtime.NumCPU(), len(pages), func(ctx context.Context, idx int) error {
+		defer c.m.handlePanic()
+
 		req := MessageActionReq{IDs: pages[idx]}
 
 		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
@@ -125,6 +131,8 @@ func (c *Client) LabelMessages(ctx context.Context, messageIDs []string, labelID
 		runtime.NumCPU(),
 		xslices.Chunk(messageIDs, maxPageSize),
 		func(ctx context.Context, messageIDs []string) (LabelMessagesRes, error) {
+			defer c.m.handlePanic()
+
 			var res LabelMessagesRes
 
 			if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
@@ -164,6 +172,8 @@ func (c *Client) UnlabelMessages(ctx context.Context, messageIDs []string, label
 		runtime.NumCPU(),
 		xslices.Chunk(messageIDs, maxPageSize),
 		func(ctx context.Context, messageIDs []string) (LabelMessagesRes, error) {
+			defer c.m.handlePanic()
+
 			var res LabelMessagesRes
 
 			if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ProtonMail/gluon/queue"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -153,7 +154,7 @@ func TestPool_ProcessAll(t *testing.T) {
 }
 
 func newDoubler(workers int, delay ...time.Duration) *Pool[int, int] {
-	return NewPool(workers, func(ctx context.Context, req int) (int, error) {
+	return NewPool(workers, queue.NoopPanicHandler{}, func(ctx context.Context, req int) (int, error) {
 		if len(delay) > 0 {
 			time.Sleep(delay[0])
 		}
@@ -163,7 +164,7 @@ func newDoubler(workers int, delay ...time.Duration) *Pool[int, int] {
 }
 
 func newDoublerWithError(workers int) *Pool[int, int] {
-	return NewPool(workers, func(ctx context.Context, req int) (int, error) {
+	return NewPool(workers, queue.NoopPanicHandler{}, func(ctx context.Context, req int) (int, error) {
 		if req%2 == 0 {
 			return 0, errors.New("oops")
 		}

@@ -72,7 +72,7 @@ func (c *Client) GetAllContacts(ctx context.Context) ([]Contact, error) {
 		return nil, err
 	}
 
-	return fetchPaged(ctx, total, maxPageSize, func(ctx context.Context, page, pageSize int) ([]Contact, error) {
+	return fetchPaged(ctx, total, maxPageSize, c, func(ctx context.Context, page, pageSize int) ([]Contact, error) {
 		return c.GetContacts(ctx, page, pageSize)
 	})
 }
@@ -101,7 +101,7 @@ func (c *Client) GetAllContactEmails(ctx context.Context, email string) ([]Conta
 		return nil, err
 	}
 
-	return fetchPaged(ctx, total, maxPageSize, func(ctx context.Context, page, pageSize int) ([]ContactEmail, error) {
+	return fetchPaged(ctx, total, maxPageSize, c, func(ctx context.Context, page, pageSize int) ([]ContactEmail, error) {
 		return c.GetContactEmails(ctx, email, page, pageSize)
 	})
 }

@@ -13,7 +13,7 @@ const maxPageSize = 150
 
 func fetchPaged[T any](
 	ctx context.Context,
-	total, pageSize int,
+	total, pageSize int, c *Client,
 	fn func(ctx context.Context, page, pageSize int) ([]T, error),
 ) ([]T, error) {
 	return stream.Collect(ctx, stream.Flatten(parallel.MapStream(
@@ -22,6 +22,8 @@ func fetchPaged[T any](
 		runtime.NumCPU(),
 		runtime.NumCPU(),
 		func(ctx context.Context, page int) (stream.Stream[T], error) {
+			defer c.m.handlePanic()
+
 			values, err := fn(ctx, page, pageSize)
 			if err != nil {
 				return nil, err

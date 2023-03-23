@@ -3,6 +3,7 @@ package proton
 import (
 	"net/http"
 
+	"github.com/ProtonMail/gluon/queue"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -121,4 +122,18 @@ type withDebug struct {
 
 func (opt withDebug) config(builder *managerBuilder) {
 	builder.debug = opt.debug
+}
+
+func WithPanicHandler(panicHandler queue.PanicHandler) Option {
+	return &withPanicHandler{
+		panicHandler: panicHandler,
+	}
+}
+
+type withPanicHandler struct {
+	panicHandler queue.PanicHandler
+}
+
+func (opt withPanicHandler) config(builder *managerBuilder) {
+	builder.panicHandler = opt.panicHandler
 }

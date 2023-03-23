@@ -45,6 +45,8 @@ func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, wor
 		workers,
 		buffer,
 		func(ctx context.Context, req []ImportReq) (stream.Stream[ImportRes], error) {
+			defer c.m.handlePanic()
+
 			res, err := c.importMessages(ctx, req)
 			if err != nil {
 				return nil, fmt.Errorf("failed to import messages: %w", err)

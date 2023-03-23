@@ -126,7 +126,7 @@ func (opt withTLS) config(builder *serverBuilder) {
 	builder.withTLS = opt.withTLS
 }
 
-// withDomain controls the domain of the server.
+// WithDomain controls the domain of the server.
 func WithDomain(domain string) Option {
 	return &withDomain{
 		domain: domain,
