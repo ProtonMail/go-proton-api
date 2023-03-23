@@ -198,6 +198,12 @@ SGVsbG8gQXR0YWNobWVudA==
 		header, err := child.ParseHeader()
 		require.NoError(t, err)
 
+		header.Entries(func(key, value string) {
+			// Old header should be deleted.
+			assert.NotEqual(t, key, "Content-type")
+			assert.NotEqual(t, value, "text/plain; charset=us-ascii")
+		})
+
 		assert.Equal(t, header.Get("Content-Type"), "text/plain; charset=utf-8")
 	}
 

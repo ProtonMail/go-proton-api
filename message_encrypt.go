@@ -137,7 +137,7 @@ func encryptText(w io.Writer, kr *crypto.KeyRing, s *rfc822.Section) error {
 		return err
 	}
 
-	// Remove the Content-Transfer-Encoding header as we decode the body.
+	// Remove the Content-Transfer-Encoding header  as we decode the body.
 	header.Del("Content-Transfer-Encoding")
 
 	// If the text part has a charset, decode it to UTF-8.
@@ -150,6 +150,9 @@ func encryptText(w io.Writer, kr *crypto.KeyRing, s *rfc822.Section) error {
 		if body, err = io.ReadAll(decoder); err != nil {
 			return err
 		}
+
+		// Remove old content type.
+		header.Del("Content-Type")
 
 		header.Set("Content-Type", mime.FormatMediaType(
 			string(contentType),
