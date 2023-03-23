@@ -203,19 +203,13 @@ func encryptAtt(w io.Writer, kr *crypto.KeyRing, s *rfc822.Section) error {
 		return err
 	}
 
-	// Encode the encrypted body to base64.
-	b64, err := getBase64(enc.GetBinary())
-	if err != nil {
-		return err
-	}
-
 	// Write the header.
 	if _, err := w.Write(header.Raw()); err != nil {
 		return err
 	}
 
 	// Write the base64 body.
-	if _, err := w.Write(b64); err != nil {
+	if err := encodeBase64(w, enc.GetBinary()); err != nil {
 		return err
 	}
 
@@ -328,24 +322,15 @@ func encryptFull(kr *crypto.KeyRing, literal []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func getBase64(b []byte) ([]byte, error) {
-	var buf bytes.Buffer
+func encodeBase64(writer io.Writer, b []byte) error {
+	encoder := base64.NewEncoder(base64.StdEncoding, writer)
+	defer encoder.Close()
 
-	if err := encode(base64.NewEncoder(base64.StdEncoding, &buf), b); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-func encode(wc io.WriteCloser, b []byte) error {
-	var buf bytes.Buffer
-
-	if _, err := buf.Write(b); err != nil {
+	if _, err := encoder.Write(b); err != nil {
 		return err
 	}
 
-	return wc.Close()
+	return nil
 }
 
 func getCharsetDecoder(r io.Reader, charset string) (io.Reader, error) {
