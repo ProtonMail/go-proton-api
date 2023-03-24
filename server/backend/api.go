@@ -945,7 +945,7 @@ func buildEvent(
 			event.Addresses = append(event.Addresses, proton.AddressEvent{
 				EventItem: proton.EventItem{
 					ID:     update.addressID,
-					Action: proton.EventCreate,
+					Action: proton.EventUpdate,
 				},
 
 				Address: addresses[update.addressID].toAddress(),
