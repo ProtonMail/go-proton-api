@@ -277,3 +277,9 @@ func (c *Client) GetMessageMetadataPage(ctx context.Context, page, pageSize int,
 
 	return res.Messages, nil
 }
+
+func (c *Client) EmptyLabel(ctx context.Context, labelID string) error {
+	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetQueryParam("LabelID", labelID).Delete("/mail/v4/messages/empty")
+	})
+}
