@@ -203,6 +203,14 @@ func (b *Backend) RemoveUserKey(userID, keyID string) error {
 }
 
 func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus) (string, error) {
+	return b.createAddress(userID, email, password, withKey, status, false)
+}
+
+func (b *Backend) CreateAddressAsUpdate(userID, email string, password []byte, withKey bool, status proton.AddressStatus) (string, error) {
+	return b.createAddress(userID, email, password, withKey, status, true)
+}
+
+func (b *Backend) createAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus, issueUpdateInsteadOfCreate bool) (string, error) {
 	return withAcc(b, userID, func(acc *account) (string, error) {
 		var keys []key
 
@@ -250,7 +258,14 @@ func (b *Backend) CreateAddress(userID, email string, password []byte, withKey b
 			keys:   keys,
 		}
 
-		updateID, err := b.newUpdate(&addressCreated{addressID: addressID})
+		var update update
+		if issueUpdateInsteadOfCreate {
+			update = &addressUpdated{addressID: addressID}
+		} else {
+			update = &addressCreated{addressID: addressID}
+		}
+
+		updateID, err := b.newUpdate(update)
 		if err != nil {
 			return "", err
 		}

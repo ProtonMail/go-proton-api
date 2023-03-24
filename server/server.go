@@ -151,6 +151,10 @@ func (s *Server) CreateAddress(userID, email string, password []byte) (string, e
 	return s.b.CreateAddress(userID, email, password, true, proton.AddressStatusEnabled)
 }
 
+func (s *Server) CreateAddressAsUpdate(userID, email string, password []byte) (string, error) {
+	return s.b.CreateAddressAsUpdate(userID, email, password, true, proton.AddressStatusEnabled)
+}
+
 func (s *Server) RemoveAddress(userID, addrID string) error {
 	return s.b.RemoveAddress(userID, addrID)
 }
