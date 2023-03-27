@@ -102,6 +102,41 @@ func TestHandleTooManyRequests(t *testing.T) {
 	}
 }
 
+func TestHandleTooManyRequests503(t *testing.T) {
+	// Create a server with a rate limit of 1 request per second.
+	s := server.New(server.WithRateLimitAndCustomStatusCode(1, time.Second, http.StatusServiceUnavailable))
+	defer s.Close()
+
+	var calls []server.Call
+
+	// Watch the calls made.
+	s.AddCallWatcher(func(call server.Call) {
+		calls = append(calls, call)
+	})
+
+	m := proton.New(
+		proton.WithHostURL(s.GetHostURL()),
+		proton.WithTransport(proton.InsecureTransport()),
+	)
+	defer m.Close()
+
+	// Make five calls; they should all succeed, but will be rate limited.
+	for i := 0; i < 5; i++ {
+		require.NoError(t, m.Ping(context.Background()))
+	}
+
+	// After each 503 response, we should wait at least the requested duration before making the next request.
+	for idx, call := range calls {
+		if call.Status == http.StatusServiceUnavailable {
+			after, err := strconv.Atoi(call.ResponseHeader.Get("Retry-After"))
+			require.NoError(t, err)
+
+			// The next call should be made after the requested duration.
+			require.True(t, calls[idx+1].Time.After(call.Time.Add(time.Duration(after)*time.Second)))
+		}
+	}
+}
+
 func TestHandleTooManyRequests_Malformed(t *testing.T) {
 	var calls []time.Time
 

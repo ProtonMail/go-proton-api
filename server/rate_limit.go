@@ -22,12 +22,16 @@ type rateLimiter struct {
 
 	// countLock is a mutex for the callCount.
 	countLock sync.Mutex
+
+	// statusCode to reply with
+	statusCode int
 }
 
-func newRateLimiter(limit int, window time.Duration) *rateLimiter {
+func newRateLimiter(limit int, window time.Duration, statusCode int) *rateLimiter {
 	return &rateLimiter{
-		limit:  limit,
-		window: window,
+		limit:      limit,
+		window:     window,
+		statusCode: statusCode,
 	}
 }
 
