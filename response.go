@@ -114,7 +114,7 @@ func updateTime(_ *resty.Client, res *resty.Response) error {
 // nolint:gosec
 func catchRetryAfter(_ *resty.Client, res *resty.Response) (time.Duration, error) {
 	// 0 and no error means default behaviour which is exponential backoff with jitter.
-	if res.StatusCode() != http.StatusTooManyRequests {
+	if res.StatusCode() != http.StatusTooManyRequests && res.StatusCode() != http.StatusServiceUnavailable {
 		return 0, nil
 	}
 
@@ -139,7 +139,7 @@ func catchRetryAfter(_ *resty.Client, res *resty.Response) (time.Duration, error
 }
 
 func catchTooManyRequests(res *resty.Response, _ error) bool {
-	return res.StatusCode() == http.StatusTooManyRequests
+	return res.StatusCode() == http.StatusTooManyRequests || res.StatusCode() == http.StatusServiceUnavailable
 }
 
 func catchDialError(res *resty.Response, err error) bool {

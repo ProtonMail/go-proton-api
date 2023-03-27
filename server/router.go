@@ -202,7 +202,7 @@ func (s *Server) applyRateLimit() gin.HandlerFunc {
 
 		if wait := s.rateLimit.exceeded(); wait > 0 {
 			c.Header("Retry-After", strconv.Itoa(int(wait.Seconds())))
-			c.AbortWithStatus(http.StatusTooManyRequests)
+			c.AbortWithStatus(s.rateLimit.statusCode)
 		}
 	}
 }

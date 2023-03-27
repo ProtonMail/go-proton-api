@@ -186,18 +186,28 @@ func (opt withAuthCache) config(builder *serverBuilder) {
 
 func WithRateLimit(limit int, window time.Duration) Option {
 	return &withRateLimit{
-		limit:  limit,
-		window: window,
+		limit:      limit,
+		window:     window,
+		statusCode: http.StatusTooManyRequests,
+	}
+}
+
+func WithRateLimitAndCustomStatusCode(limit int, window time.Duration, code int) Option {
+	return &withRateLimit{
+		limit:      limit,
+		window:     window,
+		statusCode: code,
 	}
 }
 
 type withRateLimit struct {
-	limit  int
-	window time.Duration
+	limit      int
+	statusCode int
+	window     time.Duration
 }
 
 func (opt withRateLimit) config(builder *serverBuilder) {
-	builder.rateLimiter = newRateLimiter(opt.limit, opt.window)
+	builder.rateLimiter = newRateLimiter(opt.limit, opt.window, opt.statusCode)
 }
 
 func WithProxyTransport(transport *http.Transport) Option {
