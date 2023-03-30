@@ -3,7 +3,7 @@ package proton
 import (
 	"net/http"
 
-	"github.com/ProtonMail/gluon/queue"
+	"github.com/ProtonMail/gluon/async"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -124,14 +124,14 @@ func (opt withDebug) config(builder *managerBuilder) {
 	builder.debug = opt.debug
 }
 
-func WithPanicHandler(panicHandler queue.PanicHandler) Option {
+func WithPanicHandler(panicHandler async.PanicHandler) Option {
 	return &withPanicHandler{
 		panicHandler: panicHandler,
 	}
 }
 
 type withPanicHandler struct {
-	panicHandler queue.PanicHandler
+	panicHandler async.PanicHandler
 }
 
 func (opt withPanicHandler) config(builder *managerBuilder) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"runtime"
 
+	"github.com/ProtonMail/gluon/async"
 	"github.com/bradenaw/juniper/iterator"
 	"github.com/bradenaw/juniper/parallel"
 	"github.com/bradenaw/juniper/stream"
@@ -22,7 +23,7 @@ func fetchPaged[T any](
 		runtime.NumCPU(),
 		runtime.NumCPU(),
 		func(ctx context.Context, page int) (stream.Stream[T], error) {
-			defer c.m.handlePanic()
+			defer async.HandlePanic(c.m.panicHandler)
 
 			values, err := fn(ctx, page, pageSize)
 			if err != nil {

@@ -19,7 +19,7 @@ import (
 	"github.com/bradenaw/juniper/parallel"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/ProtonMail/gluon/queue"
+	"github.com/ProtonMail/gluon/async"
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
@@ -613,7 +613,7 @@ func TestServer_CreateMessage(t *testing.T) {
 			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
 			require.NoError(t, err)
 
-			_, addrKRs, err := proton.Unlock(user, addr, pass, queue.NoopPanicHandler{})
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
 			require.NoError(t, err)
 
 			draft, err := c.CreateDraft(ctx, addrKRs[addr[0].ID], proton.CreateDraftReq{
@@ -649,7 +649,7 @@ func TestServer_UpdateDraft(t *testing.T) {
 			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
 			require.NoError(t, err)
 
-			_, addrKRs, err := proton.Unlock(user, addr, pass, queue.NoopPanicHandler{})
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
 			require.NoError(t, err)
 
 			// Create the draft.
@@ -725,7 +725,7 @@ func TestServer_SendMessage(t *testing.T) {
 			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
 			require.NoError(t, err)
 
-			_, addrKRs, err := proton.Unlock(user, addr, pass, queue.NoopPanicHandler{})
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
 			require.NoError(t, err)
 
 			draft, err := c.CreateDraft(ctx, addrKRs[addr[0].ID], proton.CreateDraftReq{
@@ -808,7 +808,7 @@ func TestServer_Import(t *testing.T) {
 			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
 			require.NoError(t, err)
 
-			_, addrKRs, err := proton.Unlock(user, addr, pass, queue.NoopPanicHandler{})
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
 			require.NoError(t, err)
 
 			res := importMessages(ctx, t, c, addr[0].ID, addrKRs[addr[0].ID], []string{}, proton.MessageFlagReceived, 1)
@@ -1027,7 +1027,7 @@ func TestServer_Labels(t *testing.T) {
 			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
 			require.NoError(t, err)
 
-			_, addrKRs, err := proton.Unlock(user, addr, pass, queue.NoopPanicHandler{})
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
 			require.NoError(t, err)
 
 			for _, tt := range tests {
@@ -1169,7 +1169,7 @@ func TestServer_Import_FlagsAndLabels(t *testing.T) {
 			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
 			require.NoError(t, err)
 
-			_, addrKRs, err := proton.Unlock(user, addr, pass, queue.NoopPanicHandler{})
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
 			require.NoError(t, err)
 
 			for _, tt := range tests {
@@ -1846,7 +1846,7 @@ func withMessages(ctx context.Context, t *testing.T, c *proton.Client, pass stri
 	keyPass, err := salt.SaltForKey([]byte(pass), user.Keys.Primary().ID)
 	require.NoError(t, err)
 
-	_, addrKRs, err := proton.Unlock(user, addr, keyPass, queue.NoopPanicHandler{})
+	_, addrKRs, err := proton.Unlock(user, addr, keyPass, async.NoopPanicHandler{})
 	require.NoError(t, err)
 
 	fn(xslices.Map(importMessages(ctx, t, c, addr[0].ID, addrKRs[addr[0].ID], []string{}, proton.MessageFlagReceived, count), func(res proton.ImportRes) string {

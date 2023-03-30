@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/ProtonMail/gluon/queue"
+	"github.com/ProtonMail/gluon/async"
 	"github.com/bradenaw/juniper/parallel"
 )
 
@@ -59,21 +59,15 @@ func (SequentialScheduler) Schedule(ctx context.Context, attachmentIDs []string,
 
 type ParallelScheduler struct {
 	workers      int
-	panicHandler queue.PanicHandler
+	panicHandler async.PanicHandler
 }
 
-func NewParallelScheduler(workers int, panicHandler queue.PanicHandler) *ParallelScheduler {
+func NewParallelScheduler(workers int, panicHandler async.PanicHandler) *ParallelScheduler {
 	if workers == 0 {
 		workers = 1
 	}
 
 	return &ParallelScheduler{workers: workers}
-}
-
-func (p *ParallelScheduler) handlePanic() {
-	if p.panicHandler != nil {
-		p.panicHandler.HandlePanic()
-	}
 }
 
 func (p ParallelScheduler) Schedule(ctx context.Context, attachmentIDs []string, storageProvider AttachmentAllocator, downloader func(context.Context, string, *bytes.Buffer) error) ([]*bytes.Buffer, error) {
@@ -84,7 +78,7 @@ func (p ParallelScheduler) Schedule(ctx context.Context, attachmentIDs []string,
 	}
 
 	return parallel.MapContext(ctx, workers, attachmentIDs, func(ctx context.Context, id string) (*bytes.Buffer, error) {
-		defer p.handlePanic()
+		defer async.HandlePanic(p.panicHandler)
 
 		buffer := storageProvider.NewBuffer()
 		if err := downloader(ctx, id, buffer); err != nil {

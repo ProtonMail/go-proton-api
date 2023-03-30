@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/ProtonMail/gluon/async"
 	"github.com/bradenaw/juniper/parallel"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/go-resty/resty/v2"
@@ -87,7 +88,7 @@ func (c *Client) DeleteMessage(ctx context.Context, messageIDs ...string) error 
 	pages := xslices.Chunk(messageIDs, maxPageSize)
 
 	return parallel.DoContext(ctx, runtime.NumCPU(), len(pages), func(ctx context.Context, idx int) error {
-		defer c.m.handlePanic()
+		defer async.HandlePanic(c.m.panicHandler)
 
 		return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
 			return r.SetBody(MessageActionReq{IDs: pages[idx]}).Put("/mail/v4/messages/delete")
@@ -99,7 +100,7 @@ func (c *Client) MarkMessagesRead(ctx context.Context, messageIDs ...string) err
 	pages := xslices.Chunk(messageIDs, maxPageSize)
 
 	return parallel.DoContext(ctx, runtime.NumCPU(), len(pages), func(ctx context.Context, idx int) error {
-		defer c.m.handlePanic()
+		defer async.HandlePanic(c.m.panicHandler)
 
 		return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
 			return r.SetBody(MessageActionReq{IDs: pages[idx]}).Put("/mail/v4/messages/read")
@@ -111,7 +112,7 @@ func (c *Client) MarkMessagesUnread(ctx context.Context, messageIDs ...string) e
 	pages := xslices.Chunk(messageIDs, maxPageSize)
 
 	return parallel.DoContext(ctx, runtime.NumCPU(), len(pages), func(ctx context.Context, idx int) error {
-		defer c.m.handlePanic()
+		defer async.HandlePanic(c.m.panicHandler)
 
 		req := MessageActionReq{IDs: pages[idx]}
 
@@ -131,7 +132,7 @@ func (c *Client) LabelMessages(ctx context.Context, messageIDs []string, labelID
 		runtime.NumCPU(),
 		xslices.Chunk(messageIDs, maxPageSize),
 		func(ctx context.Context, messageIDs []string) (LabelMessagesRes, error) {
-			defer c.m.handlePanic()
+			defer async.HandlePanic(c.m.panicHandler)
 
 			var res LabelMessagesRes
 
@@ -172,7 +173,7 @@ func (c *Client) UnlabelMessages(ctx context.Context, messageIDs []string, label
 		runtime.NumCPU(),
 		xslices.Chunk(messageIDs, maxPageSize),
 		func(ctx context.Context, messageIDs []string) (LabelMessagesRes, error) {
-			defer c.m.handlePanic()
+			defer async.HandlePanic(c.m.panicHandler)
 
 			var res LabelMessagesRes
 

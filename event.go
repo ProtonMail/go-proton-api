@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/ProtonMail/gluon/async"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -60,7 +61,7 @@ func (c *Client) NewEventStream(ctx context.Context, period, jitter time.Duratio
 	eventCh := make(chan Event)
 
 	go func() {
-		defer c.m.handlePanic()
+		defer async.HandlePanic(c.m.panicHandler)
 
 		defer close(eventCh)
 

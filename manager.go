@@ -6,7 +6,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/ProtonMail/gluon/queue"
+	"github.com/ProtonMail/gluon/async"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -21,7 +21,7 @@ type Manager struct {
 
 	verifyProofs bool
 
-	panicHandler queue.PanicHandler
+	panicHandler async.PanicHandler
 }
 
 func New(opts ...Option) *Manager {
@@ -129,11 +129,5 @@ func (m *Manager) onConnUp() {
 
 	for _, observer := range m.observers {
 		observer(m.status)
-	}
-}
-
-func (m *Manager) handlePanic() {
-	if m.panicHandler != nil {
-		m.panicHandler.HandlePanic()
 	}
 }

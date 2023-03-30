@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/ProtonMail/gluon/async"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/iterator"
 	"github.com/bradenaw/juniper/parallel"
@@ -45,7 +46,7 @@ func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, wor
 		workers,
 		buffer,
 		func(ctx context.Context, req []ImportReq) (stream.Stream[ImportRes], error) {
-			defer c.m.handlePanic()
+			defer async.HandlePanic(c.m.panicHandler)
 
 			res, err := c.importMessages(ctx, req)
 			if err != nil {
