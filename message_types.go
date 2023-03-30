@@ -31,6 +31,8 @@ type MessageMetadata struct {
 	IsReplied    Bool
 	IsRepliedAll Bool
 	IsForwarded  Bool
+
+	NumAttachments int
 }
 
 func (meta MessageMetadata) Seen() bool {

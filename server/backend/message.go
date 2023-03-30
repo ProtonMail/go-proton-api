@@ -182,6 +182,8 @@ func (msg *message) toMetadata(attData map[string][]byte, att map[string]*attach
 
 		Flags:  msg.flags,
 		Unread: proton.Bool(msg.unread),
+
+		NumAttachments: len(attData),
 	}
 }
 
