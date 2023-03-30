@@ -1,10 +1,12 @@
 package proton
 
-import "github.com/ProtonMail/gluon/queue"
+import (
+	"github.com/ProtonMail/gluon/async"
+)
 
 type Future[T any] struct {
 	resCh        chan res[T]
-	panicHandler queue.PanicHandler
+	panicHandler async.PanicHandler
 }
 
 type res[T any] struct {
@@ -12,7 +14,7 @@ type res[T any] struct {
 	err error
 }
 
-func NewFuture[T any](panicHandler queue.PanicHandler, fn func() (T, error)) *Future[T] {
+func NewFuture[T any](panicHandler async.PanicHandler, fn func() (T, error)) *Future[T] {
 	resCh := make(chan res[T])
 	job := &Future[T]{
 		resCh:        resCh,
@@ -20,7 +22,7 @@ func NewFuture[T any](panicHandler queue.PanicHandler, fn func() (T, error)) *Fu
 	}
 
 	go func() {
-		defer job.handlePanic()
+		defer async.HandlePanic(job.panicHandler)
 
 		val, err := fn()
 
@@ -32,18 +34,12 @@ func NewFuture[T any](panicHandler queue.PanicHandler, fn func() (T, error)) *Fu
 
 func (job *Future[T]) Then(fn func(T, error)) {
 	go func() {
-		defer job.handlePanic()
+		defer async.HandlePanic(job.panicHandler)
 
 		res := <-job.resCh
 
 		fn(res.val, res.err)
 	}()
-}
-
-func (job *Future[T]) handlePanic() {
-	if job.panicHandler != nil {
-		job.panicHandler.HandlePanic()
-	}
 }
 
 func (job *Future[T]) Get() (T, error) {
@@ -54,10 +50,10 @@ func (job *Future[T]) Get() (T, error) {
 
 type Group[T any] struct {
 	futures      []*Future[T]
-	panicHandler queue.PanicHandler
+	panicHandler async.PanicHandler
 }
 
-func NewGroup[T any](panicHandler queue.PanicHandler) *Group[T] {
+func NewGroup[T any](panicHandler async.PanicHandler) *Group[T] {
 	return &Group[T]{panicHandler: panicHandler}
 }
 

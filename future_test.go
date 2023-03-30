@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ProtonMail/gluon/queue"
+	"github.com/ProtonMail/gluon/async"
 	"github.com/stretchr/testify/require"
 )
 
 func TestFuture(t *testing.T) {
 	resCh := make(chan int)
 
-	NewFuture(queue.NoopPanicHandler{}, func() (int, error) {
+	NewFuture(async.NoopPanicHandler{}, func() (int, error) {
 		return 42, nil
 	}).Then(func(res int, err error) {
 		resCh <- res
@@ -22,7 +22,7 @@ func TestFuture(t *testing.T) {
 }
 
 func TestGroup(t *testing.T) {
-	group := NewGroup[int](queue.NoopPanicHandler{})
+	group := NewGroup[int](async.NoopPanicHandler{})
 
 	for i := 0; i < 10; i++ {
 		i := i
