@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.0
-	github.com/ProtonMail/gluon v0.15.1-0.20230405065656-e75e877aede1
+	github.com/ProtonMail/gluon v0.15.1-0.20230406114115-7eae5cb3ec21
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8
 	github.com/ProtonMail/go-srp v0.0.5
 	github.com/ProtonMail/gopenpgp/v2 v2.5.2
