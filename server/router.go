@@ -104,6 +104,14 @@ func initRouter(s *Server) {
 		contacts.GET("/emails", s.handleGetContactsEmails())
 	}
 
+	// All data routes need authentication.
+	if data := s.r.Group("/data/v1", s.requireAuth()); data != nil {
+		if stats := data.Group("/stats"); stats != nil {
+			stats.POST("", s.handlePostDataStats())
+			stats.POST("/multiple", s.handlePostDataStatsMultiple())
+		}
+	}
+
 	// Top level auth routes don't need authentication.
 	if auth := s.r.Group("/auth/v4"); auth != nil {
 		auth.POST("", s.handlePostAuth())

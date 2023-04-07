@@ -1805,6 +1805,52 @@ func TestServer_StatusHooks(t *testing.T) {
 	})
 }
 
+func TestServer_SendDataEvent(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			// Send data event minimal
+			err := c.SendDataEvent(context.Background(), proton.SendStatsReq{MeasurementGroup: "proton.any.test"})
+			require.NoError(t, err)
+
+			// Send data event Full.
+			var req proton.SendStatsReq
+			req.MeasurementGroup = "proton.any.test"
+			req.Event = "test"
+			req.Values = map[string]any{"string": "string", "integer": 42}
+			req.Dimensions = map[string]any{"string": "string", "integer": 42}
+			err = c.SendDataEvent(context.Background(), req)
+			require.NoError(t, err)
+
+			// Send bad data event.
+			err = c.SendDataEvent(context.Background(), proton.SendStatsReq{})
+			require.Error(t, err)
+		})
+	})
+}
+
+func TestServer_SendDataEventMultiple(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			// Send multiple minimal data event.
+			var req proton.SendStatsMultiReq
+			req.EventInfo = append(req.EventInfo, proton.SendStatsReq{MeasurementGroup: "proton.any.test"})
+			req.EventInfo = append(req.EventInfo, proton.SendStatsReq{MeasurementGroup: "proton.any.test2"})
+			err := c.SendDataEventMultiple(context.Background(), req)
+			require.NoError(t, err)
+
+			// send empty multiple data event.
+			err = c.SendDataEventMultiple(context.Background(), proton.SendStatsMultiReq{})
+			require.NoError(t, err)
+
+			// Send bad multiple data event.
+			var badReq proton.SendStatsMultiReq
+			badReq.EventInfo = append(badReq.EventInfo, proton.SendStatsReq{})
+			err = c.SendDataEventMultiple(context.Background(), badReq)
+			require.Error(t, err)
+		})
+	})
+}
+
 func withServer(t *testing.T, fn func(ctx context.Context, s *Server, m *proton.Manager), opts ...Option) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
