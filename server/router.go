@@ -68,6 +68,11 @@ func initRouter(s *Server) {
 				events.GET("/:eventID", s.handleGetEvents())
 				events.GET("/latest", s.handleGetEventsLatest())
 			}
+			if settings := core.Group("/settings"); settings != nil {
+				settings.GET("", s.handleGetUserSettings())
+				settings.PUT("/telemetry", s.handlePutUserSettingsTelemetry())
+				settings.PUT("/crashreports", s.handlePutUserSettingsCrashReports())
+			}
 		}
 	}
 

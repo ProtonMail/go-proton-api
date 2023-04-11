@@ -14,6 +14,7 @@ type account struct {
 	username     string
 	addresses    map[string]*address
 	mailSettings *mailSettings
+	userSettings proton.UserSettings
 
 	auth     map[string]auth
 	authLock sync.RWMutex
@@ -33,6 +34,7 @@ func newAccount(userID, username string, armKey string, salt, verifier []byte) *
 		username:     username,
 		addresses:    make(map[string]*address),
 		mailSettings: newMailSettings(username),
+		userSettings: newUserSettings(),
 
 		auth:     make(map[string]auth),
 		keys:     []key{{keyID: uuid.NewString(), key: armKey}},
