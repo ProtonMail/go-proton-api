@@ -1773,6 +1773,39 @@ func TestServer_MailSettings(t *testing.T) {
 	})
 }
 
+func TestServer_UserSettings(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			settings, err := c.GetUserSettings(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, proton.SettingEnabled, settings.Telemetry)
+			require.Equal(t, proton.SettingEnabled, settings.CrashReports)
+
+			settings, err = c.SetUserSettingsTelemetry(context.Background(), proton.SetTelemetryReq{Telemetry: proton.SettingDisabled})
+			require.NoError(t, err)
+			require.Equal(t, proton.SettingDisabled, settings.Telemetry)
+			require.Equal(t, proton.SettingEnabled, settings.CrashReports)
+
+			settings, err = c.SetUserSettingsCrashReports(context.Background(), proton.SetCrashReportReq{CrashReports: proton.SettingDisabled})
+			require.NoError(t, err)
+			require.Equal(t, proton.SettingDisabled, settings.Telemetry)
+			require.Equal(t, proton.SettingDisabled, settings.CrashReports)
+
+			settings, err = c.SetUserSettingsTelemetry(context.Background(), proton.SetTelemetryReq{Telemetry: 2})
+			require.Error(t, err)
+
+			settings, err = c.SetUserSettingsCrashReports(context.Background(), proton.SetCrashReportReq{CrashReports: 2})
+			require.Error(t, err)
+
+			settings, err = c.GetUserSettings(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, proton.SettingDisabled, settings.Telemetry)
+			require.Equal(t, proton.SettingDisabled, settings.CrashReports)
+
+		})
+	})
+}
+
 func TestServer_Domains(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		domains, err := m.GetDomains(ctx)

@@ -44,6 +44,32 @@ func (b *Backend) SetMailSettingsAttachPublicKey(userID string, attach bool) (pr
 	})
 }
 
+func (b *Backend) GetUserSettings(userID string) (proton.UserSettings, error) {
+	return withAcc(b, userID, func(acc *account) (proton.UserSettings, error) {
+		return acc.userSettings, nil
+	})
+}
+
+func (b *Backend) SetUserSettingsTelemetry(userID string, telemetry proton.SettingsBool) (proton.UserSettings, error) {
+	return withAcc(b, userID, func(acc *account) (proton.UserSettings, error) {
+		if telemetry != proton.SettingDisabled && telemetry != proton.SettingEnabled {
+			return proton.UserSettings{}, errors.New("bad value")
+		}
+		acc.userSettings.Telemetry = telemetry
+		return acc.userSettings, nil
+	})
+}
+
+func (b *Backend) SetUserSettingsCrashReports(userID string, crashReports proton.SettingsBool) (proton.UserSettings, error) {
+	return withAcc(b, userID, func(acc *account) (proton.UserSettings, error) {
+		if crashReports != proton.SettingDisabled && crashReports != proton.SettingEnabled {
+			return proton.UserSettings{}, errors.New("bad value")
+		}
+		acc.userSettings.CrashReports = crashReports
+		return acc.userSettings, nil
+	})
+}
+
 func (b *Backend) GetAddressID(email string) (string, error) {
 	return withAccEmail(b, email, func(acc *account) (string, error) {
 		addr, ok := acc.getAddr(email)
