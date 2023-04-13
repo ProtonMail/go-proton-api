@@ -97,112 +97,93 @@ func (c *Client) DeleteMessage(ctx context.Context, messageIDs ...string) error 
 }
 
 func (c *Client) MarkMessagesRead(ctx context.Context, messageIDs ...string) error {
-	pages := xslices.Chunk(messageIDs, maxPageSize)
+	for _, page := range xslices.Chunk(messageIDs, maxPageSize) {
+		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+			return r.SetBody(MessageActionReq{IDs: page}).Put("/mail/v4/messages/read")
+		}); err != nil {
+			return err
+		}
+	}
 
-	return parallel.DoContext(ctx, runtime.NumCPU(), len(pages), func(ctx context.Context, idx int) error {
-		defer async.HandlePanic(c.m.panicHandler)
-
-		return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-			return r.SetBody(MessageActionReq{IDs: pages[idx]}).Put("/mail/v4/messages/read")
-		})
-	})
+	return nil
 }
 
 func (c *Client) MarkMessagesUnread(ctx context.Context, messageIDs ...string) error {
-	pages := xslices.Chunk(messageIDs, maxPageSize)
-
-	return parallel.DoContext(ctx, runtime.NumCPU(), len(pages), func(ctx context.Context, idx int) error {
-		defer async.HandlePanic(c.m.panicHandler)
-
-		req := MessageActionReq{IDs: pages[idx]}
+	for _, page := range xslices.Chunk(messageIDs, maxPageSize) {
+		req := MessageActionReq{IDs: page}
 
 		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
 			return r.SetBody(req).Put("/mail/v4/messages/unread")
 		}); err != nil {
 			return err
 		}
+	}
 
-		return nil
-	})
+	return nil
 }
 
 func (c *Client) LabelMessages(ctx context.Context, messageIDs []string, labelID string) error {
-	res, err := parallel.MapContext(
-		ctx,
-		runtime.NumCPU(),
-		xslices.Chunk(messageIDs, maxPageSize),
-		func(ctx context.Context, messageIDs []string) (LabelMessagesRes, error) {
-			defer async.HandlePanic(c.m.panicHandler)
+	var results []LabelMessagesRes
 
-			var res LabelMessagesRes
+	for _, chunk := range xslices.Chunk(messageIDs, maxPageSize) {
+		var res LabelMessagesRes
 
-			if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-				return r.SetBody(LabelMessagesReq{
-					LabelID: labelID,
-					IDs:     messageIDs,
-				}).SetResult(&res).Put("/mail/v4/messages/label")
-			}); err != nil {
-				return LabelMessagesRes{}, err
-			}
-
-			return res, nil
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	if idx := xslices.IndexFunc(res, func(res LabelMessagesRes) bool { return !res.ok() }); idx >= 0 {
-		tokens := xslices.Map(res, func(res LabelMessagesRes) UndoToken {
-			return res.UndoToken
-		})
-
-		if _, undoErr := c.UndoActions(ctx, tokens...); undoErr != nil {
-			return fmt.Errorf("failed to undo actions: %w", undoErr)
+		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+			return r.SetBody(LabelMessagesReq{
+				LabelID: labelID,
+				IDs:     chunk,
+			}).SetResult(&res).Put("/mail/v4/messages/label")
+		}); err != nil {
+			return err
 		}
 
-		return fmt.Errorf("failed to label messages")
+		if ok, errStr := res.ok(); !ok {
+			tokens := xslices.Map(results, func(res LabelMessagesRes) UndoToken {
+				return res.UndoToken
+			})
+
+			if _, undoErr := c.UndoActions(ctx, tokens...); undoErr != nil {
+				return fmt.Errorf("failed to undo label actions (undo reason: %v): %w", errStr, undoErr)
+			}
+
+			return fmt.Errorf("failed to label messages: %v", errStr)
+		}
+
+		results = append(results, res)
 	}
 
 	return nil
 }
 
 func (c *Client) UnlabelMessages(ctx context.Context, messageIDs []string, labelID string) error {
-	res, err := parallel.MapContext(
-		ctx,
-		runtime.NumCPU(),
-		xslices.Chunk(messageIDs, maxPageSize),
-		func(ctx context.Context, messageIDs []string) (LabelMessagesRes, error) {
-			defer async.HandlePanic(c.m.panicHandler)
+	var results []LabelMessagesRes
 
-			var res LabelMessagesRes
+	for _, chunk := range xslices.Chunk(messageIDs, maxPageSize) {
+		var res LabelMessagesRes
 
-			if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-				return r.SetBody(LabelMessagesReq{
-					LabelID: labelID,
-					IDs:     messageIDs,
-				}).SetResult(&res).Put("/mail/v4/messages/unlabel")
-			}); err != nil {
-				return LabelMessagesRes{}, err
-			}
-
-			return res, nil
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	if idx := xslices.IndexFunc(res, func(res LabelMessagesRes) bool { return !res.ok() }); idx >= 0 {
-		tokens := xslices.Map(res, func(res LabelMessagesRes) UndoToken {
-			return res.UndoToken
-		})
-
-		if _, undoErr := c.UndoActions(ctx, tokens...); undoErr != nil {
-			return fmt.Errorf("failed to undo actions: %w", undoErr)
+		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+			return r.SetBody(LabelMessagesReq{
+				LabelID: labelID,
+				IDs:     chunk,
+			}).SetResult(&res).Put("/mail/v4/messages/unlabel")
+		}); err != nil {
+			return err
 		}
 
-		return fmt.Errorf("failed to unlabel messages")
+		if ok, errStr := res.ok(); !ok {
+			tokens := xslices.Map(results, func(res LabelMessagesRes) UndoToken {
+				return res.UndoToken
+			})
+
+			if _, undoErr := c.UndoActions(ctx, tokens...); undoErr != nil {
+				return fmt.Errorf("failed to undo unlabel actions (undo reason: %v): %w", errStr, undoErr)
+			}
+
+			return fmt.Errorf("failed to unlabel messages: %v", errStr)
+
+		}
+
+		results = append(results, res)
 	}
 
 	return nil

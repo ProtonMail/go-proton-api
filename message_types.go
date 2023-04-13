@@ -204,14 +204,14 @@ type LabelMessagesRes struct {
 	UndoToken UndoToken
 }
 
-func (res LabelMessagesRes) ok() bool {
+func (res LabelMessagesRes) ok() (bool, string) {
 	for _, resp := range res.Responses {
 		if resp.Response.Code != SuccessCode {
-			return false
+			return false, resp.Response.Error()
 		}
 	}
 
-	return true
+	return true, ""
 }
 
 type LabelMessageRes struct {
