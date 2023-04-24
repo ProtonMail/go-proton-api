@@ -2,6 +2,7 @@ package proton
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -22,12 +23,15 @@ const (
 	maxImportSize = 30 * 1024 * 1024
 )
 
+var ErrImportEncrypt = errors.New("failed to encrypt message")
+var ErrImportSizeExceeded = errors.New("message exceeds maximum import size of 30MB")
+
 func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, workers, buffer int, req ...ImportReq) (stream.Stream[ImportRes], error) {
 	// Encrypt each message.
 	for idx := range req {
 		enc, err := EncryptRFC822(addrKR, req[idx].Message)
 		if err != nil {
-			return nil, fmt.Errorf("failed to encrypt message %v: %w", idx, err)
+			return nil, fmt.Errorf("%w %v: %v", ErrImportEncrypt, idx, err)
 		}
 
 		req[idx].Message = enc
@@ -35,7 +39,7 @@ func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, wor
 
 	// If any of the messages exceed the maximum import size, return an error.
 	if xslices.Any(req, func(req ImportReq) bool { return len(req.Message) > maxImportSize }) {
-		return nil, fmt.Errorf("message size exceeds maximum import size of %v", maxImportSize)
+		return nil, ErrImportSizeExceeded
 	}
 
 	return stream.Flatten(parallel.MapStream(
