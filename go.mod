@@ -5,9 +5,9 @@ go 1.18
 require (
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/ProtonMail/gluon v0.16.0
-	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8
+	github.com/ProtonMail/go-crypto v0.0.0-20230322105811-d73448b7e800
 	github.com/ProtonMail/go-srp v0.0.5
-	github.com/ProtonMail/gopenpgp/v2 v2.5.2
+	github.com/ProtonMail/gopenpgp/v2 v2.7.1-proton
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/bradenaw/juniper v0.10.2
 	github.com/emersion/go-message v0.16.0
@@ -20,15 +20,15 @@ require (
 	github.com/urfave/cli/v2 v2.24.4
 	go.uber.org/goleak v1.2.1
 	golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb
-	golang.org/x/net v0.7.0
-	golang.org/x/text v0.7.0
+	golang.org/x/net v0.8.0
+	golang.org/x/text v0.8.0
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
 )
 
 require (
 	github.com/ProtonMail/bcrypt v0.0.0-20211005172633-e235017c1baf // indirect
-	github.com/ProtonMail/go-mime v0.0.0-20221031134845-8fd9bc37cf08 // indirect
+	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/bytedance/sonic v1.8.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
@@ -57,9 +57,9 @@ require (
 	github.com/ugorji/go/codec v1.2.10 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/arch v0.2.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	google.golang.org/genproto v0.0.0-20230221151758-ace64dc21148 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
