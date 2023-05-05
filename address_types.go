@@ -7,6 +7,7 @@ type Address struct {
 	Send    Bool
 	Receive Bool
 	Status  AddressStatus
+	Type    AddressType
 
 	Order       int
 	DisplayName string
@@ -24,4 +25,14 @@ const (
 	AddressStatusDisabled AddressStatus = iota
 	AddressStatusEnabled
 	AddressStatusDeleting
+)
+
+type AddressType int
+
+const (
+	AddressTypeOriginal AddressType = iota + 1
+	AddressTypeAlias
+	AddressTypeCustom
+	AddressTypePremium
+	AddressTypeExternal
 )

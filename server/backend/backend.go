@@ -202,15 +202,15 @@ func (b *Backend) RemoveUserKey(userID, keyID string) error {
 	return nil
 }
 
-func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus) (string, error) {
-	return b.createAddress(userID, email, password, withKey, status, false)
+func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType) (string, error) {
+	return b.createAddress(userID, email, password, withKey, status, addrType, false)
 }
 
-func (b *Backend) CreateAddressAsUpdate(userID, email string, password []byte, withKey bool, status proton.AddressStatus) (string, error) {
-	return b.createAddress(userID, email, password, withKey, status, true)
+func (b *Backend) CreateAddressAsUpdate(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType) (string, error) {
+	return b.createAddress(userID, email, password, withKey, status, addrType, true)
 }
 
-func (b *Backend) createAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus, issueUpdateInsteadOfCreate bool) (string, error) {
+func (b *Backend) createAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType, issueUpdateInsteadOfCreate bool) (string, error) {
 	return withAcc(b, userID, func(acc *account) (string, error) {
 		var keys []key
 
@@ -251,11 +251,12 @@ func (b *Backend) createAddress(userID, email string, password []byte, withKey b
 		addressID := uuid.NewString()
 
 		acc.addresses[addressID] = &address{
-			addrID: addressID,
-			email:  email,
-			order:  len(acc.addresses) + 1,
-			status: status,
-			keys:   keys,
+			addrID:   addressID,
+			email:    email,
+			order:    len(acc.addresses) + 1,
+			status:   status,
+			addrType: addrType,
+			keys:     keys,
 		}
 
 		var update update
@@ -273,6 +274,18 @@ func (b *Backend) createAddress(userID, email string, password []byte, withKey b
 		acc.updateIDs = append(acc.updateIDs, updateID)
 
 		return addressID, nil
+	})
+}
+
+func (b *Backend) ChangeAddressType(userID, addrId string, addrType proton.AddressType) error {
+	return b.withAcc(userID, func(acc *account) error {
+		for _, addr := range acc.addresses {
+			if addr.addrID == addrId {
+				addr.addrType = addrType
+				return nil
+			}
+		}
+		return fmt.Errorf("no addrID matching %s for user %s", addrId, userID)
 	})
 }
 
