@@ -72,7 +72,7 @@ func (s *Backend) quarkUserCreate(args ...string) (proton.User, error) {
 
 	// TODO: Create keys of different types (we always use RSA2048).
 	if *newAddr || *genKeys != "" {
-		if _, err := s.CreateAddress(userID, *name+"@"+s.domain, []byte(*pass), *genKeys != "", addressStatus); err != nil {
+		if _, err := s.CreateAddress(userID, *name+"@"+s.domain, []byte(*pass), *genKeys != "", addressStatus, proton.AddressTypeOriginal); err != nil {
 			return proton.User{}, fmt.Errorf("failed to create address with keys: %w", err)
 		}
 	}
@@ -102,7 +102,7 @@ func (s *Backend) quarkUserCreateAddress(args ...string) (proton.Address, error)
 	}
 
 	// TODO: Create keys of different types (we always use RSA2048).
-	addrID, err := s.CreateAddress(fs.Arg(0), fs.Arg(2), []byte(fs.Arg(1)), *genKeys != "", addressStatus)
+	addrID, err := s.CreateAddress(fs.Arg(0), fs.Arg(2), []byte(fs.Arg(1)), *genKeys != "", addressStatus, proton.AddressTypeOriginal)
 	if err != nil {
 		return proton.Address{}, fmt.Errorf("failed to create address with keys: %w", err)
 	}
