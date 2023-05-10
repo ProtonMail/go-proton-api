@@ -1,11 +1,15 @@
 package proton
 
 import (
+	"errors"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/ProtonMail/gluon/async"
 	"github.com/go-resty/resty/v2"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -18,28 +22,30 @@ const (
 )
 
 type managerBuilder struct {
-	hostURL      string
-	appVersion   string
-	transport    http.RoundTripper
-	verifyProofs bool
-	cookieJar    http.CookieJar
-	retryCount   int
-	logger       resty.Logger
-	debug        bool
-	panicHandler async.PanicHandler
+	hostURL       string
+	appVersion    string
+	transport     http.RoundTripper
+	verifyProofs  bool
+	cookieJar     http.CookieJar
+	retryCount    int
+	logger        resty.Logger
+	debug         bool
+	panicHandler  async.PanicHandler
+	errorsToRetry []int
 }
 
 func newManagerBuilder() *managerBuilder {
 	return &managerBuilder{
-		hostURL:      DefaultHostURL,
-		appVersion:   DefaultAppVersion,
-		transport:    http.DefaultTransport,
-		verifyProofs: true,
-		cookieJar:    nil,
-		retryCount:   3,
-		logger:       nil,
-		debug:        false,
-		panicHandler: async.NoopPanicHandler{},
+		hostURL:       DefaultHostURL,
+		appVersion:    DefaultAppVersion,
+		transport:     http.DefaultTransport,
+		verifyProofs:  true,
+		cookieJar:     nil,
+		retryCount:    3,
+		logger:        nil,
+		debug:         false,
+		panicHandler:  async.NoopPanicHandler{},
+		errorsToRetry: []int{http.StatusTooManyRequests, http.StatusServiceUnavailable},
 	}
 }
 
@@ -87,13 +93,49 @@ func (builder *managerBuilder) build() *Manager {
 	// Configure retry mechanism.
 	m.rc.SetRetryCount(builder.retryCount)
 	m.rc.SetRetryMaxWaitTime(time.Minute)
-	m.rc.AddRetryCondition(catchTooManyRequests)
+	m.rc.AddRetryCondition(builder.catchErrorsToRetry)
 	m.rc.AddRetryCondition(catchDialError)
 	m.rc.AddRetryCondition(catchDropError)
-	m.rc.SetRetryAfter(catchRetryAfter)
+	m.rc.SetRetryAfter(builder.catchRetryAfter)
 
 	// Set the data type of API errors.
 	m.rc.SetError(&APIError{})
 
 	return m
+}
+
+func (builder *managerBuilder) catchErrorsToRetry(res *resty.Response, _ error) bool {
+	for _, err := range builder.errorsToRetry {
+		if err == res.StatusCode() {
+			return true
+		}
+	}
+	return false
+}
+
+// nolint:gosec
+func (builder *managerBuilder) catchRetryAfter(_ *resty.Client, res *resty.Response) (time.Duration, error) {
+	// 0 and no error means default behaviour which is exponential backoff with jitter.
+	if !builder.catchErrorsToRetry(res, errors.New("")) {
+		return 0, nil
+	}
+
+	// Parse the Retry-After header, or fallback to 10 seconds.
+	after, err := strconv.Atoi(res.Header().Get("Retry-After"))
+	if err != nil {
+		after = 10
+	}
+
+	// Add some jitter to the delay.
+	after += rand.Intn(10)
+
+	logrus.WithFields(logrus.Fields{
+		"pkg":    "go-proton-api",
+		"status": res.StatusCode(),
+		"url":    res.Request.URL,
+		"method": res.Request.Method,
+		"after":  after,
+	}).Warn("Too many requests, retrying after delay")
+
+	return time.Duration(after) * time.Second, nil
 }

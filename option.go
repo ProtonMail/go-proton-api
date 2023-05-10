@@ -137,3 +137,17 @@ type withPanicHandler struct {
 func (opt withPanicHandler) config(builder *managerBuilder) {
 	builder.panicHandler = opt.panicHandler
 }
+
+type withErrorsToRetry struct {
+	errorsToRetry []int
+}
+
+func WithErrorsToRetry(errors []int) Option {
+	return &withErrorsToRetry{
+		errorsToRetry: errors,
+	}
+}
+
+func (opt withErrorsToRetry) config(builder *managerBuilder) {
+	builder.errorsToRetry = opt.errorsToRetry
+}
