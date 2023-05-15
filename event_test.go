@@ -105,11 +105,14 @@ func TestMaxEventMerge(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	event, more, err := c.GetEvent(ctx, latestID)
+	events, more, err := c.GetEvent(ctx, latestID)
 	require.NoError(t, err)
 	require.True(t, more)
+	require.Equal(t, 50, len(events))
 
-	event, more, err = c.GetEvent(ctx, event.EventID)
+	events2, more, err := c.GetEvent(ctx, events[len(events)-1].EventID)
+	require.NotEqual(t, events, events2)
 	require.NoError(t, err)
 	require.False(t, more)
+	require.Equal(t, 26, len(events2))
 }
