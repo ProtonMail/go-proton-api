@@ -70,31 +70,6 @@ func (event Event) String() string {
 	return fmt.Sprintf("Event %s: %s", event.EventID, strings.Join(parts, ", "))
 }
 
-// merge combines this event with the other event (assumed to be newer!).
-// TODO: Intelligent merging: if there are multiple EventUpdate(Flags) events, can we just take the latest one?
-func (event *Event) merge(other Event) error {
-	event.EventID = other.EventID
-
-	if other.User != nil {
-		event.User = other.User
-	}
-
-	if other.MailSettings != nil {
-		event.MailSettings = other.MailSettings
-	}
-
-	// For now, label events are simply appended.
-	event.Labels = append(event.Labels, other.Labels...)
-
-	// For now, message events are simply appended.
-	event.Messages = append(event.Messages, other.Messages...)
-
-	// For now, address events are simply appended.
-	event.Addresses = append(event.Addresses, other.Addresses...)
-
-	return nil
-}
-
 type RefreshFlag uint8
 
 const (

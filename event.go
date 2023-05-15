@@ -22,37 +22,37 @@ func (c *Client) GetLatestEventID(ctx context.Context) (string, error) {
 	return res.EventID, nil
 }
 
-// maxMergedEvents limits the number of events which are merged per one GetEvent
+// maxCollectedEvents limits the number of events which are collected per one GetEvent
 // call.
-const maxMergedEvents = 50
+const maxCollectedEvents = 50
 
-func (c *Client) GetEvent(ctx context.Context, eventID string) (Event, bool, error) {
+func (c *Client) GetEvent(ctx context.Context, eventID string) ([]Event, bool, error) {
+	var events []Event
+
 	event, more, err := c.getEvent(ctx, eventID)
 	if err != nil {
-		return Event{}, more, err
+		return nil, more, err
 	}
 
-	nMerged := 0
+	events = append(events, event)
+
+	nCollected := 0
 
 	for more {
-		nMerged++
-		if nMerged >= maxMergedEvents {
+		nCollected++
+		if nCollected >= maxCollectedEvents {
 			break
 		}
 
-		var next Event
-
-		next, more, err = c.getEvent(ctx, event.EventID)
+		event, more, err = c.getEvent(ctx, event.EventID)
 		if err != nil {
-			return Event{}, false, err
+			return nil, false, err
 		}
 
-		if err := event.merge(next); err != nil {
-			return Event{}, false, err
-		}
+		events = append(events, event)
 	}
 
-	return event, more, nil
+	return events, more, nil
 }
 
 // NewEventStreamer returns a new event stream.
@@ -77,21 +77,23 @@ func (c *Client) NewEventStream(ctx context.Context, period, jitter time.Duratio
 				// ...
 			}
 
-			event, _, err := c.GetEvent(ctx, lastEventID)
+			events, _, err := c.GetEvent(ctx, lastEventID)
 			if err != nil {
 				continue
 			}
 
-			if event.EventID == lastEventID {
+			if events[len(events)-1].EventID == lastEventID {
 				continue
 			}
 
-			select {
-			case <-ctx.Done():
-				return
+			for _, evt := range events {
+				select {
+				case <-ctx.Done():
+					return
 
-			case eventCh <- event:
-				lastEventID = event.EventID
+				case eventCh <- evt:
+					lastEventID = evt.EventID
+				}
 			}
 		}
 	}()
