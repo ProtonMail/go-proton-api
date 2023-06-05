@@ -1,6 +1,7 @@
 package proton
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -39,10 +40,26 @@ type APIError struct {
 
 	// Message is the error message returned by the API.
 	Message string `json:"Error"`
+
+	// Details contains optional error details which are specific to each request.
+	Details map[string]any
 }
 
 func (err APIError) Error() string {
 	return fmt.Sprintf("%v (Code=%v, Status=%v)", err.Message, err.Code, err.Status)
+}
+
+func (err APIError) DetailsToString() string {
+	if err.Details == nil {
+		return ""
+	}
+
+	bytes, e := json.Marshal(err.Details)
+	if e != nil {
+		return fmt.Sprintf("Failed to generate json: %v", e)
+	}
+
+	return string(bytes)
 }
 
 // NetError represents a network error. It is returned when the API is unreachable.
