@@ -10,12 +10,13 @@ type ShareMetadata struct {
 	Type  ShareType  // Type of share
 	State ShareState // The state of the share (active, deleted)
 
-	CreateTime int64 // Creation time of the share in Unix time
-	ModifyTime int64 // Last modification time of the share in Unix time
+	CreationTime int64 // Creation time of the share in Unix time
+	ModifyTime   int64 // Last modification time of the share in Unix time
 
-	Creator string     // Creator email address
-	Flags   ShareFlags // The flag bitmap
-	Locked  bool       // Whether the share is locked
+	Creator           string     // Creator email address
+	Flags             ShareFlags // The flag bitmap
+	Locked            bool       // Whether the share is locked
+	VolumeSoftDeleted bool       // Was the volume soft deleted
 }
 
 // Share is an entry point to a location in the file structure (Volume).
