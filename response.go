@@ -42,7 +42,7 @@ type APIError struct {
 	Message string `json:"Error"`
 
 	// Details contains optional error details which are specific to each request.
-	Details map[string]any
+	Details any
 }
 
 func (err APIError) Error() string {

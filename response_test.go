@@ -51,7 +51,23 @@ func TestAPIError_DeserializeWithoutDetails(t *testing.T) {
 	require.Nil(t, err.Details)
 }
 
-func TestAPIError_DeserializeWithDetails(t *testing.T) {
+func TestAPIError_DeserializeWithoutDetailsValue(t *testing.T) {
+	errJson := `
+{
+	"Status": 400,
+	"Code": 1000,
+	"Error": "Foo Bar",
+	"Details": 20
+}
+`
+	var err proton.APIError
+
+	require.NoError(t, json.Unmarshal([]byte(errJson), &err))
+	require.NotNil(t, err.Details)
+	require.Equal(t, `20`, err.DetailsToString())
+}
+
+func TestAPIError_DeserializeWithDetailsObject(t *testing.T) {
 	errJson := `
 {
 	"Status": 400,
@@ -70,4 +86,29 @@ func TestAPIError_DeserializeWithDetails(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(errJson), &err))
 	require.NotNil(t, err.Details)
 	require.Equal(t, `{"foo":"bar","object2":{"v":20}}`, err.DetailsToString())
+}
+
+func TestAPIError_DeserializeWithDetailsArray(t *testing.T) {
+	errJson := `
+{
+	"Status": 400,
+	"Code": 1000,
+	"Error": "Foo Bar",
+	"Details": [
+		{
+			"object2": {
+				"v": 20
+			},
+			"foo": "bar"
+		},
+		499,
+		"hello"
+	]
+}
+`
+	var err proton.APIError
+
+	require.NoError(t, json.Unmarshal([]byte(errJson), &err))
+	require.NotNil(t, err.Details)
+	require.Equal(t, `[{"foo":"bar","object2":{"v":20}},499,"hello"]`, err.DetailsToString())
 }
