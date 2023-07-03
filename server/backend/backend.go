@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"golang.org/x/exp/slices"
 	"net/mail"
 	"sync"
 	"time"
@@ -40,10 +41,11 @@ type Backend struct {
 	srp     map[string]*srp.Server
 	srpLock sync.Mutex
 
-	authLife time.Duration
+	authLife    time.Duration
+	enableDedup bool
 }
 
-func New(authLife time.Duration, domain string) *Backend {
+func New(authLife time.Duration, domain string, enableDedup bool) *Backend {
 	return &Backend{
 		domain:             domain,
 		accounts:           make(map[string]*account),
@@ -55,6 +57,7 @@ func New(authLife time.Duration, domain string) *Backend {
 		maxUpdatesPerEvent: 0,
 		srp:                make(map[string]*srp.Server),
 		authLife:           authLife,
+		enableDedup:        enableDedup,
 	}
 }
 
@@ -400,15 +403,52 @@ func (b *Backend) CreateMessage(
 			msg.unread = unread
 			msg.starred = starred
 
-			messages[msg.messageID] = msg
+			addrListEqual := func(l1 []*mail.Address, l2 []*mail.Address) bool {
+				s1 := xslices.Map(l1, func(addr *mail.Address) string {
+					return addr.Address
+				})
+				s2 := xslices.Map(l2, func(addr *mail.Address) string {
+					return addr.Address
+				})
 
-			updateID, err := b.newUpdate(&messageCreated{messageID: msg.messageID})
-			if err != nil {
-				return "", err
+				return slices.Equal(s1, s2)
 			}
 
-			acc.messageIDs = append(acc.messageIDs, msg.messageID)
-			acc.updateIDs = append(acc.updateIDs, updateID)
+			var foundDuplicate bool
+
+			if b.enableDedup {
+				for _, m := range messages {
+					if m.addrID != msg.addrID {
+						continue
+					}
+
+					toEqual := addrListEqual(m.toList, msg.toList)
+					bccEqual := addrListEqual(m.bccList, msg.bccList)
+					ccEqual := addrListEqual(m.ccList, msg.ccList)
+
+					if m.sender.Address == msg.sender.Address &&
+						toEqual &&
+						bccEqual &&
+						ccEqual &&
+						m.subject == msg.subject {
+						msg.messageID = m.messageID
+						foundDuplicate = true
+						break
+					}
+				}
+			}
+
+			if !foundDuplicate {
+				messages[msg.messageID] = msg
+
+				updateID, err := b.newUpdate(&messageCreated{messageID: msg.messageID})
+				if err != nil {
+					return "", err
+				}
+
+				acc.messageIDs = append(acc.messageIDs, msg.messageID)
+				acc.updateIDs = append(acc.updateIDs, updateID)
+			}
 
 			return msg.messageID, nil
 		})

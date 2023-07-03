@@ -23,6 +23,7 @@ type serverBuilder struct {
 	proxyTransport *http.Transport
 	cacher         AuthCacher
 	rateLimiter    *rateLimiter
+	enableDedup    bool
 }
 
 func newServerBuilder() *serverBuilder {
@@ -49,7 +50,7 @@ func (builder *serverBuilder) build() *Server {
 
 	s := &Server{
 		r: gin.New(),
-		b: backend.New(time.Hour, builder.domain),
+		b: backend.New(time.Hour, builder.domain, builder.enableDedup),
 
 		domain:         builder.domain,
 		proxyOrigin:    builder.origin,
@@ -252,4 +253,14 @@ func WithListener(listener net.Listener) Option {
 	return withNetListener{
 		listener: listener,
 	}
+}
+
+type withMessageDedup struct{}
+
+func (withMessageDedup) config(builder *serverBuilder) {
+	builder.enableDedup = true
+}
+
+func WithMessageDedup() Option {
+	return &withMessageDedup{}
 }

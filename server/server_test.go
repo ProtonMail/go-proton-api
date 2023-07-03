@@ -827,6 +827,73 @@ func TestServer_Import(t *testing.T) {
 	})
 }
 
+func TestServer_Import_Dedup(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			user, err := c.GetUser(ctx)
+			require.NoError(t, err)
+
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
+			require.NoError(t, err)
+
+			subjectGenerator := func() string {
+				return "my Subject"
+			}
+
+			res := importMessagesWithSubjectGenerator(
+				ctx,
+				t,
+				c,
+				addr[0].ID,
+				addrKRs[addr[0].ID],
+				[]string{},
+				proton.MessageFlagReceived,
+				1,
+				subjectGenerator,
+			)
+			require.NoError(t, err)
+			require.Len(t, res, 1)
+			require.Equal(t, proton.SuccessCode, res[0].Code)
+
+			message, err := c.GetMessage(ctx, res[0].MessageID)
+			require.NoError(t, err)
+
+			dec, err := message.Decrypt(addrKRs[message.AddressID])
+			require.NoError(t, err)
+			require.NotEmpty(t, dec)
+
+			// Import message again should be deduped.
+			resDedup := importMessagesWithSubjectGenerator(
+				ctx,
+				t,
+				c,
+				addr[0].ID,
+				addrKRs[addr[0].ID],
+				[]string{},
+				proton.MessageFlagReceived,
+				1,
+				subjectGenerator,
+			)
+			require.NoError(t, err)
+			require.Len(t, resDedup, 1)
+			require.Equal(t, proton.SuccessCode, resDedup[0].Code)
+			require.Equal(t, res[0].MessageID, resDedup[0].MessageID)
+		})
+	}, WithMessageDedup())
+}
+
 func TestServer_Labels(t *testing.T) {
 	type add string
 	type rem string
@@ -1934,7 +2001,7 @@ func withMessages(ctx context.Context, t *testing.T, c *proton.Client, pass stri
 	}))
 }
 
-func importMessages(
+func importMessagesWithSubjectGenerator(
 	ctx context.Context,
 	t *testing.T,
 	c *proton.Client,
@@ -1943,6 +2010,7 @@ func importMessages(
 	labelIDs []string,
 	flags proton.MessageFlag,
 	count int,
+	subjectGenerator func() string,
 ) []proton.ImportRes {
 	req := iterator.Collect(iterator.Map(iterator.Counter(count), func(int) proton.ImportReq {
 		return proton.ImportReq{
@@ -1952,7 +2020,7 @@ func importMessages(
 				Flags:     flags,
 				Unread:    true,
 			},
-			Message: newMessageLiteral("sender@example.com", "recipient@example.com"),
+			Message: newMessageLiteralWithSubject("sender@example.com", "recipient@example.com", subjectGenerator()),
 		}
 	}))
 
@@ -1963,6 +2031,21 @@ func importMessages(
 	require.NoError(t, err)
 
 	return res
+}
+
+func importMessages(
+	ctx context.Context,
+	t *testing.T,
+	c *proton.Client,
+	addrID string,
+	addrKR *crypto.KeyRing,
+	labelIDs []string,
+	flags proton.MessageFlag,
+	count int,
+) []proton.ImportRes {
+	return importMessagesWithSubjectGenerator(ctx, t, c, addrID, addrKR, labelIDs, flags, count, func() string {
+		return uuid.NewString()
+	})
 }
 
 func countBytesRead(ctl *proton.NetCtl, fn func()) uint64 {
