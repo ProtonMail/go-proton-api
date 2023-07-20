@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
@@ -111,4 +113,20 @@ func TestAPIError_DeserializeWithDetailsArray(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(errJson), &err))
 	require.NotNil(t, err.Details)
 	require.Equal(t, `[{"foo":"bar","object2":{"v":20}},499,"hello"]`, err.DetailsToString())
+}
+
+func TestNetError_RouteInErrorMessage(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	}))
+	defer s.Close()
+
+	m := proton.New(proton.WithHostURL(s.URL))
+	defer m.Close()
+
+	pingErr := m.Quark(context.Background(), "test/ping")
+
+	require.Error(t, pingErr)
+	require.Contains(t, pingErr.Error(), "GET")
+	require.Contains(t, pingErr.Error(), "/test/ping")
 }
