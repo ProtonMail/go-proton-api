@@ -93,6 +93,14 @@ func catchAPIError(_ *resty.Client, res *resty.Response) error {
 		return nil
 	}
 
+	method := "NONE"
+	route := "N/A"
+
+	if res.Request != nil {
+		method = res.Request.Method
+		route = res.Request.URL
+	}
+
 	var err error
 
 	if apiErr, ok := res.Error().(*APIError); ok {
@@ -114,7 +122,10 @@ func catchAPIError(_ *resty.Client, res *resty.Response) error {
 		}
 	}
 
-	return fmt.Errorf("%v: %w", res.StatusCode(), err)
+	return fmt.Errorf(
+		"%v %s %s: %w",
+		res.StatusCode(), method, route, err,
+	)
 }
 
 func updateTime(_ *resty.Client, res *resty.Response) error {
