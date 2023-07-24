@@ -25,7 +25,7 @@ type doneFunc func()
 // New returns a new pool.
 func NewPool[In comparable, Out any](size int, panicHandler async.PanicHandler, work func(context.Context, In) (Out, error)) *Pool[In, Out] {
 	pool := &Pool[In, Out]{
-		queue: async.NewQueuedChannel[*job[In, Out]](0, 0, panicHandler),
+		queue: async.NewQueuedChannel[*job[In, Out]](0, 0, panicHandler, "gpa-pool"),
 	}
 
 	for i := 0; i < size; i++ {
