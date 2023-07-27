@@ -237,11 +237,11 @@ func TestServer_MessageIDs(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
 			withMessages(ctx, t, c, "pass", 10000, func(wantMessageIDs []string) {
-				allMessageIDs, err := c.GetMessageIDs(ctx, "")
+				allMessageIDs, err := c.GetAllMessageIDs(ctx, "")
 				require.NoError(t, err)
 				require.ElementsMatch(t, wantMessageIDs, allMessageIDs)
 
-				halfMessageIDs, err := c.GetMessageIDs(ctx, allMessageIDs[len(allMessageIDs)/2])
+				halfMessageIDs, err := c.GetAllMessageIDs(ctx, allMessageIDs[len(allMessageIDs)/2])
 				require.NoError(t, err)
 				require.ElementsMatch(t, allMessageIDs[len(allMessageIDs)/2+1:], halfMessageIDs)
 			})
