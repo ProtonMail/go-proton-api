@@ -67,11 +67,11 @@ func (c *Client) GetMessageMetadata(ctx context.Context, filter MessageFilter) (
 	})
 }
 
-func (c *Client) GetMessageIDs(ctx context.Context, afterID string) ([]string, error) {
+func (c *Client) GetAllMessageIDs(ctx context.Context, afterID string) ([]string, error) {
 	var messageIDs []string
 
 	for ; ; afterID = messageIDs[len(messageIDs)-1] {
-		page, err := c.getMessageIDs(ctx, afterID)
+		page, err := c.GetMessageIDs(ctx, afterID, maxMessageIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -189,7 +189,11 @@ func (c *Client) UnlabelMessages(ctx context.Context, messageIDs []string, label
 	return nil
 }
 
-func (c *Client) getMessageIDs(ctx context.Context, afterID string) ([]string, error) {
+func (c *Client) GetMessageIDs(ctx context.Context, afterID string, limit int) ([]string, error) {
+	if limit > maxMessageIDs {
+		limit = maxMessageIDs
+	}
+
 	var res struct {
 		IDs []string
 	}
@@ -199,7 +203,7 @@ func (c *Client) getMessageIDs(ctx context.Context, afterID string) ([]string, e
 			r = r.SetQueryParam("AfterID", afterID)
 		}
 
-		return r.SetQueryParam("Limit", strconv.Itoa(maxMessageIDs)).SetResult(&res).Get("/mail/v4/messages/ids")
+		return r.SetQueryParam("Limit", strconv.Itoa(limit)).SetResult(&res).Get("/mail/v4/messages/ids")
 	}); err != nil {
 		return nil, err
 	}
