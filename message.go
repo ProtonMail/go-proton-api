@@ -248,7 +248,6 @@ func (c *Client) GetMessageMetadataPage(ctx context.Context, page, pageSize int,
 		PageSize int
 
 		Sort string
-		Desc Bool
 	}{
 		MessageFilter: filter,
 
@@ -256,7 +255,6 @@ func (c *Client) GetMessageMetadataPage(ctx context.Context, page, pageSize int,
 		PageSize: pageSize,
 
 		Sort: "ID",
-		Desc: false,
 	}
 
 	for {
