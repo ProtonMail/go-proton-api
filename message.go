@@ -271,3 +271,17 @@ func (c *Client) GetMessageMetadataPage(ctx context.Context, page, pageSize int,
 
 	return res.Messages, nil
 }
+
+func (c *Client) GetGroupedMessageCount(ctx context.Context) ([]MessageGroupCount, error) {
+	var res struct {
+		Counts []MessageGroupCount
+	}
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetResult(&res).Get("/mail/v4/messages/count")
+	}); err != nil {
+		return nil, err
+	}
+
+	return res.Counts, nil
+}
