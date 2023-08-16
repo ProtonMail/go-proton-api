@@ -220,3 +220,9 @@ type LabelMessageRes struct {
 	ID       string
 	Response APIError
 }
+
+type MessageGroupCount struct {
+	LabelID string
+	Total   int
+	Unread  int
+}

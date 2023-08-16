@@ -96,6 +96,7 @@ func initRouter(s *Server) {
 			messages.PUT("/unlabel", s.handlePutMailMessagesUnlabel())
 			messages.POST("/import", s.handlePutMailMessagesImport())
 			messages.PUT("/delete", s.handleDeleteMailMessages())
+			messages.GET("/count", s.handleMessageGroupCount())
 		}
 
 		if attachments := mail.Group("/attachments"); attachments != nil {

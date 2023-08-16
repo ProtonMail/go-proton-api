@@ -126,7 +126,7 @@ func (msg *message) toMessage(attData map[string][]byte, att map[string]*attachm
 	}
 }
 
-func (msg *message) toMetadata(attData map[string][]byte, att map[string]*attachment) proton.MessageMetadata {
+func (msg *message) getLabelIDs() []string {
 	labelIDs := []string{proton.AllMailLabel}
 
 	if msg.flags.HasAny(proton.MessageFlagSent, proton.MessageFlagScheduledSend) {
@@ -160,6 +160,12 @@ func (msg *message) toMetadata(attData map[string][]byte, att map[string]*attach
 			labelIDs = append(labelIDs, proton.DraftsLabel)
 		}
 	}
+
+	return labelIDs
+}
+
+func (msg *message) toMetadata(attData map[string][]byte, att map[string]*attachment) proton.MessageMetadata {
+	labelIDs := msg.getLabelIDs()
 
 	messageSize := len(msg.armBody)
 	for _, a := range msg.attIDs {

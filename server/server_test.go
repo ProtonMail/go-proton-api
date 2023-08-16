@@ -1990,6 +1990,97 @@ func TestServer_SendDataEventMultiple(t *testing.T) {
 	})
 }
 
+func TestServer_GetMessageGroupCount(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			user, err := c.GetUser(ctx)
+			require.NoError(t, err)
+
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
+			require.NoError(t, err)
+
+			expected := []proton.MessageGroupCount{
+				{
+					LabelID: proton.InboxLabel,
+					Total:   10,
+					Unread:  4,
+				},
+				{
+					LabelID: proton.SentLabel,
+					Total:   4,
+					Unread:  0,
+				},
+				{
+					LabelID: proton.ArchiveLabel,
+					Total:   3,
+					Unread:  0,
+				},
+				{
+					LabelID: proton.TrashLabel,
+					Total:   6,
+					Unread:  0,
+				},
+				{
+					LabelID: proton.AllMailLabel,
+					Total:   23,
+					Unread:  4,
+				},
+			}
+
+			for _, st := range expected {
+				if st.LabelID == proton.AllMailLabel {
+					continue
+				}
+
+				var flags proton.MessageFlag
+				if st.LabelID == proton.InboxLabel {
+					flags = proton.MessageFlagReceived
+				} else if st.LabelID == proton.SentLabel {
+					flags = proton.MessageFlagSent
+				}
+
+				res := importMessages(ctx, t, c, addr[0].ID, addrKRs[addr[0].ID], []string{}, flags, st.Total)
+				msgIDs := xslices.Map(res, func(r proton.ImportRes) string {
+					return r.MessageID
+				})
+				require.NoError(t, c.LabelMessages(ctx, msgIDs, st.LabelID))
+				if st.Unread == 0 {
+					require.NoError(t, c.MarkMessagesRead(ctx, msgIDs...))
+				} else {
+					require.NoError(t, c.MarkMessagesRead(ctx, msgIDs[st.Unread:]...))
+				}
+			}
+
+			counts, err := c.GetGroupedMessageCount(ctx)
+			require.NoError(t, err)
+
+			counts = xslices.Filter(counts, func(t proton.MessageGroupCount) bool {
+				switch t.LabelID {
+				case proton.InboxLabel, proton.TrashLabel, proton.ArchiveLabel, proton.AllMailLabel, proton.SentLabel:
+					return true
+				default:
+					return false
+				}
+			})
+			require.NotEmpty(t, counts)
+			require.ElementsMatch(t, expected, counts)
+
+		})
+	})
+}
+
 func withServer(t *testing.T, fn func(ctx context.Context, s *Server, m *proton.Manager), opts ...Option) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

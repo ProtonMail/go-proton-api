@@ -337,6 +337,24 @@ func (s *Server) handleDeleteMailMessages() gin.HandlerFunc {
 	}
 }
 
+func (s *Server) handleMessageGroupCount() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		count, err := s.b.GetMessageGroupCount(c.GetString("UserID"))
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, proton.APIError{
+				Code:    proton.InvalidValue,
+				Message: fmt.Sprintf("Message %s not found", c.Param("messageID")),
+			})
+
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"Counts": count,
+		})
+	}
+}
+
 func (s *Server) importMessage(
 	userID, addrID string,
 	labelIDs []string,

@@ -900,6 +900,49 @@ func (b *Backend) AddMessageCreatedUpdate(userID, messageID string) error {
 	})
 }
 
+func (b *Backend) GetMessageGroupCount(userID string) ([]proton.MessageGroupCount, error) {
+	var result []proton.MessageGroupCount
+	err := b.withAcc(userID, func(acc *account) error {
+		return b.withMessages(func(m map[string]*message) error {
+			type stats struct {
+				total  int
+				unread int
+			}
+
+			labelStats := make(map[string]stats)
+
+			for _, msg := range m {
+				for _, lbl := range msg.getLabelIDs() {
+					v, ok := labelStats[lbl]
+					if !ok {
+						v = stats{}
+					}
+					v.total++
+					if msg.unread {
+						v.unread++
+					}
+
+					labelStats[lbl] = v
+				}
+			}
+
+			result = make([]proton.MessageGroupCount, 0, len(labelStats))
+
+			for lbl, stats := range labelStats {
+				result = append(result, proton.MessageGroupCount{
+					LabelID: lbl,
+					Total:   stats.total,
+					Unread:  stats.unread,
+				})
+			}
+
+			return nil
+		})
+	})
+
+	return result, err
+}
+
 func buildEvent(
 	updates []update,
 	addresses map[string]*address,
