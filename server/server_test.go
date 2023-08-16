@@ -233,6 +233,44 @@ func TestServer_MessageFilter(t *testing.T) {
 	})
 }
 
+func TestServer_MessageFilterDesc(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			withMessages(ctx, t, c, "pass", 100, func(messageIDs []string) {
+				allMetadata := make([]proton.MessageMetadata, 0, 100)
+
+				// first request.
+				{
+					metadata, err := c.GetMessageMetadataPage(ctx, 0, 10, proton.MessageFilter{Desc: true})
+					require.NoError(t, err)
+
+					allMetadata = append(allMetadata, metadata...)
+				}
+
+				for i := 1; i < 11; i++ {
+					// Get the messages.
+					metadata, err := c.GetMessageMetadataPage(ctx, 0, 10, proton.MessageFilter{Desc: true, EndID: allMetadata[len(allMetadata)-1].ID})
+					require.NoError(t, err)
+					require.NotEmpty(t, metadata)
+					require.Equal(t, metadata[0].ID, allMetadata[len(allMetadata)-1].ID)
+					allMetadata = append(allMetadata, metadata[1:]...)
+				}
+
+				// Final check. Asking for EndID as last message multiple times will always return the last id.
+				metadata, err := c.GetMessageMetadataPage(ctx, 0, 10, proton.MessageFilter{Desc: true, EndID: allMetadata[len(allMetadata)-1].ID})
+				require.NoError(t, err)
+				require.Len(t, metadata, 1)
+				require.Equal(t, metadata[0].ID, allMetadata[len(allMetadata)-1].ID)
+
+				// The messages should be the ones we created.
+				require.ElementsMatch(t, messageIDs, xslices.Map(allMetadata, func(metadata proton.MessageMetadata) string {
+					return metadata.ID
+				}))
+			})
+		})
+	})
+}
+
 func TestServer_MessageIDs(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {

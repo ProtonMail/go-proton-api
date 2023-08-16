@@ -360,6 +360,23 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 				return nil, err
 			}
 
+			if filter.Desc {
+				xslices.Reverse(metadata)
+			}
+
+			// Note that this not a perfect replacement as we don't handle the case where this message could have been
+			// deleted in between this metadata request. The backend has the information stored differently and can
+			// resolve these gaps.
+			if filter.EndID != "" {
+				index := xslices.IndexFunc(metadata, func(metadata proton.MessageMetadata) bool {
+					return metadata.ID == filter.EndID
+				})
+
+				if index >= 0 {
+					metadata = metadata[index:]
+				}
+			}
+
 			metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
 				if len(filter.ID) > 0 {
 					if !slices.Contains(filter.ID, metadata.ID) {
@@ -548,7 +565,6 @@ func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate,
 					}
 				}
 				msg := newMessageFromTemplate(addrID, draft, parentRef)
-
 				// Drafts automatically get the sysLabel "Drafts".
 				msg.addLabel(proton.DraftsLabel, labels)
 

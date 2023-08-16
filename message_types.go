@@ -54,6 +54,8 @@ type MessageFilter struct {
 	AddressID  string `json:",omitempty"`
 	ExternalID string `json:",omitempty"`
 	LabelID    string `json:",omitempty"`
+	EndID      string `json:",omitempty"`
+	Desc       Bool
 }
 
 type Message struct {

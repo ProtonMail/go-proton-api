@@ -2,7 +2,6 @@ package backend
 
 import (
 	"fmt"
-	"golang.org/x/exp/slices"
 	"net/mail"
 	"sync"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 type Backend struct {
