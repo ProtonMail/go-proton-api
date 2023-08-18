@@ -173,3 +173,17 @@ func (update *addressDeleted) replaces(other update) bool {
 		return false
 	}
 }
+
+type userSettingsUpdate struct {
+	baseUpdate
+	settings proton.UserSettings
+}
+
+func (update *userSettingsUpdate) replaces(other update) bool {
+	switch other.(type) {
+	case *userSettingsUpdate:
+		return true
+	default:
+		return false
+	}
+}

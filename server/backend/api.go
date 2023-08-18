@@ -56,6 +56,14 @@ func (b *Backend) SetUserSettingsTelemetry(userID string, telemetry proton.Setti
 			return proton.UserSettings{}, errors.New("bad value")
 		}
 		acc.userSettings.Telemetry = telemetry
+
+		updateID, err := b.newUpdate(&userSettingsUpdate{settings: acc.userSettings})
+		if err != nil {
+			return acc.userSettings, err
+		}
+
+		acc.updateIDs = append(acc.updateIDs, updateID)
+
 		return acc.userSettings, nil
 	})
 }
@@ -66,6 +74,14 @@ func (b *Backend) SetUserSettingsCrashReports(userID string, crashReports proton
 			return proton.UserSettings{}, errors.New("bad value")
 		}
 		acc.userSettings.CrashReports = crashReports
+
+		updateID, err := b.newUpdate(&userSettingsUpdate{settings: acc.userSettings})
+		if err != nil {
+			return acc.userSettings, err
+		}
+
+		acc.updateIDs = append(acc.updateIDs, updateID)
+
 		return acc.userSettings, nil
 	})
 }
@@ -1043,6 +1059,12 @@ func buildEvent(
 					Action: proton.EventDelete,
 				},
 			})
+
+		case *userSettingsUpdate:
+			event.UserSettings = &proton.UserSettings{
+				Telemetry:    update.settings.Telemetry,
+				CrashReports: update.settings.CrashReports,
+			}
 		}
 	}
 
