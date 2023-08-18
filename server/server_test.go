@@ -482,6 +482,35 @@ func TestServer_Events_Refresh(t *testing.T) {
 	})
 }
 
+func TestServer_Events_UserSettings(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			user, err := c.GetUser(ctx)
+			require.NoError(t, err)
+
+			_, err = s.b.SetUserSettingsTelemetry(user.ID, proton.SettingDisabled)
+			require.NoError(t, err)
+
+			// Get the latest event ID to stream from.
+			fromEventID, err := c.GetLatestEventID(ctx)
+			require.NoError(t, err)
+
+			// Refresh the user's mail.
+			_, err = s.b.SetUserSettingsTelemetry(user.ID, proton.SettingEnabled)
+			require.NoError(t, err)
+
+			// Begin collecting events.
+			eventCh := c.NewEventStream(ctx, time.Second, 0, fromEventID)
+
+			// The user should eventually be refreshed.
+			require.Eventually(t, func() bool {
+				e := <-eventCh
+				return e.UserSettings != nil && e.UserSettings.Telemetry == proton.SettingEnabled
+			}, 5*time.Second, time.Millisecond*100)
+		})
+	})
+}
+
 func TestServer_RevokeUser(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
