@@ -192,7 +192,7 @@ func catchDropError(_ *resty.Response, err error) bool {
 //
 // This function also closes the response body.
 func parseResponse(res *resty.Response, err error) (*resty.Response, error) {
-	if res.StatusCode() == 200 {
+	if err != nil || res.StatusCode() == 200 {
 		return res, err
 	}
 
