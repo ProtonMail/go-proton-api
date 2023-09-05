@@ -2,6 +2,7 @@ package proton
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
@@ -17,12 +18,13 @@ type Link struct {
 	LinkID       string // Encrypted file/folder ID
 	ParentLinkID string // Encrypted parent folder ID (LinkID). Root link has null ParentLinkID.
 
-	Type     LinkType
-	Name     string // Encrypted file name
-	Hash     string // HMAC of name encrypted with parent hash key
-	Size     int64
-	State    LinkState
-	MIMEType string
+	Type               LinkType
+	Name               string // Encrypted file name
+	NameSignatureEmail string // Signature email for link name
+	Hash               string // HMAC of name encrypted with parent hash key
+	Size               int64
+	State              LinkState
+	MIMEType           string
 
 	CreateTime     int64 // Link creation time
 	ModifyTime     int64 // Link modification time (on API, real modify date is stored in XAttr)
@@ -31,6 +33,8 @@ type Link struct {
 	NodeKey                 string // The private NodeKey, used to decrypt any file/folder content.
 	NodePassphrase          string // The passphrase used to unlock the NodeKey, encrypted by the owning Link/Share keyring.
 	NodePassphraseSignature string
+	SignatureEmail          string // Signature email for the NodePassphraseSignature
+	XAttr                   string // Modification time and size from the file system
 
 	FileProperties   *FileProperties
 	FolderProperties *FolderProperties
@@ -93,7 +97,7 @@ func (l Link) GetKeyRing(parentNodeKR, addrKR *crypto.KeyRing) (*crypto.KeyRing,
 	return crypto.NewKeyRing(unlockedKey)
 }
 
-func (l Link) GetHashKey(nodeKR *crypto.KeyRing) ([]byte, error) {
+func (l Link) GetHashKey(parentNodeKey, addrKRs *crypto.KeyRing) ([]byte, error) {
 	if l.Type != LinkTypeFolder {
 		return nil, errors.New("link is not a folder")
 	}
@@ -103,9 +107,18 @@ func (l Link) GetHashKey(nodeKR *crypto.KeyRing) ([]byte, error) {
 		return nil, err
 	}
 
-	dec, err := nodeKR.Decrypt(enc, nodeKR, crypto.GetUnixTime())
-	if err != nil {
-		return nil, err
+	_, ok := enc.GetSignatureKeyIDs()
+	var dec *crypto.PlainMessage
+	if ok {
+		dec, err = parentNodeKey.Decrypt(enc, addrKRs, crypto.GetUnixTime())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		dec, err = parentNodeKey.Decrypt(enc, nil, 0)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return dec.GetBinary(), nil
@@ -162,8 +175,35 @@ type RevisionMetadata struct {
 	ManifestSignature string        // Signature of the revision manifest, signed with user's address key of the share.
 	SignatureEmail    string        // Email of the user that signed the revision.
 	State             RevisionState // State of revision
+	XAttr             string        // modification time and size from the file system
 	Thumbnail         Bool          // Whether the revision has a thumbnail
 	ThumbnailHash     string        // Hash of the thumbnail
+}
+
+func (revisionMetadata *RevisionMetadata) GetDecXAttrString(addrKR, nodeKR *crypto.KeyRing) (*RevisionXAttrCommon, error) {
+	if revisionMetadata.XAttr == "" {
+		return nil, nil
+	}
+
+	// decrypt the modification time and size
+	XAttrMsg, err := crypto.NewPGPMessageFromArmored(revisionMetadata.XAttr)
+	if err != nil {
+		return nil, err
+	}
+
+	decXAttr, err := nodeKR.Decrypt(XAttrMsg, addrKR, crypto.GetUnixTime())
+	if err != nil {
+		return nil, err
+	}
+
+	var data RevisionXAttr
+	err = json.Unmarshal(decXAttr.Data, &data)
+	if err != nil {
+		// TODO: if Unmarshal fails, maybe it's because the file system is missing the field?
+		return nil, err
+	}
+
+	return &data.Common, nil
 }
 
 // Revisions are only for files, they represent “versions” of files.
@@ -174,6 +214,32 @@ type Revision struct {
 	Blocks []Block
 }
 
+func (revision *Revision) GetDecXAttrString(addrKR, nodeKR *crypto.KeyRing) (*RevisionXAttrCommon, error) {
+	if revision.XAttr == "" {
+		return nil, nil
+	}
+
+	// decrypt the modification time and size
+	XAttrMsg, err := crypto.NewPGPMessageFromArmored(revision.XAttr)
+	if err != nil {
+		return nil, err
+	}
+
+	decXAttr, err := nodeKR.Decrypt(XAttrMsg, addrKR, crypto.GetUnixTime())
+	if err != nil {
+		return nil, err
+	}
+
+	var data RevisionXAttr
+	err = json.Unmarshal(decXAttr.Data, &data)
+	if err != nil {
+		// TODO: if Unmarshal fails, maybe it's because the file system is missing the field?
+		return nil, err
+	}
+
+	return &data.Common, nil
+}
+
 type RevisionState int
 
 const (
@@ -182,3 +248,17 @@ const (
 	RevisionStateObsolete
 	RevisionStateDeleted
 )
+
+type CheckAvailableHashesReq struct {
+	Hashes []string
+}
+
+type PendingHashData struct {
+	Hash       []string
+	RevisionID []string
+	LinkID     []string
+}
+type CheckAvailableHashesRes struct {
+	AvailableHashes   []string
+	PendingHashesData []PendingHashData
+}

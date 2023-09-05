@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bradenaw/juniper/parallel"
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server"
-	"github.com/bradenaw/juniper/parallel"
 	"github.com/stretchr/testify/require"
 )
 

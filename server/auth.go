@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"net/http"
 
-	"github.com/ProtonMail/go-proton-api"
 	"github.com/gin-gonic/gin"
+	"github.com/ProtonMail/go-proton-api"
 	"github.com/sirupsen/logrus"
 )
 

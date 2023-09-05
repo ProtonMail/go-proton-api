@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/ProtonMail/gluon/async"
-	"github.com/ProtonMail/go-proton-api"
 	"github.com/bradenaw/juniper/iterator"
 	"github.com/bradenaw/juniper/stream"
 	"github.com/google/uuid"
+	"github.com/ProtonMail/go-proton-api"
 	"github.com/stretchr/testify/require"
 )
 

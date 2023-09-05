@@ -5,9 +5,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/google/uuid"
+	"github.com/ProtonMail/go-proton-api"
 )
 
 type ID uint64

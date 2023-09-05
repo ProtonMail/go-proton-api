@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gin-gonic/gin"
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server/backend"
-	"github.com/gin-gonic/gin"
 )
 
 func (s *Server) handleGetContacts() gin.HandlerFunc {

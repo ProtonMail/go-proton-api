@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/ProtonMail/go-proton-api"
-	"github.com/ProtonMail/go-proton-api/server/backend"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/gin-gonic/gin"
+	"github.com/ProtonMail/go-proton-api"
+	"github.com/ProtonMail/go-proton-api/server/backend"
 )
 
 type AuthCacher interface {

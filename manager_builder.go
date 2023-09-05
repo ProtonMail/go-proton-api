@@ -15,11 +15,16 @@ const (
 	// DefaultAppVersion is the default app version used to communicate with the API.
 	// This must be changed (using the WithAppVersion option) for production use.
 	DefaultAppVersion = "go-proton-api"
+
+	// DefaultUserAgent is the default user agent used to communicate with the API.
+	// See: https://github.com/emersion/hydroxide/issues/252
+	DefaultUserAgent = ""
 )
 
 type managerBuilder struct {
 	hostURL      string
 	appVersion   string
+	userAgent    string
 	transport    http.RoundTripper
 	verifyProofs bool
 	cookieJar    http.CookieJar
@@ -33,6 +38,7 @@ func newManagerBuilder() *managerBuilder {
 	return &managerBuilder{
 		hostURL:      DefaultHostURL,
 		appVersion:   DefaultAppVersion,
+		userAgent:    DefaultUserAgent,
 		transport:    http.DefaultTransport,
 		verifyProofs: true,
 		cookieJar:    nil,
@@ -74,6 +80,7 @@ func (builder *managerBuilder) build() *Manager {
 	// Set app version in header.
 	m.rc.OnBeforeRequest(func(_ *resty.Client, req *resty.Request) error {
 		req.SetHeader("x-pm-appversion", builder.appVersion)
+		req.SetHeader("User-Agent", builder.userAgent)
 		return nil
 	})
 

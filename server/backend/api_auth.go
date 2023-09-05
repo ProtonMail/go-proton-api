@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-srp"
 	"github.com/google/uuid"
+	"github.com/ProtonMail/go-proton-api"
 )
 
 func (b *Backend) NewAuthInfo(username string) (proton.AuthInfo, error) {

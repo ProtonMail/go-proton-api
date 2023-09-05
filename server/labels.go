@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ProtonMail/go-proton-api"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/gin-gonic/gin"
+	"github.com/ProtonMail/go-proton-api"
 )
 
 func (s *Server) handleGetMailLabels() gin.HandlerFunc {

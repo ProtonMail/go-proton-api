@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/ProtonMail/gluon/rfc822"
-	"github.com/ProtonMail/go-proton-api"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/google/uuid"
+	"github.com/ProtonMail/go-proton-api"
 	"golang.org/x/exp/slices"
 )
 
