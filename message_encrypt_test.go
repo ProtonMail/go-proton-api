@@ -1,4 +1,4 @@
-package proton
+package proton_test
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ProtonMail/gluon/rfc822"
+	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +28,7 @@ This is explicitly typed plain ASCII text.
 	kr, err := crypto.NewKeyRing(key)
 	require.NoError(t, err)
 
-	encryptedMessage, err := EncryptRFC822(kr, []byte(message))
+	encryptedMessage, err := proton.EncryptRFC822(kr, []byte(message))
 	require.NoError(t, err)
 
 	section := rfc822.Parse(encryptedMessage)
@@ -85,7 +86,7 @@ This is the epilogue.  It is also to be ignored.
 	kr, err := crypto.NewKeyRing(key)
 	require.NoError(t, err)
 
-	encryptedMessage, err := EncryptRFC822(kr, []byte(message))
+	encryptedMessage, err := proton.EncryptRFC822(kr, []byte(message))
 	require.NoError(t, err)
 
 	section := rfc822.Parse(encryptedMessage)
@@ -167,7 +168,7 @@ SGVsbG8gQXR0YWNobWVudA==
 	kr, err := crypto.NewKeyRing(key)
 	require.NoError(t, err)
 
-	encryptedMessage, err := EncryptRFC822(kr, []byte(message))
+	encryptedMessage, err := proton.EncryptRFC822(kr, []byte(message))
 	require.NoError(t, err)
 
 	section := rfc822.Parse(encryptedMessage)

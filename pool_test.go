@@ -1,4 +1,4 @@
-package proton
+package proton_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ProtonMail/gluon/async"
+	"github.com/ProtonMail/go-proton-api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,18 +18,18 @@ func TestPool_NewJob(t *testing.T) {
 	doubler := newDoubler(runtime.NumCPU())
 	defer doubler.Done()
 
-	job1, done1, err := doubler.newJob(context.Background(), 1)
+	job1, done1, err := doubler.NewJob(context.Background(), 1)
 	require.NoError(t, err)
 	defer done1()
 
-	job2, done2, err := doubler.newJob(context.Background(), 2)
+	job2, done2, err := doubler.NewJob(context.Background(), 2)
 	require.NoError(t, err)
 	defer done2()
 
-	res2, err := job2.result()
+	res2, err := job2.Result()
 	require.NoError(t, err)
 
-	res1, err := job1.result()
+	res1, err := job1.Result()
 	require.NoError(t, err)
 
 	assert.Equal(t, 2, res1)
@@ -41,35 +42,35 @@ func TestPool_NewJob_Done(t *testing.T) {
 	defer doubler.Done()
 
 	// Start two jobs. Don't mark the jobs as done yet.
-	job1, done1, err := doubler.newJob(context.Background(), 1)
+	job1, done1, err := doubler.NewJob(context.Background(), 1)
 	require.NoError(t, err)
-	job2, done2, err := doubler.newJob(context.Background(), 2)
+	job2, done2, err := doubler.NewJob(context.Background(), 2)
 	require.NoError(t, err)
 
 	// Get the first result.
-	res1, _ := job1.result()
+	res1, _ := job1.Result()
 	assert.Equal(t, 2, res1)
 
 	// Get the first result.
-	res2, _ := job2.result()
+	res2, _ := job2.Result()
 	assert.Equal(t, 4, res2)
 
 	// Additional jobs will wait.
-	job3, done3, err := doubler.newJob(context.Background(), 3)
+	job3, done3, err := doubler.NewJob(context.Background(), 3)
 	require.NoError(t, err)
-	job4, done4, err := doubler.newJob(context.Background(), 4)
+	job4, done4, err := doubler.NewJob(context.Background(), 4)
 	require.NoError(t, err)
 
 	// Channel to collect results from jobs 3 and 4.
 	resCh := make(chan int, 2)
 
 	go func() {
-		res, _ := job3.result()
+		res, _ := job3.Result()
 		resCh <- res
 	}()
 
 	go func() {
-		res, _ := job4.result()
+		res, _ := job4.Result()
 		resCh <- res
 	}()
 
@@ -153,8 +154,8 @@ func TestPool_ProcessAll(t *testing.T) {
 	}, res)
 }
 
-func newDoubler(workers int, delay ...time.Duration) *Pool[int, int] {
-	return NewPool(workers, async.NoopPanicHandler{}, func(ctx context.Context, req int) (int, error) {
+func newDoubler(workers int, delay ...time.Duration) *proton.Pool[int, int] {
+	return proton.NewPool(workers, async.NoopPanicHandler{}, func(ctx context.Context, req int) (int, error) {
 		if len(delay) > 0 {
 			time.Sleep(delay[0])
 		}
@@ -163,8 +164,8 @@ func newDoubler(workers int, delay ...time.Duration) *Pool[int, int] {
 	})
 }
 
-func newDoublerWithError(workers int) *Pool[int, int] {
-	return NewPool(workers, async.NoopPanicHandler{}, func(ctx context.Context, req int) (int, error) {
+func newDoublerWithError(workers int) *proton.Pool[int, int] {
+	return proton.NewPool(workers, async.NoopPanicHandler{}, func(ctx context.Context, req int) (int, error) {
 		if req%2 == 0 {
 			return 0, errors.New("oops")
 		}

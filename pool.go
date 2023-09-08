@@ -79,7 +79,7 @@ func (pool *Pool[In, Out]) Process(ctx context.Context, reqs []In, fn func(int, 
 
 			defer wg.Done()
 
-			job, done, err := pool.newJob(ctx, req)
+			job, done, err := pool.NewJob(ctx, req)
 			if err != nil {
 				lock.Lock()
 				defer lock.Unlock()
@@ -95,7 +95,7 @@ func (pool *Pool[In, Out]) Process(ctx context.Context, reqs []In, fn func(int, 
 
 			defer done()
 
-			res, err := job.result()
+			res, err := job.Result()
 
 			if err := fn(index, req, res, err); err != nil {
 				lock.Lock()
@@ -141,7 +141,7 @@ func (pool *Pool[In, Out]) ProcessAll(ctx context.Context, reqs []In) ([]Out, er
 
 // ProcessOne submits one job to the pool and returns the result.
 func (pool *Pool[In, Out]) ProcessOne(ctx context.Context, req In) (Out, error) {
-	job, done, err := pool.newJob(ctx, req)
+	job, done, err := pool.NewJob(ctx, req)
 	if err != nil {
 		var o Out
 		return o, err
@@ -149,7 +149,7 @@ func (pool *Pool[In, Out]) ProcessOne(ctx context.Context, req In) (Out, error) 
 
 	defer done()
 
-	return job.result()
+	return job.Result()
 }
 
 func (pool *Pool[In, Out]) Done() {
@@ -157,10 +157,10 @@ func (pool *Pool[In, Out]) Done() {
 	pool.wg.Wait()
 }
 
-// newJob submits a job to the pool. It returns a job handle and a DoneFunc.
+// NewJob submits a job to the pool. It returns a job handle and a DoneFunc.
 // The job handle allows the job result to be obtained. The DoneFunc is used to mark the job as done,
 // which frees up the worker in the pool for reuse.
-func (pool *Pool[In, Out]) newJob(ctx context.Context, req In) (*job[In, Out], doneFunc, error) {
+func (pool *Pool[In, Out]) NewJob(ctx context.Context, req In) (*job[In, Out], doneFunc, error) {
 	job := newJob[In, Out](ctx, req)
 
 	if !pool.queue.Enqueue(job) {

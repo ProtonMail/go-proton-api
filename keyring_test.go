@@ -1,8 +1,9 @@
-package proton
+package proton_test
 
 import (
 	"testing"
 
+	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/ProtonMail/gopenpgp/v2/helper"
 	"github.com/stretchr/testify/require"
@@ -11,7 +12,7 @@ import (
 func TestKeyring_Unlock(t *testing.T) {
 	r := require.New(t)
 
-	newKey := func(id, passphrase string) Key {
+	newKey := func(id, passphrase string) proton.Key {
 		arm, err := helper.GenerateKey(id, id+"@email.com", []byte(passphrase), "rsa", 2048)
 		r.NoError(err)
 
@@ -21,14 +22,14 @@ func TestKeyring_Unlock(t *testing.T) {
 		serial, err := privKey.Serialize()
 		r.NoError(err)
 
-		return Key{
+		return proton.Key{
 			ID:         id,
 			PrivateKey: serial,
 			Active:     true,
 		}
 	}
 
-	keys := Keys{
+	keys := proton.Keys{
 		newKey("1", "good_phrase"),
 		newKey("2", "good_phrase"),
 		newKey("3", "bad_phrase"),

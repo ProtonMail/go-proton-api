@@ -1,9 +1,10 @@
-package proton
+package proton_test
 
 import (
 	"os"
 	"testing"
 
+	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/stretchr/testify/require"
 )
@@ -15,9 +16,9 @@ func TestDecrypt(t *testing.T) {
 	pubKR := loadKeyRing(t, "testdata/pub.asc", nil)
 	prvKR := loadKeyRing(t, "testdata/prv.asc", []byte("password"))
 
-	msg := Message{Body: string(body)}
+	msg := proton.Message{Body: string(body)}
 
-	sigs, err := ExtractSignatures(prvKR, msg.Body)
+	sigs, err := proton.ExtractSignatures(prvKR, msg.Body)
 	require.NoError(t, err)
 
 	enc, err := crypto.NewPGPMessageFromArmored(msg.Body)
