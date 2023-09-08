@@ -44,7 +44,7 @@ func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, wor
 
 	return stream.Flatten(parallel.MapStream(
 		ctx,
-		stream.FromIterator(iterator.Slice(chunkSized(req, maxImportCount, maxImportSize, func(req ImportReq) int {
+		stream.FromIterator(iterator.Slice(ChunkSized(req, maxImportCount, maxImportSize, func(req ImportReq) int {
 			return len(req.Message)
 		}))),
 		workers,
@@ -113,9 +113,9 @@ func (c *Client) importMessages(ctx context.Context, req []ImportReq) ([]ImportR
 	}), nil
 }
 
-// chunkSized splits a slice into chunks of maximum size and length.
+// ChunkSized splits a slice into chunks of maximum size and length.
 // It is assumed that the size of each element is less than the maximum size.
-func chunkSized[T any](vals []T, maxLen, maxSize int, getSize func(T) int) [][]T {
+func ChunkSized[T any](vals []T, maxLen, maxSize int, getSize func(T) int) [][]T {
 	var chunks [][]T
 
 	for len(vals) > 0 {

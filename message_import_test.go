@@ -1,8 +1,10 @@
-package proton
+package proton_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/ProtonMail/go-proton-api"
 )
 
 func Test_chunkSized(t *testing.T) {
@@ -51,8 +53,8 @@ func Test_chunkSized(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := chunkSized(tt.args.vals, tt.args.maxLen, tt.args.maxSize, tt.args.getSize); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("chunkSized() = %v, want %v", got, tt.want)
+			if got := proton.ChunkSized(tt.args.vals, tt.args.maxLen, tt.args.maxSize, tt.args.getSize); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ChunkSized() = %v, want %v", got, tt.want)
 			}
 		})
 	}

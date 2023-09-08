@@ -2,10 +2,11 @@ package proton_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestAddress_Types(t *testing.T) {

@@ -22,7 +22,7 @@ func newJob[In, Out any](ctx context.Context, req In) *job[In, Out] {
 	}
 }
 
-func (job *job[In, Out]) result() (Out, error) {
+func (job *job[In, Out]) Result() (Out, error) {
 	return <-job.res, <-job.err
 }
 

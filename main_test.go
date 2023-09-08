@@ -1,4 +1,4 @@
-package proton
+package proton_test
 
 import (
 	"testing"
