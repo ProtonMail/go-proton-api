@@ -89,19 +89,21 @@ func (c Card) Get(kr *crypto.KeyRing, key string) ([]*vcard.Field, error) {
 	return dec[key], nil
 }
 
-func (c *Card) Set(kr *crypto.KeyRing, key, value string) error {
+func (c *Card) Set(kr *crypto.KeyRing, key string, value *vcard.Field) error {
 	dec, err := c.decode(kr)
 	if err != nil {
 		return err
 	}
 
 	if field := dec.Get(key); field != nil {
-		field.Value = value
+		field.Value = value.Value
+		field.Params = value.Params
+		field.Group = value.Group
 
 		return c.encode(kr, dec)
 	}
 
-	dec.AddValue(key, value)
+	dec.Add(key, value)
 
 	return c.encode(kr, dec)
 }
