@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ProtonMail/gluon/rfc822"
@@ -957,6 +958,68 @@ func (b *Backend) GetMessageGroupCount(userID string) ([]proton.MessageGroupCoun
 	})
 
 	return result, err
+}
+
+func (b *Backend) GetUserContact(userID, contactID string) (proton.Contact, error) {
+	return withAcc(b, userID, func(acc *account) (proton.Contact, error) {
+		contact, ok := acc.contacts[contactID]
+		if ok {
+			return *contact, nil
+		}
+		return proton.Contact{}, errors.New("No such contact with ID" + contactID)
+	})
+}
+
+func (b *Backend) GetUserContacts(userID string) ([]proton.Contact, error) {
+	return withAcc(b, userID, func(acc *account) ([]proton.Contact, error) {
+		var contacts []proton.Contact
+		for _, contact := range acc.contacts {
+			contacts = append(contacts, *contact)
+		}
+		return contacts, nil
+	})
+}
+
+func (b *Backend) GetUserContactEmails(userID, email string) ([]proton.ContactEmail, error) {
+	return withAcc(b, userID, func(acc *account) ([]proton.ContactEmail, error) {
+		var contacts []proton.ContactEmail
+		for _, contact := range acc.contacts {
+			for _, contactEmail := range contact.ContactEmails {
+				if email == "" || contactEmail.Email == email {
+					contacts = append(contacts, contactEmail)
+				}
+			}
+		}
+		return contacts, nil
+	})
+}
+
+func (b *Backend) AddUserContact(userID string, contact proton.Contact) (proton.Contact, error) {
+	return withAcc(b, userID, func(acc *account) (proton.Contact, error) {
+		acc.contacts[contact.ID] = &contact
+		return *acc.contacts[contact.ID], nil
+	})
+}
+
+func (b *Backend) UpdateUserContact(userID, contactID string, cards proton.Cards) (proton.Contact, error) {
+	return withAcc(b, userID, func(acc *account) (proton.Contact, error) {
+		acc.contacts[contactID].Cards = cards
+		return *acc.contacts[contactID], nil
+	})
+}
+
+func (b *Backend) GenerateContactID(userID string) (string, error) {
+	return withAcc(b, userID, func(acc *account) (string, error) {
+		var lastKey = "0"
+		for k := range acc.contacts {
+			lastKey = k
+		}
+		newKey, err := strconv.Atoi(lastKey)
+		if err != nil {
+			return "", err
+		}
+		return strconv.Itoa(newKey + 1), nil
+	})
 }
 
 func buildEvent(

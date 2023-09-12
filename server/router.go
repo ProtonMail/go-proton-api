@@ -107,6 +107,10 @@ func initRouter(s *Server) {
 
 	// All contacts routes need authentication.
 	if contacts := s.r.Group("/contacts/v4", s.requireAuth()); contacts != nil {
+		contacts.GET("", s.handleGetContacts())
+		contacts.POST("", s.handlePostContacts())
+		contacts.GET("/:contactID", s.handleGetContact())
+		contacts.PUT("/:contactID", s.handlePutContact())
 		contacts.GET("/emails", s.handleGetContactsEmails())
 	}
 
