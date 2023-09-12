@@ -277,13 +277,15 @@ type CreateContactsReq struct {
 	Labels    int
 }
 
+type CreateContactResp struct {
+	APIError
+	Contact Contact
+}
+
 type CreateContactsRes struct {
 	Index int
 
-	Response struct {
-		APIError
-		Contact Contact
-	}
+	Response CreateContactResp
 }
 
 type UpdateContactReq struct {
