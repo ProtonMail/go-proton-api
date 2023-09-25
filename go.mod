@@ -18,6 +18,7 @@ require (
 	github.com/sirupsen/logrus v1.9.2
 	github.com/stretchr/testify v1.8.3
 	github.com/urfave/cli/v2 v2.24.4
+	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a
 	go.uber.org/goleak v1.2.1
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
 	golang.org/x/net v0.10.0
