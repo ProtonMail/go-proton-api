@@ -237,10 +237,13 @@ func (msg *message) getParsedHeaders() proton.Headers {
 		panic(err)
 	}
 
-	parsed := make(proton.Headers)
+	parsed := proton.Headers{
+		Values: make(map[string][]string),
+	}
 
 	header.Entries(func(key, value string) {
-		parsed[key] = append(parsed[key], value)
+		parsed.Order = append(parsed.Order, key)
+		parsed.Values[key] = append(parsed.Values[key], value)
 	})
 
 	return parsed
