@@ -17,7 +17,28 @@ import (
 
 func (b *Backend) GetUser(userID string) (proton.User, error) {
 	return withAcc(b, userID, func(acc *account) (proton.User, error) {
-		return acc.toUser(), nil
+		return withMessages(b, func(m map[string]*message) (proton.User, error) {
+			return withAtts(b, func(attachments map[string]*attachment) (proton.User, error) {
+				user := acc.toUser()
+
+				var messageBytes uint64
+				for _, v := range m {
+					if _, ok := acc.addresses[v.addrID]; ok {
+						messageBytes += uint64(len(v.armBody))
+					}
+
+					for _, a := range v.attIDs {
+						if attach, ok := attachments[a]; ok {
+							messageBytes += uint64(len(b.attData[attach.attDataID]))
+						}
+					}
+				}
+
+				user.ProductUsedSpace.Mail = messageBytes
+
+				return user, nil
+			})
+		})
 	})
 }
 
