@@ -563,7 +563,7 @@ func withAccAuth[T any](b *Backend, authUID, authAcc string, fn func(acc *accoun
 		}
 
 		if time.Since(val.creation) > b.authLife {
-			acc.auth[authUID] = auth{ref: val.ref, creation: val.creation}
+			acc.auth[authUID] = newAuthFromExpired(val)
 		} else if val.acc == authAcc {
 			return fn(acc)
 		}

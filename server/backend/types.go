@@ -62,6 +62,15 @@ func newAuth(scope Scope) auth {
 	}
 }
 
+func newAuthFromExpired(old auth) auth {
+	return auth{
+		acc:      "",
+		ref:      old.ref,
+		scope:    old.scope,
+		creation: old.creation,
+	}
+}
+
 func (auth *auth) toAuth(userID, authUID string, proof []byte) proton.Auth {
 	return proton.Auth{
 		UserID: userID,
