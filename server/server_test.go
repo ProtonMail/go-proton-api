@@ -48,6 +48,32 @@ func TestServer_LoginLogout(t *testing.T) {
 	})
 }
 
+func TestServer_Login_2FA(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		userID, _, err := s.CreateUser("user", []byte("pass"))
+		require.NoError(t, err)
+
+		// Set the expected 2FA code.
+		require.NoError(t, s.SetAuthTOTP(userID, "123123"))
+
+		// Create a new client.
+		c, _, err := m.NewClientWithLogin(ctx, "user", []byte("pass"))
+		require.NoError(t, err)
+		defer c.Close()
+
+		// Most requests should fail; we haven't provided the 2FA code.
+		must_fail(c.GetUser(ctx))
+
+		// Provide the 2FA code.
+		require.NoError(t, c.Auth2FA(ctx, proton.Auth2FAReq{
+			TwoFactorCode: "123123",
+		}))
+
+		// Now requests should succeed.
+		must(c.GetUser(ctx))
+	})
+}
+
 func TestServerMulti(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		_, _, err := s.CreateUser("user", []byte("pass"))
@@ -2245,6 +2271,14 @@ func (j *testCookieJar) Cookies(u *url.URL) []*http.Cookie {
 
 func must[T any](t T, err error) T {
 	if err != nil {
+		panic(err)
+	}
+
+	return t
+}
+
+func must_fail[T any](t T, err error) T {
+	if err == nil {
 		panic(err)
 	}
 

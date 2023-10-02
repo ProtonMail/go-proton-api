@@ -65,6 +65,13 @@ func (b *Backend) SetAuthLife(authLife time.Duration) {
 	b.authLife = authLife
 }
 
+func (b *Backend) SetAuthTOTP(userID, totp string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		acc.totp.want = &totp
+		return nil
+	})
+}
+
 func (b *Backend) SetMaxUpdatesPerEvent(max int) {
 	b.maxUpdatesPerEvent = max
 }
