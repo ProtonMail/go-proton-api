@@ -35,6 +35,7 @@ func initRouter(s *Server) {
 		// Reporting a bug is also possible without authentication.
 		if reports := core.Group("/reports"); reports != nil {
 			reports.POST("/bug", s.handlePostReportBug())
+			reports.POST("/bug/attachments", s.handlePostReportBugAttachments())
 		}
 
 		// These routes require auth.

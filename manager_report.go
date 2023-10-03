@@ -24,3 +24,17 @@ func (m *Manager) ReportBug(ctx context.Context, req ReportBugReq, atts ...Repor
 
 	return res, nil
 }
+
+func (m *Manager) ReportBugAttachement(ctx context.Context, req ReportBugAttachmentReq, atts ...ReportBugAttachment) error {
+	r := m.r(ctx).SetMultipartFormData(req.toFormData())
+
+	for _, att := range atts {
+		r = r.SetMultipartField(att.Name, att.Filename, string(att.MIMEType), bytes.NewReader(att.Body))
+	}
+
+	if _, err := r.Post("/core/v4/reports/bug/attachments"); err != nil {
+		return err
+	}
+
+	return nil
+}

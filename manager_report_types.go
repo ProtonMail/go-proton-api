@@ -43,6 +43,12 @@ type ReportBugReq struct {
 	AsyncAttachments bool
 }
 
+type ReportBugAttachmentReq struct {
+	ClientType ClientType
+	Body       string
+	Token      string
+}
+
 type ReportBugRes struct {
 	APIError
 	Token *string
@@ -53,10 +59,21 @@ func (req ReportBugReq) toFormData() map[string]string {
 	if err != nil {
 		panic(err)
 	}
+	return bytesToFormData(b)
+}
 
+func (req ReportBugAttachmentReq) toFormData() map[string]string {
+	b, err := json.Marshal(req)
+	if err != nil {
+		panic(err)
+	}
+	return bytesToFormData(b)
+}
+
+func bytesToFormData(buff []byte) map[string]string {
 	var raw map[string]any
 
-	if err := json.Unmarshal(b, &raw); err != nil {
+	if err := json.Unmarshal(buff, &raw); err != nil {
 		panic(err)
 	}
 
