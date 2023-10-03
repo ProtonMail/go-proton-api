@@ -15,3 +15,15 @@ func (b *Backend) CreateCSTicket() string {
 	b.csTicket = append(b.csTicket, token)
 	return token
 }
+
+func (b *Backend) GetCSTicket(token string) bool {
+	b.csTicketLock.Lock()
+	defer b.csTicketLock.Unlock()
+
+	for _, ticket := range b.csTicket {
+		if ticket == token {
+			return true
+		}
+	}
+	return false
+}
