@@ -39,6 +39,13 @@ type ReportBugReq struct {
 
 	Country string
 	ISP     string
+
+	AsyncAttachments bool
+}
+
+type ReportBugRes struct {
+	APIError
+	Token *string
 }
 
 func (req ReportBugReq) toFormData() map[string]string {

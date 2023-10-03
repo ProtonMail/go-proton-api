@@ -43,6 +43,9 @@ type Backend struct {
 
 	authLife    time.Duration
 	enableDedup bool
+
+	csTicket     []string
+	csTicketLock sync.Mutex
 }
 
 func New(authLife time.Duration, domain string, enableDedup bool) *Backend {
