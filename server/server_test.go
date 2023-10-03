@@ -656,7 +656,8 @@ func TestServer_Calls_Manager(t *testing.T) {
 		})
 
 		// Make a non-user request.
-		require.NoError(t, m.ReportBug(ctx, proton.ReportBugReq{}))
+		_, err := m.ReportBug(ctx, proton.ReportBugReq{})
+		require.NoError(t, err)
 
 		// The call should be correct.
 		reportCall := calls[0]
