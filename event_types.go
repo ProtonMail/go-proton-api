@@ -24,7 +24,7 @@ type Event struct {
 
 	Addresses []AddressEvent
 
-	UsedSpace *int
+	UsedSpace *int64
 }
 
 func (event Event) String() string {
