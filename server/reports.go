@@ -3,7 +3,6 @@ package server
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,12 +14,8 @@ func (s *Server) handlePostReportBug() gin.HandlerFunc {
 			_ = c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
-		asyncAttach, err := strconv.ParseBool(form.Value["AsyncAttachments"][0])
-		if err != nil {
-			_ = c.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
-		if asyncAttach {
+
+		if form.Value["AsyncAttachments"][0] == "1" {
 			token := s.b.CreateCSTicket()
 			c.JSON(http.StatusOK, gin.H{
 				"Token": token,

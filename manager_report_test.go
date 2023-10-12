@@ -49,7 +49,7 @@ func TestReportBug(t *testing.T) {
 	require.Equal(t, "5.4.0-42-generic", form.Value["OSVersion"][0])
 	require.Equal(t, "firefox", form.Value["Browser"][0])
 	require.Equal(t, "1", form.Value["ClientType"][0])
-	require.Equal(t, "false", form.Value["AsyncAttachments"][0])
+	require.Equal(t, "0", form.Value["AsyncAttachments"][0])
 }
 
 func TestReportBugAsync(t *testing.T) {
@@ -73,7 +73,7 @@ func TestReportBugAsync(t *testing.T) {
 		OSVersion:        "5.4.0-42-generic",
 		Browser:          "firefox",
 		ClientType:       proton.ClientTypeEmail,
-		AsyncAttachments: true,
+		AsyncAttachments: proton.AttachmentTypeAsync,
 	})
 	require.NoError(t, err)
 	require.NotEmpty(t, res.Token)
@@ -90,7 +90,7 @@ func TestReportBugAsync(t *testing.T) {
 	require.Equal(t, "5.4.0-42-generic", form.Value["OSVersion"][0])
 	require.Equal(t, "firefox", form.Value["Browser"][0])
 	require.Equal(t, "1", form.Value["ClientType"][0])
-	require.Equal(t, "true", form.Value["AsyncAttachments"][0])
+	require.Equal(t, "1", form.Value["AsyncAttachments"][0])
 
 	err = m.ReportBugAttachement(context.Background(), proton.ReportBugAttachmentReq{
 		ClientType: proton.ClientTypeEmail,

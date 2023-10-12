@@ -16,6 +16,13 @@ const (
 	ClientTypeDrive
 )
 
+type AttachmentType int
+
+const (
+	AttachmentTypeSync AttachmentType = iota
+	AttachmentTypeAsync
+)
+
 type ReportBugReq struct {
 	OS        string
 	OSVersion string
@@ -40,7 +47,7 @@ type ReportBugReq struct {
 	Country string
 	ISP     string
 
-	AsyncAttachments bool
+	AsyncAttachments AttachmentType
 }
 
 type ReportBugAttachmentReq struct {
