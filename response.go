@@ -44,6 +44,15 @@ type APIError struct {
 
 	// Details contains optional error details which are specific to each request.
 	Details any
+
+	// HV contains optional HV details when API requests HV verification.
+	HV *APIHVDetails
+}
+
+// APIHVDetails contains information related to the human verification requests.
+type APIHVDetails struct {
+	Methods []string `json:"HumanVerificationMethods"`
+	Token   string   `json:"HumanVerificationToken"`
 }
 
 func (err APIError) Error() string {
@@ -61,6 +70,46 @@ func (err APIError) DetailsToString() string {
 	}
 
 	return string(bytes)
+}
+
+func (err *APIError) UnmarshalJSON(data []byte) error {
+	// Struct needs redefine to avoid recursive calls.
+	type APIErrorWithoutHV struct {
+		Status  int
+		Code    Code
+		Message string `json:"Error"`
+		Details any
+	}
+
+	var de APIErrorWithoutHV
+
+	if err := json.Unmarshal(data, &de); err != nil {
+		return err
+	}
+
+	err.Status = de.Status
+	err.Code = de.Code
+	err.Details = de.Details
+	err.Message = de.Message
+
+	if de.Code != HumanVerificationRequired {
+		return nil
+	}
+
+	// Parse HV details.
+	type hvDetails struct {
+		Details *APIHVDetails
+	}
+
+	var hv hvDetails
+
+	if err := json.Unmarshal(data, &hv); err != nil {
+		return fmt.Errorf("failed to parse hv details: %w", err)
+	}
+
+	err.HV = hv.Details
+
+	return nil
 }
 
 // NetError represents a network error. It is returned when the API is unreachable.

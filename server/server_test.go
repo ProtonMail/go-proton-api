@@ -883,7 +883,7 @@ func TestServer_Import(t *testing.T) {
 			res := importMessages(ctx, t, c, addr[0].ID, addrKRs[addr[0].ID], []string{}, proton.MessageFlagReceived, 1)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			require.Equal(t, proton.SuccessCode, res[0].Code)
+			require.Equal(t, proton.SuccessCode, res[0].Response.Code)
 
 			message, err := c.GetMessage(ctx, res[0].MessageID)
 			require.NoError(t, err)
@@ -933,7 +933,7 @@ func TestServer_Import_Dedup(t *testing.T) {
 			)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			require.Equal(t, proton.SuccessCode, res[0].Code)
+			require.Equal(t, proton.SuccessCode, res[0].Response.Code)
 
 			message, err := c.GetMessage(ctx, res[0].MessageID)
 			require.NoError(t, err)
@@ -956,7 +956,7 @@ func TestServer_Import_Dedup(t *testing.T) {
 			)
 			require.NoError(t, err)
 			require.Len(t, resDedup, 1)
-			require.Equal(t, proton.SuccessCode, resDedup[0].Code)
+			require.Equal(t, proton.SuccessCode, resDedup[0].Response.Code)
 			require.Equal(t, res[0].MessageID, resDedup[0].MessageID)
 		})
 	}, WithMessageDedup())
@@ -1325,7 +1325,7 @@ func TestServer_Import_FlagsAndLabels(t *testing.T) {
 						require.Error(t, err)
 					} else {
 						require.NoError(t, err)
-						require.Equal(t, proton.SuccessCode, res[0].Code)
+						require.Equal(t, proton.SuccessCode, res[0].Response.Code)
 
 						message, err := c.GetMessage(ctx, res[0].MessageID)
 						require.NoError(t, err)

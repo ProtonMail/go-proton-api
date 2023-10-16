@@ -53,6 +53,6 @@ func createTestMessages(t *testing.T, c *proton.Client, pass string, count int) 
 	require.NoError(t, err)
 
 	for _, res := range res {
-		require.Equal(t, proton.SuccessCode, res.Code)
+		require.Equal(t, proton.SuccessCode, res.Response.Code)
 	}
 }

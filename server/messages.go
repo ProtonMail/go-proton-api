@@ -297,14 +297,14 @@ func (s *Server) handlePutMailMessagesImport() gin.HandlerFunc {
 			)
 			if err != nil {
 				res.Response = proton.ImportRes{
-					APIError: proton.APIError{
+					Response: proton.APIError{
 						Code:    proton.InvalidValue,
 						Message: fmt.Sprintf("failed to import: %v", err),
 					},
 				}
 			} else {
 				res.Response = proton.ImportRes{
-					APIError:  proton.APIError{Code: proton.SuccessCode},
+					Response:  proton.APIError{Code: proton.SuccessCode},
 					MessageID: messageID,
 				}
 			}
