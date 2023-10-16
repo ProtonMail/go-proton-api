@@ -278,8 +278,8 @@ type CreateContactsReq struct {
 }
 
 type CreateContactResp struct {
-	APIError
-	Contact Contact
+	Response APIError
+	Contact  Contact
 }
 
 type CreateContactsRes struct {

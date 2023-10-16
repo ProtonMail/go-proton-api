@@ -57,8 +57,8 @@ type ReportBugAttachmentReq struct {
 }
 
 type ReportBugRes struct {
-	APIError
-	Token *string
+	Response APIError
+	Token    *string
 }
 
 func (req ReportBugReq) toFormData() map[string]string {

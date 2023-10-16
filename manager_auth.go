@@ -29,6 +29,10 @@ func (m *Manager) NewClientWithRefresh(ctx context.Context, uid, ref string) (*C
 }
 
 func (m *Manager) NewClientWithLogin(ctx context.Context, username string, password []byte) (*Client, Auth, error) {
+	return m.NewClientWithLoginWithHVToken(ctx, username, password, "")
+}
+
+func (m *Manager) NewClientWithLoginWithHVToken(ctx context.Context, username string, password []byte, hvToken string) (*Client, Auth, error) {
 	info, err := m.AuthInfo(ctx, AuthInfoReq{Username: username})
 	if err != nil {
 		return nil, Auth{}, err
@@ -49,7 +53,7 @@ func (m *Manager) NewClientWithLogin(ctx context.Context, username string, passw
 		ClientProof:     base64.StdEncoding.EncodeToString(proofs.ClientProof),
 		ClientEphemeral: base64.StdEncoding.EncodeToString(proofs.ClientEphemeral),
 		SRPSession:      info.SRPSession,
-	})
+	}, hvToken)
 	if err != nil {
 		return nil, Auth{}, err
 	}
@@ -90,12 +94,17 @@ func (m *Manager) AuthModulus(ctx context.Context) (AuthModulus, error) {
 	return res, nil
 }
 
-func (m *Manager) auth(ctx context.Context, req AuthReq) (Auth, error) {
+func (m *Manager) auth(ctx context.Context, req AuthReq, hvToken string) (Auth, error) {
 	var res struct {
 		Auth
 	}
 
-	if _, err := m.r(ctx).SetBody(req).SetResult(&res).Post("/auth/v4"); err != nil {
+	request := m.r(ctx)
+	if len(hvToken) != 0 {
+		request = request.SetHeader(hvPMTokenHeaderField, hvToken).SetHeader(hvPMTokenType, "captcha")
+	}
+
+	if _, err := request.SetBody(req).SetResult(&res).Post("/auth/v4"); err != nil {
 		return Auth{}, err
 	}
 
@@ -131,3 +140,6 @@ func (m *Manager) authRefresh(ctx context.Context, uid, ref string) (Auth, error
 
 	return res.Auth, nil
 }
+
+const hvPMTokenHeaderField = "x-pm-human-verification-token"
+const hvPMTokenType = "x-pm-human-verification-token-type"

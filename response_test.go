@@ -51,6 +51,7 @@ func TestAPIError_DeserializeWithoutDetails(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal([]byte(errJson), &err))
 	require.Nil(t, err.Details)
+	require.Nil(t, err.HV)
 }
 
 func TestAPIError_DeserializeWithoutDetailsValue(t *testing.T) {
@@ -113,6 +114,27 @@ func TestAPIError_DeserializeWithDetailsArray(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(errJson), &err))
 	require.NotNil(t, err.Details)
 	require.Equal(t, `[{"foo":"bar","object2":{"v":20}},499,"hello"]`, err.DetailsToString())
+}
+
+func TestAPIError_DeserializeWithHV(t *testing.T) {
+	errJson := `
+{
+	"Status": 422,
+	"Code": 9001,
+	"Error": "Foo Bar",
+	"Details": {
+		"HumanVerificationMethods": ["captcha", "foo"],
+        "HumanVerificationToken": "token"
+	}
+}
+`
+	var err proton.APIError
+
+	require.NoError(t, json.Unmarshal([]byte(errJson), &err))
+	require.NotNil(t, err.Details)
+	require.NotNil(t, err.HV)
+	require.Equal(t, []string{"captcha", "foo"}, err.HV.Methods)
+	require.Equal(t, "token", err.HV.Token)
 }
 
 func TestNetError_RouteInErrorMessage(t *testing.T) {
