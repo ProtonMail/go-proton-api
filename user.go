@@ -9,12 +9,16 @@ import (
 )
 
 func (c *Client) GetUser(ctx context.Context) (User, error) {
+	return c.GetUserWithHV(ctx, nil)
+}
+
+func (c *Client) GetUserWithHV(ctx context.Context, hv *APIHVDetails) (User, error) {
 	var res struct {
 		User User
 	}
 
-	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetResult(&res).Get("/core/v4/users")
+	if _, err := c.doRes(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return addHVToRequest(r, hv).SetResult(&res).Get("/core/v4/users")
 	}); err != nil {
 		return User{}, err
 	}

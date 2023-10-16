@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-
 	"github.com/ProtonMail/go-srp"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/go-resty/resty/v2"
@@ -29,10 +28,10 @@ func (m *Manager) NewClientWithRefresh(ctx context.Context, uid, ref string) (*C
 }
 
 func (m *Manager) NewClientWithLogin(ctx context.Context, username string, password []byte) (*Client, Auth, error) {
-	return m.NewClientWithLoginWithHVToken(ctx, username, password, "")
+	return m.NewClientWithLoginWithHVToken(ctx, username, password, nil)
 }
 
-func (m *Manager) NewClientWithLoginWithHVToken(ctx context.Context, username string, password []byte, hvToken string) (*Client, Auth, error) {
+func (m *Manager) NewClientWithLoginWithHVToken(ctx context.Context, username string, password []byte, hv *APIHVDetails) (*Client, Auth, error) {
 	info, err := m.AuthInfo(ctx, AuthInfoReq{Username: username})
 	if err != nil {
 		return nil, Auth{}, err
@@ -53,7 +52,7 @@ func (m *Manager) NewClientWithLoginWithHVToken(ctx context.Context, username st
 		ClientProof:     base64.StdEncoding.EncodeToString(proofs.ClientProof),
 		ClientEphemeral: base64.StdEncoding.EncodeToString(proofs.ClientEphemeral),
 		SRPSession:      info.SRPSession,
-	}, hvToken)
+	}, hv)
 	if err != nil {
 		return nil, Auth{}, err
 	}
@@ -94,17 +93,12 @@ func (m *Manager) AuthModulus(ctx context.Context) (AuthModulus, error) {
 	return res, nil
 }
 
-func (m *Manager) auth(ctx context.Context, req AuthReq, hvToken string) (Auth, error) {
+func (m *Manager) auth(ctx context.Context, req AuthReq, hv *APIHVDetails) (Auth, error) {
 	var res struct {
 		Auth
 	}
 
-	request := m.r(ctx)
-	if len(hvToken) != 0 {
-		request = request.SetHeader(hvPMTokenHeaderField, hvToken).SetHeader(hvPMTokenType, "captcha")
-	}
-
-	if _, err := request.SetBody(req).SetResult(&res).Post("/auth/v4"); err != nil {
+	if _, err := addHVToRequest(m.r(ctx), hv).SetBody(req).SetResult(&res).Post("/auth/v4"); err != nil {
 		return Auth{}, err
 	}
 
