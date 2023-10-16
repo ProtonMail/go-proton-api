@@ -13,8 +13,9 @@ type mailSettings struct {
 
 func newMailSettings(displayName string) *mailSettings {
 	return &mailSettings{
-		displayName:  displayName,
-		attachPubKey: false,
+		displayName:   displayName,
+		draftMIMEType: rfc822.TextHTML,
+		attachPubKey:  false,
 	}
 }
 
