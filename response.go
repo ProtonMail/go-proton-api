@@ -31,6 +31,8 @@ const (
 	AuthRefreshTokenInvalid   Code = 10013
 )
 
+type ErrDetails []byte
+
 // APIError represents an error returned by the API.
 type APIError struct {
 	// Status is the HTTP status code of the response that caused the error.
@@ -43,20 +45,16 @@ type APIError struct {
 	Message string `json:"Error"`
 
 	// Details contains optional error details which are specific to each request.
-	Details any
-
-	// HV contains optional HV details when API requests HV verification.
-	HV *APIHVDetails
-}
-
-// APIHVDetails contains information related to the human verification requests.
-type APIHVDetails struct {
-	Methods []string `json:"HumanVerificationMethods"`
-	Token   string   `json:"HumanVerificationToken"`
+	// Note that the contents of this field needs to be valid serialized JSON.
+	Details ErrDetails `json:"Details,omitempty"`
 }
 
 func (err APIError) Error() string {
 	return fmt.Sprintf("%v (Code=%v, Status=%v)", err.Message, err.Code, err.Status)
+}
+
+func (err APIError) IsHVError() bool {
+	return err.Code == HumanVerificationRequired
 }
 
 func (err APIError) DetailsToString() string {
@@ -64,52 +62,7 @@ func (err APIError) DetailsToString() string {
 		return ""
 	}
 
-	bytes, e := json.Marshal(err.Details)
-	if e != nil {
-		return fmt.Sprintf("Failed to generate json: %v", e)
-	}
-
-	return string(bytes)
-}
-
-func (err *APIError) UnmarshalJSON(data []byte) error {
-	// Struct needs redefine to avoid recursive calls.
-	type APIErrorWithoutHV struct {
-		Status  int
-		Code    Code
-		Message string `json:"Error"`
-		Details any
-	}
-
-	var de APIErrorWithoutHV
-
-	if err := json.Unmarshal(data, &de); err != nil {
-		return err
-	}
-
-	err.Status = de.Status
-	err.Code = de.Code
-	err.Details = de.Details
-	err.Message = de.Message
-
-	if de.Code != HumanVerificationRequired {
-		return nil
-	}
-
-	// Parse HV details.
-	type hvDetails struct {
-		Details *APIHVDetails
-	}
-
-	var hv hvDetails
-
-	if err := json.Unmarshal(data, &hv); err != nil {
-		return fmt.Errorf("failed to parse hv details: %w", err)
-	}
-
-	err.HV = hv.Details
-
-	return nil
+	return string(err.Details)
 }
 
 // NetError represents a network error. It is returned when the API is unreachable.
@@ -283,4 +236,13 @@ func parseRawAPIError(rawResponse io.ReadCloser) (*APIError, bool) {
 	}
 
 	return &apiErr, true
+}
+
+func (d ErrDetails) MarshalJSON() ([]byte, error) {
+	return d, nil
+}
+
+func (d *ErrDetails) UnmarshalJSON(data []byte) error {
+	*d = data
+	return nil
 }
