@@ -7,6 +7,8 @@ import (
 
 type mailSettings struct {
 	displayName   string
+	sign          proton.SignExternalMessages
+	pgpScheme     proton.EncryptionScheme
 	draftMIMEType rfc822.MIMEType
 	attachPubKey  bool
 }
@@ -16,6 +18,8 @@ func newMailSettings(displayName string) *mailSettings {
 		displayName:   displayName,
 		draftMIMEType: rfc822.TextHTML,
 		attachPubKey:  false,
+		sign:          0,
+		pgpScheme:     0,
 	}
 }
 
@@ -24,5 +28,7 @@ func (settings *mailSettings) toMailSettings() proton.MailSettings {
 		DisplayName:     settings.displayName,
 		DraftMIMEType:   settings.draftMIMEType,
 		AttachPublicKey: proton.Bool(settings.attachPubKey),
+		Sign:            settings.sign,
+		PGPScheme:       settings.pgpScheme,
 	}
 }
