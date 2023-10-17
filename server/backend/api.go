@@ -66,6 +66,27 @@ func (b *Backend) SetMailSettingsAttachPublicKey(userID string, attach bool) (pr
 	})
 }
 
+func (b *Backend) SetMailSettingsSign(userID string, sign proton.SignExternalMessages) (proton.MailSettings, error) {
+	return withAcc(b, userID, func(acc *account) (proton.MailSettings, error) {
+		acc.mailSettings.sign = sign
+		return acc.mailSettings.toMailSettings(), nil
+	})
+}
+
+func (b *Backend) SetMailSettingsDraftMIMEType(userID string, drafttype rfc822.MIMEType) (proton.MailSettings, error) {
+	return withAcc(b, userID, func(acc *account) (proton.MailSettings, error) {
+		acc.mailSettings.draftMIMEType = drafttype
+		return acc.mailSettings.toMailSettings(), nil
+	})
+}
+
+func (b *Backend) SetMailSettingsPGPScheme(userID string, scheme proton.EncryptionScheme) (proton.MailSettings, error) {
+	return withAcc(b, userID, func(acc *account) (proton.MailSettings, error) {
+		acc.mailSettings.pgpScheme = scheme
+		return acc.mailSettings.toMailSettings(), nil
+	})
+}
+
 func (b *Backend) GetUserSettings(userID string) (proton.UserSettings, error) {
 	return withAcc(b, userID, func(acc *account) (proton.UserSettings, error) {
 		return acc.userSettings, nil

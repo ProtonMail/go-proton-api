@@ -82,6 +82,9 @@ func initRouter(s *Server) {
 		if settings := mail.Group("/settings"); settings != nil {
 			settings.GET("", s.handleGetMailSettings())
 			settings.PUT("/attachpublic", s.handlePutMailSettingsAttachPublicKey())
+			settings.PUT("/drafttype", s.handlePutMailSettingsDraftType())
+			settings.PUT("/sign", s.handlePutMailSettingsSign())
+			settings.PUT("/pgpscheme", s.handlePutMailSettingsPGPScheme())
 		}
 
 		if messages := mail.Group("/messages"); messages != nil {
