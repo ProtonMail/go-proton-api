@@ -51,9 +51,9 @@ type ReportBugReq struct {
 }
 
 type ReportBugAttachmentReq struct {
-	ClientType ClientType
-	Body       string
-	Token      string
+	Product ClientType
+	Body    string
+	Token   string
 }
 
 type ReportBugRes struct {
