@@ -93,17 +93,17 @@ func TestReportBugAsync(t *testing.T) {
 	require.Equal(t, "1", form.Value["AsyncAttachments"][0])
 
 	err = m.ReportBugAttachement(context.Background(), proton.ReportBugAttachmentReq{
-		ClientType: proton.ClientTypeEmail,
-		Body:       "Comment without any attachment",
-		Token:      *res.Token,
+		Product: proton.ClientTypeEmail,
+		Body:    "Comment without any attachment",
+		Token:   *res.Token,
 	})
 
 	require.NoError(t, err)
 
 	err = m.ReportBugAttachement(context.Background(), proton.ReportBugAttachmentReq{
-		ClientType: proton.ClientTypeEmail,
-		Body:       "Comment without any attachment",
-		Token:      "not a good token",
+		Product: proton.ClientTypeEmail,
+		Body:    "Comment without any attachment",
+		Token:   "not a good token",
 	})
 
 	require.Error(t, err)
