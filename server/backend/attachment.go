@@ -26,6 +26,7 @@ type attachment struct {
 	filename    string
 	mimeType    rfc822.MIMEType
 	disposition proton.Disposition
+	contentID   string
 
 	keyPackets []byte
 	armSig     string
@@ -35,6 +36,7 @@ func newAttachment(
 	filename string,
 	mimeType rfc822.MIMEType,
 	disposition proton.Disposition,
+	contentID string,
 	keyPackets []byte,
 	dataPacketID string,
 	armSig string,
@@ -46,6 +48,7 @@ func newAttachment(
 		filename:    filename,
 		mimeType:    mimeType,
 		disposition: disposition,
+		contentID:   contentID,
 
 		keyPackets: keyPackets,
 		armSig:     armSig,

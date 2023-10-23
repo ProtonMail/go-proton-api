@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -727,7 +728,10 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 								newMsg.unread = true
 								messages[newMsg.messageID] = newMsg
 
-								for _, attID := range msg.attIDs {
+								// collect attachment with contentID
+								attIDs := sortAttachment(atts, msg.attIDs)
+
+								for _, attID := range attIDs {
 									attKey, err := base64.StdEncoding.DecodeString(recipient.AttachmentKeyPackets[attID])
 									if err != nil {
 										return err
@@ -737,6 +741,7 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 										atts[attID].filename,
 										atts[attID].mimeType,
 										atts[attID].disposition,
+										atts[attID].contentID,
 										attKey,
 										atts[attID].attDataID,
 										atts[attID].armSig,
@@ -767,6 +772,39 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 	})
 }
 
+func sortAttachment(atts map[string]*attachment, attIDs []string) []string {
+	// collect attachment with contentID
+	attContentId := make(map[string]string, len(attIDs))
+	for _, attID := range attIDs {
+		if atts[attID].contentID != "" {
+			attContentId[atts[attID].contentID] = attID
+		}
+	}
+
+	// sort contentID
+	contentIDs := make([]string, 0, len(attContentId))
+	for k := range attContentId {
+		contentIDs = append(contentIDs, k)
+	}
+	sort.Strings(contentIDs)
+
+	// set contentID attachment first
+	attachments := make([]string, len(attIDs))
+	for _, id := range contentIDs {
+		attachments = append(attachments, attContentId[id])
+	}
+
+	// follow with attachment without contentID
+	for _, attID := range attIDs {
+		if atts[attID].contentID != "" {
+			continue
+		}
+		attachments = append(attachments, attContentId[attID])
+	}
+
+	return attachments
+}
+
 func (b *Backend) CreateAttachment(
 	userID string,
 	messageID string,
@@ -792,6 +830,7 @@ func (b *Backend) CreateAttachment(
 					filename,
 					mimeType,
 					disposition,
+					contentID,
 					keyPackets,
 					b.createAttData(dataPacket),
 					armSig,
