@@ -728,10 +728,7 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 								newMsg.unread = true
 								messages[newMsg.messageID] = newMsg
 
-								// collect attachment with contentID
-								attIDs := sortAttachment(atts, msg.attIDs)
-
-								for _, attID := range attIDs {
+								for _, attID := range msg.attIDs {
 									attKey, err := base64.StdEncoding.DecodeString(recipient.AttachmentKeyPackets[attID])
 									if err != nil {
 										return err
@@ -749,7 +746,11 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 									atts[att.attachID] = att
 									messages[newMsg.messageID].attIDs = append(messages[newMsg.messageID].attIDs, att.attachID)
 								}
+								// Sort Message attachments
+								messages[newMsg.messageID].attIDs = sortAttachment(atts, messages[newMsg.messageID].attIDs)
+								msg.attIDs = sortAttachment(atts, msg.attIDs)
 
+								// Send the update event
 								updateID, err := b.newUpdate(&messageCreated{messageID: newMsg.messageID})
 								if err != nil {
 									return err
@@ -780,28 +781,35 @@ func sortAttachment(atts map[string]*attachment, attIDs []string) []string {
 			attContentId[atts[attID].contentID] = attID
 		}
 	}
-
 	// sort contentID
 	contentIDs := make([]string, 0, len(attContentId))
 	for k := range attContentId {
 		contentIDs = append(contentIDs, k)
 	}
 	sort.Strings(contentIDs)
-
 	// set contentID attachment first
-	attachments := make([]string, len(attIDs))
+	attachments := make([]string, 0, len(attIDs))
 	for _, id := range contentIDs {
 		attachments = append(attachments, attContentId[id])
 	}
 
-	// follow with attachment without contentID
+	// treat the rest by filename
+	attNames := make(map[string]string, len(attIDs))
 	for _, attID := range attIDs {
-		if atts[attID].contentID != "" {
-			continue
+		if atts[attID].contentID == "" {
+			attNames[atts[attID].filename] = attID
 		}
-		attachments = append(attachments, attContentId[attID])
 	}
-
+	// sort name
+	names := make([]string, 0, len(attNames))
+	for k := range attNames {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	// Append by alphabetical order
+	for _, name := range names {
+		attachments = append(attachments, attNames[name])
+	}
 	return attachments
 }
 
@@ -838,7 +846,10 @@ func (b *Backend) CreateAttachment(
 
 				atts[att.attachID] = att
 
+				// append attachment
 				messages[messageID].attIDs = append(messages[messageID].attIDs, att.attachID)
+				// sort the attachment list
+				messages[messageID].attIDs = sortAttachment(atts, messages[messageID].attIDs)
 
 				updateID, err := b.newUpdate(&messageUpdated{messageID: messageID})
 				if err != nil {

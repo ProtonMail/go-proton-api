@@ -1,0 +1,68 @@
+Content-Type: multipart/related;boundary="------------pXWj190lQsd0d77xbCjkhoss"
+User-Agent: Mozilla Thunderbird
+Content-Language: en-GB
+To: <[user:to]@[domain]>
+From: <[user:user]@[domain]>
+Subject: HTML message with multiple inline images
+
+--------------pXWj190lQsd0d77xbCjkhoss
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+  <p>Inline image 1</p>
+  <p><img src="cid:part1.g6ktVAf2.OzOgqU7w@protonmail.com"
+      moz-do-not-send="false"></p>
+  <p>Inline image 2</p>
+  <p><img src="cid:part2.rAUlK0aY.qNBo3Y1b@protonmail.com"
+      moz-do-not-send="false"></p>
+  <p>End<br>
+  </p>
+  <br>
+</body>
+</html>
+--------------pXWj190lQsd0d77xbCjkhoss
+Content-Type: image/png; name="inlinepart2.png"
+Content-Disposition: inline; filename="inlinepart2.png"
+Content-Id: <part2.g6ktVAf2.OzOgqU7w@protonmail.com>
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAh1BMVEX///8AAAABAQGbm5sP
+Qm1ljU7fCDEb0EoXQHyzccFedRPEVPtOY91tb9BVtzebhEdH0R1oLSwO3QvtoFl8YgQXV7eL
+BYPFOEzNxiFmI0jD8eL1M3D/A1pNGGh1w+TvAAAAAElFTkSuQmCC
+
+--------------pXWj190lQsd0d77xbCjkhoss
+Content-Type: image/png; name="alphabeticalZZZZ.png"
+Content-Disposition: attachment; filename="alphabeticalZZZZ.png"
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAh1BMVEX///8AAAABAQGbm5sP
+Qm1ljU7fCDEb0EoXQHyzccFedRPEVPtOY91tb9BVtzebhEdH0R1oLSwO3QvtoFl8YgQXV7eL
+BYPFOEzNxiFmI0jD8eL1M3D/A1pNGGh1w+TvAAAAAElFTkSuQmCC
+
+--------------pXWj190lQsd0d77xbCjkhoss
+Content-Type: image/png; name="inlinepart1.png"
+Content-Disposition: inline; filename="inlinepart1.png"
+Content-Id: <part1.g6ktVAf2.OzOgqU7w@protonmail.com>
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAh1BMVEX///8AAAABAQGbm5sP
+Qm1ljU7fCDEb0EoXQHyzccFedRPEVPtOY91tb9BVtzebhEdH0R1oLSwO3QvtoFl8YgQXV7eL
+BYPFOEzNxiFmI0jD8eL1M3D/A1pNGGh1w+TvAAAAAElFTkSuQmCC
+
+--------------pXWj190lQsd0d77xbCjkhoss
+Content-Type: image/png; name="alphabeticalAAA.png"
+Content-Disposition: attachment; filename="alphabeticalAAA.png"
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAh1BMVEX///8AAAABAQGbm5sP
+Qm1ljU7fCDEb0EoXQHyzccFedRPEVPtOY91tb9BVtzebhEdH0R1oLSwO3QvtoFl8YgQXV7eL
+BYPFOEzNxiFmI0jD8eL1M3D/A1pNGGh1w+TvAAAAAElFTkSuQmCC
+
+--------------pXWj190lQsd0d77xbCjkhoss--
