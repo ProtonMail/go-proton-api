@@ -290,7 +290,7 @@ func TestSendDraftReq_AddPackage(t *testing.T) {
 				EncryptionScheme: proton.ClearScheme,
 				MIMEType:         rfc822.TextPlain,
 			}},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name:     "clear plain text with bad scheme (error)",
@@ -391,17 +391,17 @@ func TestSendDraftReq_AddClearPackage(t *testing.T) {
 	tests := []struct {
 		name    string
 		body    string
-		prefs   map[string]SendPreferences
+		prefs   map[string]proton.SendPreferences
 		attKeys map[string]*crypto.SessionKey
 		wantErr bool
 	}{
 		{
 			name: "clear plain text with signature",
 			body: "this is a text/plain body",
-			prefs: map[string]SendPreferences{"clear-plain-with-sig@email.com": {
+			prefs: map[string]proton.SendPreferences{"clear-plain-with-sig@email.com": {
 				Encrypt:          false,
-				SignatureType:    DetachedSignature,
-				EncryptionScheme: ClearScheme,
+				SignatureType:    proton.DetachedSignature,
+				EncryptionScheme: proton.ClearScheme,
 				MIMEType:         rfc822.TextPlain,
 			}},
 			wantErr: false,
@@ -409,10 +409,10 @@ func TestSendDraftReq_AddClearPackage(t *testing.T) {
 		{
 			name: "clear plain text with bad scheme (error)",
 			body: "this is a text/plain body",
-			prefs: map[string]SendPreferences{"clear-plain-with-sig@email.com": {
+			prefs: map[string]proton.SendPreferences{"clear-plain-with-sig@email.com": {
 				Encrypt:          false,
-				SignatureType:    DetachedSignature,
-				EncryptionScheme: PGPInlineScheme,
+				SignatureType:    proton.DetachedSignature,
+				EncryptionScheme: proton.PGPInlineScheme,
 				MIMEType:         rfc822.TextPlain,
 			}},
 			wantErr: true,
@@ -420,10 +420,10 @@ func TestSendDraftReq_AddClearPackage(t *testing.T) {
 		{
 			name: "clear rich text with signature (error)",
 			body: "this is a text/html body",
-			prefs: map[string]SendPreferences{"clear-plain-with-sig@email.com": {
+			prefs: map[string]proton.SendPreferences{"clear-plain-with-sig@email.com": {
 				Encrypt:          false,
-				SignatureType:    DetachedSignature,
-				EncryptionScheme: ClearScheme,
+				SignatureType:    proton.DetachedSignature,
+				EncryptionScheme: proton.ClearScheme,
 				MIMEType:         rfc822.TextHTML,
 			}},
 			wantErr: true,
@@ -432,7 +432,7 @@ func TestSendDraftReq_AddClearPackage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var req SendDraftReq
+			var req proton.SendDraftReq
 
 			if err := req.AddClearSignedPackage(kr, tt.body, tt.prefs, tt.attKeys); (err != nil) != tt.wantErr {
 				t.Errorf("SendDraftReq.AddPackage() error = %v, wantErr %v", err, tt.wantErr)
