@@ -428,6 +428,17 @@ func TestSendDraftReq_AddClearPackage(t *testing.T) {
 			}},
 			wantErr: true,
 		},
+		{
+			name: "clear plain text with signature",
+			body: "this is a text/plain body",
+			prefs: map[string]proton.SendPreferences{"clear-plain-with-sig@email.com": {
+				Encrypt:          true,
+				SignatureType:    proton.DetachedSignature,
+				EncryptionScheme: proton.ClearScheme,
+				MIMEType:         rfc822.TextPlain,
+			}},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
