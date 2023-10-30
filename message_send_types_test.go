@@ -290,7 +290,7 @@ func TestSendDraftReq_AddPackage(t *testing.T) {
 				EncryptionScheme: proton.ClearScheme,
 				MIMEType:         rfc822.TextPlain,
 			}},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name:     "clear plain text with bad scheme (error)",
@@ -375,77 +375,6 @@ func TestSendDraftReq_AddPackage(t *testing.T) {
 			var req proton.SendDraftReq
 
 			if err := req.AddTextPackage(kr, tt.body, tt.mimeType, tt.prefs, tt.attKeys); (err != nil) != tt.wantErr {
-				t.Errorf("SendDraftReq.AddPackage() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestSendDraftReq_AddClearPackage(t *testing.T) {
-	key, err := crypto.GenerateKey("name", "email", "rsa", 2048)
-	require.NoError(t, err)
-
-	kr, err := crypto.NewKeyRing(key)
-	require.NoError(t, err)
-
-	tests := []struct {
-		name    string
-		body    string
-		prefs   map[string]proton.SendPreferences
-		attKeys map[string]*crypto.SessionKey
-		wantErr bool
-	}{
-		{
-			name: "clear plain text with signature",
-			body: "this is a text/plain body",
-			prefs: map[string]proton.SendPreferences{"clear-plain-with-sig@email.com": {
-				Encrypt:          false,
-				SignatureType:    proton.DetachedSignature,
-				EncryptionScheme: proton.ClearScheme,
-				MIMEType:         rfc822.TextPlain,
-			}},
-			wantErr: false,
-		},
-		{
-			name: "clear plain text with bad scheme (error)",
-			body: "this is a text/plain body",
-			prefs: map[string]proton.SendPreferences{"clear-plain-with-sig@email.com": {
-				Encrypt:          false,
-				SignatureType:    proton.DetachedSignature,
-				EncryptionScheme: proton.PGPInlineScheme,
-				MIMEType:         rfc822.TextPlain,
-			}},
-			wantErr: true,
-		},
-		{
-			name: "clear rich text with signature (error)",
-			body: "this is a text/html body",
-			prefs: map[string]proton.SendPreferences{"clear-plain-with-sig@email.com": {
-				Encrypt:          false,
-				SignatureType:    proton.DetachedSignature,
-				EncryptionScheme: proton.ClearScheme,
-				MIMEType:         rfc822.TextHTML,
-			}},
-			wantErr: true,
-		},
-		{
-			name: "clear plain text with signature",
-			body: "this is a text/plain body",
-			prefs: map[string]proton.SendPreferences{"clear-plain-with-sig@email.com": {
-				Encrypt:          true,
-				SignatureType:    proton.DetachedSignature,
-				EncryptionScheme: proton.ClearScheme,
-				MIMEType:         rfc822.TextPlain,
-			}},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var req proton.SendDraftReq
-
-			if err := req.AddClearSignedPackage(kr, tt.body, tt.prefs, tt.attKeys); (err != nil) != tt.wantErr {
 				t.Errorf("SendDraftReq.AddPackage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

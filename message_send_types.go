@@ -137,22 +137,6 @@ func (req *SendDraftReq) AddTextPackage(
 	return nil
 }
 
-func (req *SendDraftReq) AddClearSignedPackage(
-	kr *crypto.KeyRing,
-	body string,
-	prefs map[string]SendPreferences,
-	attKeys map[string]*crypto.SessionKey,
-) error {
-	pkg, err := newClearSignedPackage(kr, body, prefs, attKeys)
-	if err != nil {
-		return err
-	}
-
-	req.Packages = append(req.Packages, pkg)
-
-	return nil
-}
-
 func newMIMEPackage(
 	kr *crypto.KeyRing,
 	mimeBody string,
@@ -216,7 +200,7 @@ func newTextPackage(
 	prefs map[string]SendPreferences,
 	attKeys map[string]*crypto.SessionKey,
 ) (*MessagePackage, error) {
-	if !(mimeType == rfc822.TextPlain || mimeType == rfc822.TextHTML) {
+	if mimeType != rfc822.TextPlain && mimeType != rfc822.TextHTML {
 		return nil, fmt.Errorf("invalid MIME type for package: %s", mimeType)
 	}
 
@@ -233,7 +217,13 @@ func newTextPackage(
 		}
 
 		if prefs.SignatureType == DetachedSignature && !prefs.Encrypt {
-			return nil, fmt.Errorf("text package cannot contain clear-signed body")
+			if prefs.EncryptionScheme == PGPInlineScheme {
+				return nil, fmt.Errorf("invalid encryption scheme for %s: %d", addr, prefs.EncryptionScheme)
+			}
+
+			if prefs.EncryptionScheme == ClearScheme && mimeType != rfc822.TextPlain {
+				return nil, fmt.Errorf("invalid MIME type for clear package: %s", mimeType)
+			}
 		}
 
 		if prefs.EncryptionScheme == InternalScheme && !prefs.Encrypt {
@@ -298,63 +288,8 @@ func newTextPackage(
 	return pkg, nil
 }
 
-func newClearSignedPackage(
-	kr *crypto.KeyRing,
-	body string,
-	prefs map[string]SendPreferences,
-	attKeys map[string]*crypto.SessionKey,
-) (*MessagePackage, error) {
-	encBody, err := kr.Encrypt(crypto.NewPlainMessage([]byte(body)), kr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt MIME body: %w", err)
-	}
-
-	splitEncBody, err := encBody.SplitMessage()
-	if err != nil {
-		return nil, fmt.Errorf("failed to split message: %w", err)
-	}
-
-	decBodyKey, err := kr.DecryptSessionKey(splitEncBody.GetBinaryKeyPacket())
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt session key: %w", err)
-	}
-
-	pkg := newMessagePackage(rfc822.TextPlain, splitEncBody.GetBinaryDataPacket())
-
-	for addr, prefs := range prefs {
-		if prefs.MIMEType != rfc822.TextPlain {
-			return nil, fmt.Errorf("invalid MIME type for clear signed package: %s", prefs.MIMEType)
-		}
-
-		if prefs.SignatureType != DetachedSignature {
-			return nil, fmt.Errorf("clear signed package must contain detached signature")
-		}
-
-		if prefs.Encrypt || prefs.EncryptionScheme != ClearScheme {
-			return nil, fmt.Errorf("clear signed package cannot be encrypted")
-		}
-
-		pkg.BodyKey = newSessionKey(decBodyKey)
-
-		for attID, attKey := range attKeys {
-			pkg.AttachmentKeys[attID] = newSessionKey(attKey)
-		}
-
-		recipient := &MessageRecipient{
-			Type:                 prefs.EncryptionScheme,
-			Signature:            prefs.SignatureType,
-			AttachmentKeyPackets: make(map[string]string),
-		}
-
-		pkg.Addresses[addr] = recipient
-		pkg.Type |= prefs.EncryptionScheme
-	}
-
-	return pkg, nil
-}
-
 func encSplit(kr *crypto.KeyRing, body string) (*crypto.SessionKey, []byte, error) {
-	encBody, err := kr.Encrypt(crypto.NewPlainMessage([]byte(body)), kr)
+	encBody, err := kr.Encrypt(crypto.NewPlainMessageFromString(body), kr)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to encrypt MIME body: %w", err)
 	}
