@@ -26,7 +26,7 @@ type ImportMetadata struct {
 }
 
 type ImportRes struct {
-	Response  APIError
+	APIError
 	MessageID string
 }
 

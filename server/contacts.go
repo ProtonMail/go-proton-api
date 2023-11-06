@@ -71,7 +71,7 @@ func (s *Server) handlePostContacts() gin.HandlerFunc {
 						proton.CreateContactsRes{
 							Index: i,
 							Response: proton.CreateContactResp{
-								Response: proton.APIError{Code: proton.InvalidValue, Message: err.Error()},
+								APIError: proton.APIError{Code: proton.InvalidValue, Message: err.Error()},
 							},
 						})
 					continue
@@ -83,7 +83,7 @@ func (s *Server) handlePostContacts() gin.HandlerFunc {
 						proton.CreateContactsRes{
 							Index: i,
 							Response: proton.CreateContactResp{
-								Response: proton.APIError{Code: proton.InvalidValue, Message: err.Error()},
+								APIError: proton.APIError{Code: proton.InvalidValue, Message: err.Error()},
 							},
 						})
 					continue
@@ -94,7 +94,7 @@ func (s *Server) handlePostContacts() gin.HandlerFunc {
 						proton.CreateContactsRes{
 							Index: i,
 							Response: proton.CreateContactResp{
-								Response: proton.APIError{Code: proton.InvalidValue, Message: err.Error()},
+								APIError: proton.APIError{Code: proton.InvalidValue, Message: err.Error()},
 							},
 						})
 					continue
@@ -103,7 +103,7 @@ func (s *Server) handlePostContacts() gin.HandlerFunc {
 					proton.CreateContactsRes{
 						Index: i,
 						Response: proton.CreateContactResp{
-							Response: proton.APIError{Code: proton.SuccessCode},
+							APIError: proton.APIError{Code: proton.SuccessCode},
 							Contact:  contact,
 						},
 					})
