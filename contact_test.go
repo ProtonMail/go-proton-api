@@ -49,6 +49,7 @@ func TestContactSettings(t *testing.T) {
 	settings.SetScheme(proton.PGPInlineScheme)
 	settings.SetSign(true)
 	settings.SetEncrypt(true)
+	settings.SetEncryptUntrusted(true)
 	settings.AddKey(key)
 
 	err = contact.SetSettings(nil, "user@user", proton.CardTypeClear, settings)
@@ -61,6 +62,7 @@ func TestContactSettings(t *testing.T) {
 	require.Equal(t, *settings.Scheme, proton.PGPInlineScheme)
 	require.Equal(t, *settings.Sign, true)
 	require.Equal(t, *settings.Encrypt, true)
+	require.Equal(t, *settings.EncryptUntrusted, true)
 	require.Equal(t, len(settings.Keys), 1)
 	kr, err := crypto.NewKeyRing(settings.Keys[0])
 	require.NoError(t, err)
