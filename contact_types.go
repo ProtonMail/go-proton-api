@@ -19,11 +19,12 @@ const (
 )
 
 type ContactSettings struct {
-	MIMEType *rfc822.MIMEType
-	Scheme   *EncryptionScheme
-	Sign     *bool
-	Encrypt  *bool
-	Keys     []*crypto.Key
+	MIMEType         *rfc822.MIMEType
+	Scheme           *EncryptionScheme
+	Sign             *bool
+	Encrypt          *bool
+	EncryptUntrusted *bool
+	Keys             []*crypto.Key
 }
 
 type Contact struct {
@@ -57,6 +58,13 @@ func (cs *ContactSettings) SetEncrypt(enabled bool) {
 		cs.Encrypt = new(bool)
 	}
 	*cs.Encrypt = enabled
+}
+
+func (cs *ContactSettings) SetEncryptUntrusted(enabled bool) {
+	if cs.EncryptUntrusted == nil {
+		cs.EncryptUntrusted = new(bool)
+	}
+	*cs.EncryptUntrusted = enabled
 }
 
 func (cs *ContactSettings) AddKey(key *crypto.Key) {
@@ -126,6 +134,20 @@ func (c *Contact) GetSettings(kr *crypto.KeyRing, email string, cardType CardTyp
 		}
 
 		settings.Encrypt = newPtr(encrypt)
+	}
+
+	encryptUntrusted, err := group.Get(FieldPMEncryptUntrusted)
+	if err != nil {
+		return ContactSettings{}, err
+	}
+
+	if len(encryptUntrusted) > 0 {
+		b, err := strconv.ParseBool(encryptUntrusted[0])
+		if err != nil {
+			return ContactSettings{}, err
+		}
+
+		settings.EncryptUntrusted = newPtr(b)
 	}
 
 	keys, err := group.Get(vcard.FieldKey)
@@ -222,6 +244,19 @@ func (c *Contact) SetSettings(kr *crypto.KeyRing, email string, cardType CardTyp
 			}
 		} else {
 			if err := group.Set(FieldPMEncrypt, "false", vcard.Params{}); err != nil {
+				return err
+			}
+		}
+	}
+
+	// X-PM-ENCRYPT-UNTRUSTED:
+	if settings.EncryptUntrusted != nil {
+		if *settings.EncryptUntrusted {
+			if err := group.Set(FieldPMEncryptUntrusted, "true", vcard.Params{}); err != nil {
+				return err
+			}
+		} else {
+			if err := group.Set(FieldPMEncryptUntrusted, "false", vcard.Params{}); err != nil {
 				return err
 			}
 		}

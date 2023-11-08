@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	FieldPMScheme   = "X-PM-SCHEME"
-	FieldPMSign     = "X-PM-SIGN"
-	FieldPMEncrypt  = "X-PM-ENCRYPT"
-	FieldPMMIMEType = "X-PM-MIMETYPE"
+	FieldPMScheme           = "X-PM-SCHEME"
+	FieldPMSign             = "X-PM-SIGN"
+	FieldPMEncrypt          = "X-PM-ENCRYPT"
+	FieldPMEncryptUntrusted = "X-PM-ENCRYPT-UNTRUSTED"
+	FieldPMMIMEType         = "X-PM-MIMETYPE"
 )
 
 type Cards []*Card
