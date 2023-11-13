@@ -108,6 +108,62 @@ func (c *Client) MarkMessagesRead(ctx context.Context, messageIDs ...string) err
 	return nil
 }
 
+func (c *Client) MarkMessagesForwarded(ctx context.Context, messageIDs ...string) error {
+	type subResponse struct {
+		Response APIError
+		ID       string
+	}
+
+	var response struct {
+		Code      int
+		Responses []subResponse
+	}
+
+	for _, page := range xslices.Chunk(messageIDs, maxPageSize) {
+		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+			return r.SetBody(MessageActionReq{IDs: page}).SetResult(&response).Put("/mail/v4/messages/forward")
+		}); err != nil {
+			return err
+		}
+
+		for _, r := range response.Responses {
+			if r.Response.Code != SuccessCode {
+				return fmt.Errorf("failed to mark message %v as forwarded", r.ID)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) MarkMessagesUnForwarded(ctx context.Context, messageIDs ...string) error {
+	type subResponse struct {
+		Response APIError
+		ID       string
+	}
+
+	var response struct {
+		Code      int
+		Responses []subResponse
+	}
+
+	for _, page := range xslices.Chunk(messageIDs, maxPageSize) {
+		if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+			return r.SetBody(MessageActionReq{IDs: page}).SetResult(&response).Put("/mail/v4/messages/unforward")
+		}); err != nil {
+			return err
+		}
+
+		for _, r := range response.Responses {
+			if r.Response.Code != SuccessCode {
+				return fmt.Errorf("failed to unmark message %v as forwarded", r.ID)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (c *Client) MarkMessagesUnread(ctx context.Context, messageIDs ...string) error {
 	for _, page := range xslices.Chunk(messageIDs, maxPageSize) {
 		req := MessageActionReq{IDs: page}

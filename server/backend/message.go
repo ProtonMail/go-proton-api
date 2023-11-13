@@ -186,8 +186,9 @@ func (msg *message) toMetadata(attData map[string][]byte, att map[string]*attach
 		ReplyTos: msg.replytos,
 		Size:     messageSize,
 
-		Flags:  msg.flags,
-		Unread: proton.Bool(msg.unread),
+		Flags:       msg.flags,
+		Unread:      proton.Bool(msg.unread),
+		IsForwarded: msg.flags&proton.MessageFlagForwarded != 0,
 
 		NumAttachments: len(attData),
 	}
