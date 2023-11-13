@@ -13,6 +13,7 @@ import (
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/bradenaw/juniper/xslices"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slices"
 )
@@ -221,6 +222,62 @@ func (s *Server) handlePutMailMessagesUnread() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusUnprocessableEntity)
 			return
 		}
+	}
+}
+
+func (s *Server) handlePutMailMessagesForwarded() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req proton.MessageActionReq
+
+		if err := c.BindJSON(&req); err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		if err := s.b.SetMessagesForwarded(c.GetString("UserID"), true, req.IDs...); err != nil {
+			c.AbortWithStatus(http.StatusUnprocessableEntity)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"Code": 1001,
+			"Responses": xslices.Map(req.IDs, func(id string) any {
+				return gin.H{
+					"ID": id,
+					"Response": gin.H{
+						"Code": 1000,
+					},
+				}
+			}),
+		})
+	}
+}
+
+func (s *Server) handlePutMailMessagesUnforwarded() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req proton.MessageActionReq
+
+		if err := c.BindJSON(&req); err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		if err := s.b.SetMessagesForwarded(c.GetString("UserID"), false, req.IDs...); err != nil {
+			c.AbortWithStatus(http.StatusUnprocessableEntity)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"Code": 1001,
+			"Responses": xslices.Map(req.IDs, func(id string) any {
+				return gin.H{
+					"ID": id,
+					"Response": gin.H{
+						"Code": 1000,
+					},
+				}
+			}),
+		})
 	}
 }
 

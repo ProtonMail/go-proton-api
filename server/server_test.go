@@ -362,6 +362,8 @@ func TestServer_Events(t *testing.T) {
 
 				// Mark a message as read.
 				require.NoError(t, c.MarkMessagesRead(ctx, messageIDs[0]))
+				// Mark a message as forwarded
+				require.NoError(t, c.MarkMessagesForwarded(ctx, messageIDs[0]))
 
 				// The message should eventually be read.
 				require.Eventually(t, func() bool {
@@ -375,7 +377,7 @@ func TestServer_Events(t *testing.T) {
 						return false
 					}
 
-					return !bool(event.Messages[0].Message.Unread)
+					return !bool(event.Messages[0].Message.Unread) && bool(event.Messages[0].Message.IsForwarded)
 				}, 5*time.Second, time.Millisecond*100)
 
 				// Add another message to archive.

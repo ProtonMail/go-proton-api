@@ -514,6 +514,30 @@ func (b *Backend) SetMessagesRead(userID string, read bool, messageIDs ...string
 		})
 	})
 }
+
+func (b *Backend) SetMessagesForwarded(userID string, forwarded bool, messageIDs ...string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		return b.withMessages(func(messages map[string]*message) error {
+			for _, messageID := range messageIDs {
+				if forwarded {
+					messages[messageID].flags |= proton.MessageFlagForwarded
+				} else {
+					messages[messageID].flags &= ^proton.MessageFlagForwarded
+				}
+
+				updateID, err := b.newUpdate(&messageUpdated{messageID: messageID})
+				if err != nil {
+					return err
+				}
+
+				acc.updateIDs = append(acc.updateIDs, updateID)
+			}
+
+			return nil
+		})
+	})
+}
+
 func (b *Backend) LabelMessages(userID, labelID string, messageIDs ...string) error {
 	return b.labelMessages(userID, labelID, true, messageIDs...)
 }

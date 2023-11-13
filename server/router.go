@@ -101,6 +101,8 @@ func initRouter(s *Server) {
 			messages.POST("/import", s.handlePutMailMessagesImport())
 			messages.PUT("/delete", s.handleDeleteMailMessages())
 			messages.GET("/count", s.handleMessageGroupCount())
+			messages.PUT("/forward", s.handlePutMailMessagesForwarded())
+			messages.PUT("/unforward", s.handlePutMailMessagesUnforwarded())
 		}
 
 		if attachments := mail.Group("/attachments"); attachments != nil {
