@@ -74,6 +74,21 @@ func (s *Server) handlePostAuthRefresh() gin.HandlerFunc {
 	}
 }
 
+func (s *Server) handlePostAuth2FA() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req proton.Auth2FAReq
+
+		if err := c.BindJSON(&req); err != nil {
+			return
+		}
+
+		if err := s.b.UpgradeAuth(c.GetString("AuthUID"), req.TwoFactorCode); err != nil {
+			_ = c.AbortWithError(http.StatusUnauthorized, err)
+			return
+		}
+	}
+}
+
 func (s *Server) handleDeleteAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := s.b.DeleteSession(c.GetString("UserID"), c.GetString("AuthUID")); err != nil {

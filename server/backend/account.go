@@ -9,6 +9,11 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO: Add other options e.g. real 2FA time-based OTP.
+type totp struct {
+	want *string
+}
+
 type account struct {
 	userID       string
 	username     string
@@ -17,6 +22,7 @@ type account struct {
 	userSettings proton.UserSettings
 	contacts     map[string]*proton.Contact
 
+	totp     totp
 	auth     map[string]auth
 	authLock sync.RWMutex
 

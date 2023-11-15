@@ -68,6 +68,13 @@ func (b *Backend) SetAuthLife(authLife time.Duration) {
 	b.authLife = authLife
 }
 
+func (b *Backend) SetAuthTOTP(userID, totp string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		acc.totp.want = &totp
+		return nil
+	})
+}
+
 func (b *Backend) SetMaxUpdatesPerEvent(max int) {
 	b.maxUpdatesPerEvent = max
 }
@@ -590,7 +597,7 @@ func withAccAuth[T any](b *Backend, authUID, authAcc string, fn func(acc *accoun
 		}
 
 		if time.Since(val.creation) > b.authLife {
-			acc.auth[authUID] = auth{ref: val.ref, creation: val.creation}
+			acc.auth[authUID] = newAuthFromExpired(val)
 		} else if val.acc == authAcc {
 			return fn(acc)
 		}

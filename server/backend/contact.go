@@ -19,7 +19,7 @@ func ContactCardToContact(card *proton.Card, contactID string, kr *crypto.KeyRin
 		ContactMetadata: proton.ContactMetadata{
 			ID:   contactID,
 			Name: names[0].Value,
-			ContactEmails: []proton.ContactEmail{proton.ContactEmail{
+			ContactEmails: []proton.ContactEmail{{
 				ID:        "1",
 				Name:      names[0].Value,
 				Email:     emails[0].Value,

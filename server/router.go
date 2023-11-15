@@ -14,6 +14,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/ProtonMail/go-proton-api"
+	"github.com/ProtonMail/go-proton-api/server/backend"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -39,7 +40,7 @@ func initRouter(s *Server) {
 		}
 
 		// These routes require auth.
-		if core := core.Group("", s.requireAuth()); core != nil {
+		if core := core.Group("", s.requireAuth(backend.ScopeFull)); core != nil {
 			if users := core.Group("/users"); users != nil {
 				users.GET("", s.handleGetUsers())
 			}
@@ -78,7 +79,7 @@ func initRouter(s *Server) {
 	}
 
 	// All mail routes need authentication.
-	if mail := s.r.Group("/mail/v4", s.requireAuth()); mail != nil {
+	if mail := s.r.Group("/mail/v4", s.requireAuth(backend.ScopeFull)); mail != nil {
 		if settings := mail.Group("/settings"); settings != nil {
 			settings.GET("", s.handleGetMailSettings())
 			settings.PUT("/attachpublic", s.handlePutMailSettingsAttachPublicKey())
@@ -112,7 +113,7 @@ func initRouter(s *Server) {
 	}
 
 	// All contacts routes need authentication.
-	if contacts := s.r.Group("/contacts/v4", s.requireAuth()); contacts != nil {
+	if contacts := s.r.Group("/contacts/v4", s.requireAuth(backend.ScopeFull)); contacts != nil {
 		contacts.GET("", s.handleGetContacts())
 		contacts.POST("", s.handlePostContacts())
 		contacts.GET("/:contactID", s.handleGetContact())
@@ -121,7 +122,7 @@ func initRouter(s *Server) {
 	}
 
 	// All data routes need authentication.
-	if data := s.r.Group("/data/v1", s.requireAuth()); data != nil {
+	if data := s.r.Group("/data/v1", s.requireAuth(backend.ScopeFull)); data != nil {
 		if stats := data.Group("/stats"); stats != nil {
 			stats.POST("", s.handlePostDataStats())
 			stats.POST("/multiple", s.handlePostDataStatsMultiple())
@@ -134,8 +135,13 @@ func initRouter(s *Server) {
 		auth.POST("/info", s.handlePostAuthInfo())
 		auth.POST("/refresh", s.handlePostAuthRefresh())
 
+		// These routes require auth with only TOTP scope.
+		if auth := auth.Group("", s.requireAuth(backend.ScopeTOTP)); auth != nil {
+			auth.POST("/2fa", s.handlePostAuth2FA())
+		}
+
 		// These routes require auth.
-		if auth := auth.Group("", s.requireAuth()); auth != nil {
+		if auth := auth.Group("", s.requireAuth(backend.ScopeFull)); auth != nil {
 			auth.DELETE("", s.handleDeleteAuth())
 
 			if sessions := auth.Group("/sessions"); sessions != nil {
@@ -284,7 +290,7 @@ func (s *Server) handleOffline() gin.HandlerFunc {
 	}
 }
 
-func (s *Server) requireAuth() gin.HandlerFunc {
+func (s *Server) requireAuth(scope backend.Scope) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authUID := c.Request.Header.Get("x-pm-uid")
 		if authUID == "" {
@@ -298,7 +304,7 @@ func (s *Server) requireAuth() gin.HandlerFunc {
 			return
 		}
 
-		userID, err := s.b.VerifyAuth(authUID, strings.Split(auth, " ")[1])
+		userID, err := s.b.VerifyAuth(authUID, strings.Split(auth, " ")[1], scope)
 		if err != nil {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return

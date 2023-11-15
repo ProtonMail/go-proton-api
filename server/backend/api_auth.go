@@ -55,7 +55,15 @@ func (b *Backend) NewAuth(username string, ephemeral, proof []byte, session stri
 			return proton.Auth{}, fmt.Errorf("invalid proof: %w", err)
 		}
 
-		authUID, auth := uuid.NewString(), newAuth(b.authLife)
+		var scope Scope
+
+		if acc.totp.want != nil {
+			scope = ScopeTOTP
+		} else {
+			scope = ScopeFull
+		}
+
+		authUID, auth := uuid.NewString(), newAuth(scope)
 
 		acc.authLock.Lock()
 		defer acc.authLock.Unlock()
@@ -83,7 +91,7 @@ func (b *Backend) NewAuthRef(authUID, authRef string) (proton.Auth, error) {
 			return proton.Auth{}, fmt.Errorf("invalid auth ref")
 		}
 
-		newAuth := newAuth(b.authLife)
+		newAuth := newAuth(auth.scope)
 
 		acc.auth[authUID] = newAuth
 
@@ -93,8 +101,43 @@ func (b *Backend) NewAuthRef(authUID, authRef string) (proton.Auth, error) {
 	return proton.Auth{}, fmt.Errorf("invalid auth")
 }
 
-func (b *Backend) VerifyAuth(authUID, authAcc string) (string, error) {
+func (b *Backend) UpgradeAuth(authUID, totp string) error {
+	b.accLock.RLock()
+	defer b.accLock.RUnlock()
+
+	for _, acc := range b.accounts {
+		acc.authLock.Lock()
+		defer acc.authLock.Unlock()
+
+		auth, ok := acc.auth[authUID]
+		if !ok {
+			continue
+		}
+
+		if auth.scope != ScopeTOTP {
+			return fmt.Errorf("invalid scope")
+		} else if acc.totp.want == nil {
+			return fmt.Errorf("2FA not enabled")
+		} else if *acc.totp.want != totp {
+			return fmt.Errorf("invalid 2FA code")
+		}
+
+		auth.scope = ScopeFull
+
+		acc.auth[authUID] = auth
+
+		return nil
+	}
+
+	return fmt.Errorf("no such auth")
+}
+
+func (b *Backend) VerifyAuth(authUID, authAcc string, scope Scope) (string, error) {
 	return withAccAuth(b, authUID, authAcc, func(acc *account) (string, error) {
+		if acc.auth[authUID].scope != scope {
+			return "", fmt.Errorf("invalid scope")
+		}
+
 		return acc.userID, nil
 	})
 }

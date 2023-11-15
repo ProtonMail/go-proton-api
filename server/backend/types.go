@@ -35,19 +35,39 @@ func (v *ID) FromString(s string) error {
 	return nil
 }
 
+type Scope int
+
+// TODO: Add more scopes?
+const (
+	ScopeNone Scope = iota
+	ScopeTOTP
+	ScopeFull
+)
+
 type auth struct {
 	acc string
 	ref string
 
+	scope Scope
+
 	creation time.Time
 }
 
-func newAuth(authLife time.Duration) auth {
+func newAuth(scope Scope) auth {
 	return auth{
-		acc: uuid.NewString(),
-		ref: uuid.NewString(),
-
+		acc:      uuid.NewString(),
+		ref:      uuid.NewString(),
+		scope:    scope,
 		creation: time.Now(),
+	}
+}
+
+func newAuthFromExpired(old auth) auth {
+	return auth{
+		acc:      "",
+		ref:      old.ref,
+		scope:    old.scope,
+		creation: old.creation,
 	}
 }
 
