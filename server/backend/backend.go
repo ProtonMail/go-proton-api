@@ -209,14 +209,32 @@ func (b *Backend) RemoveUserKey(userID, keyID string) error {
 }
 
 func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType) (string, error) {
-	return b.createAddress(userID, email, password, withKey, status, addrType, false)
+	return b.createAddress(userID, email, password, withKey, status, addrType, false, true)
 }
 
 func (b *Backend) CreateAddressAsUpdate(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType) (string, error) {
-	return b.createAddress(userID, email, password, withKey, status, addrType, true)
+	return b.createAddress(userID, email, password, withKey, status, addrType, true, true)
 }
 
-func (b *Backend) createAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType, issueUpdateInsteadOfCreate bool) (string, error) {
+func (b *Backend) CreateAddressWithSendDisabled(
+	userID, email string,
+	password []byte,
+	withKey bool,
+	status proton.AddressStatus,
+	addrType proton.AddressType,
+) (string, error) {
+	return b.createAddress(userID, email, password, withKey, status, addrType, false, false)
+}
+
+func (b *Backend) createAddress(
+	userID, email string,
+	password []byte,
+	withKey bool,
+	status proton.AddressStatus,
+	addrType proton.AddressType,
+	issueUpdateInsteadOfCreate bool,
+	allowSend bool,
+) (string, error) {
 	return withAcc(b, userID, func(acc *account) (string, error) {
 		var keys []key
 
@@ -257,12 +275,13 @@ func (b *Backend) createAddress(userID, email string, password []byte, withKey b
 		addressID := uuid.NewString()
 
 		acc.addresses[addressID] = &address{
-			addrID:   addressID,
-			email:    email,
-			order:    len(acc.addresses) + 1,
-			status:   status,
-			addrType: addrType,
-			keys:     keys,
+			addrID:    addressID,
+			email:     email,
+			order:     len(acc.addresses) + 1,
+			status:    status,
+			addrType:  addrType,
+			keys:      keys,
+			allowSend: allowSend,
 		}
 
 		var update update
@@ -288,6 +307,18 @@ func (b *Backend) ChangeAddressType(userID, addrId string, addrType proton.Addre
 		for _, addr := range acc.addresses {
 			if addr.addrID == addrId {
 				addr.addrType = addrType
+				return nil
+			}
+		}
+		return fmt.Errorf("no addrID matching %s for user %s", addrId, userID)
+	})
+}
+
+func (b *Backend) ChangeAddressAllowSend(userID, addrId string, allowSend bool) error {
+	return b.withAcc(userID, func(acc *account) error {
+		for _, addr := range acc.addresses {
+			if addr.addrID == addrId {
+				addr.allowSend = allowSend
 				return nil
 			}
 		}

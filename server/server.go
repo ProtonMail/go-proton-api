@@ -155,6 +155,10 @@ func (s *Server) CreateAddressAsUpdate(userID, email string, password []byte) (s
 	return s.b.CreateAddressAsUpdate(userID, email, password, true, proton.AddressStatusEnabled, proton.AddressTypeOriginal)
 }
 
+func (s *Server) ChangeAddressAllowSend(userID, addrID string, allowSend bool) error {
+	return s.b.ChangeAddressAllowSend(userID, addrID, allowSend)
+}
+
 func (s *Server) ChangeAddressType(userID, addrId string, addrType proton.AddressType) error {
 	return s.b.ChangeAddressType(userID, addrId, addrType)
 }

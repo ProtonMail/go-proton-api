@@ -7,12 +7,13 @@ import (
 )
 
 type address struct {
-	addrID   string
-	email    string
-	order    int
-	status   proton.AddressStatus
-	addrType proton.AddressType
-	keys     []key
+	addrID    string
+	email     string
+	order     int
+	status    proton.AddressStatus
+	addrType  proton.AddressType
+	keys      []key
+	allowSend bool
 }
 
 func (add *address) toAddress() proton.Address {
@@ -20,7 +21,7 @@ func (add *address) toAddress() proton.Address {
 		ID:    add.addrID,
 		Email: add.email,
 
-		Send:    true,
+		Send:    proton.Bool(add.allowSend),
 		Receive: true,
 		Status:  add.status,
 		Type:    add.addrType,
