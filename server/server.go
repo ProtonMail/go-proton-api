@@ -163,6 +163,10 @@ func (s *Server) ChangeAddressType(userID, addrId string, addrType proton.Addres
 	return s.b.ChangeAddressType(userID, addrId, addrType)
 }
 
+func (s *Server) ChangeAddressDisplayName(userID, addrID, displayName string) error {
+	return s.b.ChangeAddressDisplayName(userID, addrID, displayName)
+}
+
 func (s *Server) RemoveAddress(userID, addrID string) error {
 	return s.b.RemoveAddress(userID, addrID)
 }
