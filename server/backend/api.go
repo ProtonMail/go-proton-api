@@ -636,19 +636,21 @@ func (b *Backend) DeleteMessage(userID, messageID string) error {
 	})
 }
 
-func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate, parentID string) (proton.Message, error) {
+func (b *Backend) CreateDraft(userID, addrID string, draft proton.DraftTemplate, parentID string, action proton.CreateDraftAction) (proton.Message, error) {
 	return withAcc(b, userID, func(acc *account) (proton.Message, error) {
 		return withMessages(b, func(messages map[string]*message) (proton.Message, error) {
 			return withLabels(b, func(labels map[string]*label) (proton.Message, error) {
 				// Convert the parentID into externalRef.\
 				var parentRef string
+				var internalParentID string
 				if parentID != "" {
 					parentMsg, ok := messages[parentID]
 					if ok {
 						parentRef = "<" + parentMsg.externalID + ">"
+						internalParentID = parentID
 					}
 				}
-				msg := newMessageFromTemplate(addrID, draft, parentRef)
+				msg := newMessageFromTemplate(addrID, draft, parentRef, internalParentID, action)
 				// Drafts automatically get the sysLabel "Drafts".
 				msg.addLabel(proton.DraftsLabel, labels)
 
@@ -711,6 +713,24 @@ func (b *Backend) SendMessage(userID, messageID string, packages []*proton.Messa
 					msg := messages[messageID]
 					msg.flags |= proton.MessageFlagSent
 					msg.addLabel(proton.SentLabel, labels)
+
+					if parent, ok := messages[msg.internalParentID]; ok {
+						switch msg.draftAction {
+						case proton.ReplyAction:
+							parent.flags |= proton.MessageFlagReplied
+						case proton.ReplyAllAction:
+							parent.flags |= proton.MessageFlagRepliedAll
+						case proton.ForwardAction:
+							parent.flags |= proton.MessageFlagForwarded
+						}
+
+						updateID, err := b.newUpdate(&messageUpdated{messageID: msg.internalParentID})
+						if err != nil {
+							return proton.Message{}, err
+						}
+
+						acc.updateIDs = append(acc.updateIDs, updateID)
+					}
 
 					updateID, err := b.newUpdate(&messageUpdated{messageID: messageID})
 					if err != nil {

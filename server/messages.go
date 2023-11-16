@@ -102,7 +102,7 @@ func (s *Server) postMailMessages(c *gin.Context) {
 		return
 	}
 
-	message, err := s.b.CreateDraft(c.GetString("UserID"), addrID, req.Message, req.ParentID)
+	message, err := s.b.CreateDraft(c.GetString("UserID"), addrID, req.Message, req.ParentID, req.Action)
 	if err != nil {
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
 		return

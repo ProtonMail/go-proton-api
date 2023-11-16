@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ProtonMail/go-proton-api/server/backend"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -17,14 +16,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bradenaw/juniper/parallel"
-
 	"github.com/Masterminds/semver/v3"
 	"github.com/ProtonMail/gluon/async"
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
+	"github.com/ProtonMail/go-proton-api/server/backend"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/iterator"
+	"github.com/bradenaw/juniper/parallel"
 	"github.com/bradenaw/juniper/stream"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/google/uuid"
@@ -2227,6 +2226,89 @@ func TestServer_GetMessageGroupCount(t *testing.T) {
 			})
 			require.NotEmpty(t, counts)
 			require.ElementsMatch(t, expected, counts)
+
+		})
+	})
+}
+
+func TestServer_TestDraftActions(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			user, err := c.GetUser(ctx)
+			require.NoError(t, err)
+
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
+			require.NoError(t, err)
+
+			type testData struct {
+				action proton.CreateDraftAction
+				flag   proton.MessageFlag
+			}
+
+			tests := []testData{
+				{
+					action: proton.ReplyAction,
+					flag:   proton.MessageFlagReplied,
+				},
+				{
+					action: proton.ReplyAllAction,
+					flag:   proton.MessageFlagRepliedAll,
+				},
+				{
+					action: proton.ForwardAction,
+					flag:   proton.MessageFlagForwarded,
+				},
+			}
+
+			importedMessages := importMessages(ctx, t, c, addr[0].ID, addrKRs[addr[0].ID], []string{}, 0, len(tests))
+
+			for i := 0; i < len(tests); i++ {
+				importedMessageID := importedMessages[i].MessageID
+
+				msg, err := c.GetMessage(ctx, importedMessageID)
+				require.NoError(t, err)
+
+				{
+					kr := addrKRs[addr[0].ID]
+					msg, err := c.CreateDraft(ctx, kr, proton.CreateDraftReq{
+						Message: proton.DraftTemplate{
+							Subject: "Foo",
+							Sender:  &mail.Address{Address: addr[0].Email},
+							ToList:  []*mail.Address{{Address: "foo@bar"}},
+							CCList:  nil,
+							BCCList: nil,
+						},
+						AttachmentKeyPackets: nil,
+						ParentID:             msg.ID,
+						Action:               tests[i].action,
+					})
+
+					require.NoError(t, err)
+
+					var sreq proton.SendDraftReq
+
+					require.NoError(t, sreq.AddTextPackage(kr, "Hello", "text/plain", map[string]proton.SendPreferences{}, map[string]*crypto.SessionKey{}))
+
+					_, err = c.SendDraft(ctx, msg.ID, sreq)
+					require.NoError(t, err)
+
+					msg, err = c.GetMessage(ctx, importedMessageID)
+					require.NoError(t, err)
+					require.True(t, msg.Flags&tests[i].flag != 0)
+				}
+			}
 
 		})
 	})
