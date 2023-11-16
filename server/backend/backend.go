@@ -275,13 +275,14 @@ func (b *Backend) createAddress(
 		addressID := uuid.NewString()
 
 		acc.addresses[addressID] = &address{
-			addrID:    addressID,
-			email:     email,
-			order:     len(acc.addresses) + 1,
-			status:    status,
-			addrType:  addrType,
-			keys:      keys,
-			allowSend: allowSend,
+			addrID:      addressID,
+			email:       email,
+			displayName: email,
+			order:       len(acc.addresses) + 1,
+			status:      status,
+			addrType:    addrType,
+			keys:        keys,
+			allowSend:   allowSend,
 		}
 
 		var update update
@@ -302,15 +303,15 @@ func (b *Backend) createAddress(
 	})
 }
 
-func (b *Backend) ChangeAddressType(userID, addrId string, addrType proton.AddressType) error {
+func (b *Backend) ChangeAddressType(userID, addrID string, addrType proton.AddressType) error {
 	return b.withAcc(userID, func(acc *account) error {
 		for _, addr := range acc.addresses {
-			if addr.addrID == addrId {
+			if addr.addrID == addrID {
 				addr.addrType = addrType
 				return nil
 			}
 		}
-		return fmt.Errorf("no addrID matching %s for user %s", addrId, userID)
+		return fmt.Errorf("no addrID matching %s for user %s", addrID, userID)
 	})
 }
 
@@ -323,6 +324,18 @@ func (b *Backend) ChangeAddressAllowSend(userID, addrId string, allowSend bool) 
 			}
 		}
 		return fmt.Errorf("no addrID matching %s for user %s", addrId, userID)
+	})
+}
+
+func (b *Backend) ChangeAddressDisplayName(userID, addrID, displayName string) error {
+	return b.withAcc(userID, func(acc *account) error {
+		for _, addr := range acc.addresses {
+			if addr.addrID == addrID {
+				addr.displayName = displayName
+				return nil
+			}
+		}
+		return fmt.Errorf("no addrID matching %s for user %s", addrID, userID)
 	})
 }
 

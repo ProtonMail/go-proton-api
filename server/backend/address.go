@@ -7,13 +7,14 @@ import (
 )
 
 type address struct {
-	addrID    string
-	email     string
-	order     int
-	status    proton.AddressStatus
-	addrType  proton.AddressType
-	keys      []key
-	allowSend bool
+	addrID      string
+	email       string
+	displayName string
+	order       int
+	status      proton.AddressStatus
+	addrType    proton.AddressType
+	keys        []key
+	allowSend   bool
 }
 
 func (add *address) toAddress() proton.Address {
@@ -27,7 +28,7 @@ func (add *address) toAddress() proton.Address {
 		Type:    add.addrType,
 
 		Order:       add.order,
-		DisplayName: add.email,
+		DisplayName: add.displayName,
 
 		Keys: xslices.Map(add.keys, func(key key) proton.Key {
 			privKey, err := crypto.NewKeyFromArmored(key.key)
