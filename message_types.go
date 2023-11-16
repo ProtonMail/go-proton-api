@@ -55,6 +55,7 @@ type MessageFilter struct {
 	ExternalID string `json:",omitempty"`
 	LabelID    string `json:",omitempty"`
 	EndID      string `json:",omitempty"`
+	Sort       string `json:",omitempty"`
 	Desc       Bool
 }
 
