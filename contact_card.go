@@ -109,6 +109,17 @@ func (c *Card) Set(kr *crypto.KeyRing, key string, value *vcard.Field) error {
 	return c.encode(kr, dec)
 }
 
+func (c *Card) Add(kr *crypto.KeyRing, key string, value *vcard.Field) error {
+	dec, err := c.decode(kr)
+	if err != nil {
+		return err
+	}
+
+	dec.Add(key, value)
+
+	return c.encode(kr, dec)
+}
+
 func (c *Card) ChangeType(kr *crypto.KeyRing, cardType CardType) error {
 	dec, err := c.decode(kr)
 	if err != nil {

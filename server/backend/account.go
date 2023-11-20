@@ -10,12 +10,13 @@ import (
 )
 
 type account struct {
-	userID       string
-	username     string
-	addresses    map[string]*address
-	mailSettings *mailSettings
-	userSettings proton.UserSettings
-	contacts     map[string]*proton.Contact
+	userID         string
+	username       string
+	addresses      map[string]*address
+	mailSettings   *mailSettings
+	userSettings   proton.UserSettings
+	contacts       map[string]*proton.Contact
+	contactCounter int
 
 	auth     map[string]auth
 	authLock sync.RWMutex

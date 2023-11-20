@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server/backend"
@@ -10,22 +11,29 @@ import (
 
 func (s *Server) handleGetContacts() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		contacts, err := s.b.GetUserContacts(c.GetString("UserID"))
+		total, contacts, err := s.b.GetUserContacts(c.GetString("UserID"),
+			mustParseInt(c.DefaultQuery("Page", strconv.Itoa(defaultPage))),
+			mustParseInt(c.DefaultQuery("PageSize", strconv.Itoa(defaultPageSize))),
+		)
 		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"Code":          proton.MultiCode,
-			"ContactEmails": contacts,
+			"Code":     proton.MultiCode,
+			"Contacts": contacts,
+			"Total":    total,
 		})
 	}
 }
 
 func (s *Server) handleGetContactsEmails() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		contacts, err := s.b.GetUserContactEmails(c.GetString("UserID"), c.GetString("email"))
+		total, contacts, err := s.b.GetUserContactEmails(c.GetString("UserID"), c.Query("Email"),
+			mustParseInt(c.DefaultQuery("Page", strconv.Itoa(defaultPage))),
+			mustParseInt(c.DefaultQuery("PageSize", strconv.Itoa(defaultPageSize))),
+		)
 		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
@@ -33,6 +41,7 @@ func (s *Server) handleGetContactsEmails() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{
 			"Code":          proton.MultiCode,
 			"ContactEmails": contacts,
+			"Total":         total,
 		})
 	}
 }
