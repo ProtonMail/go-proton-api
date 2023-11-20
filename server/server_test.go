@@ -26,7 +26,9 @@ import (
 	"github.com/bradenaw/juniper/parallel"
 	"github.com/bradenaw/juniper/stream"
 	"github.com/bradenaw/juniper/xslices"
+	"github.com/emersion/go-vcard"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"
 )
@@ -2312,6 +2314,219 @@ func TestServer_TestDraftActions(t *testing.T) {
 
 		})
 	})
+}
+
+func TestServer_Contacts(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+
+			user, err := c.GetUser(ctx)
+			require.NoError(t, err)
+
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
+			require.NoError(t, err)
+
+			type testContact struct {
+				Name  string
+				Email string
+			}
+
+			testContacts := []testContact{
+				{
+					Name:  "foo",
+					Email: "foo@bar.com",
+				},
+				{
+					Name:  "bar",
+					Email: "bar@bar.com",
+				},
+				{
+					Name:  "zz",
+					Email: "zz@bar.com",
+				},
+			}
+
+			contactDesc := []proton.ContactCards{
+				{
+					Cards: xslices.Map(testContacts, func(contact testContact) *proton.Card {
+						return createVCard(t, addrKRs[addr[0].ID], contact.Name, contact.Email)
+					}),
+				},
+			}
+			createReq := proton.CreateContactsReq{
+				Contacts:  contactDesc,
+				Overwrite: 0,
+				Labels:    0,
+			}
+
+			contactsRes, err := c.CreateContacts(ctx, createReq)
+			require.NoError(t, err)
+			assert.Equal(t, 3, len(contactsRes))
+
+			contacts, err := c.GetAllContactsPaged(ctx, 2)
+			require.NoError(t, err)
+			require.Len(t, contacts, len(testContacts))
+
+			for _, v := range testContacts {
+				require.NotEqual(t, -1, xslices.IndexFunc(contacts, func(contact proton.Contact) bool {
+					return contact.Name == v.Name
+				}))
+			}
+		})
+	})
+}
+
+func TestServer_ContactEmails(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+
+			user, err := c.GetUser(ctx)
+			require.NoError(t, err)
+
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
+			require.NoError(t, err)
+
+			type testContact struct {
+				Name   string
+				Emails []string
+			}
+
+			testContacts := []testContact{
+				{
+					Name:   "foo",
+					Emails: []string{"foo@bar.com", "alias@alias.com", "nn@zz.com", "abc@4.de", "001234@00.com"},
+				},
+				{
+					Name:   "bar",
+					Emails: []string{"bar@bar.com"},
+				},
+				{
+					Name:   "zz",
+					Emails: []string{"zz@bar.com", "zz@zz2.com"},
+				},
+			}
+
+			contactDesc := []proton.ContactCards{
+				{
+					Cards: xslices.Map(testContacts, func(contact testContact) *proton.Card {
+						return createVCard(t, addrKRs[addr[0].ID], contact.Name, contact.Emails...)
+					}),
+				},
+			}
+			createReq := proton.CreateContactsReq{
+				Contacts:  contactDesc,
+				Overwrite: 0,
+				Labels:    0,
+			}
+
+			contactsRes, err := c.CreateContacts(ctx, createReq)
+			require.NoError(t, err)
+			assert.Equal(t, 3, len(contactsRes))
+
+			for _, v := range testContacts {
+				for _, email := range v.Emails {
+					emails, err := c.GetAllContactEmailsPaged(ctx, email, 2)
+					require.NoError(t, err)
+					require.Len(t, emails, 1)
+					assert.Equal(t, email, emails[0].Email)
+				}
+			}
+		})
+	})
+}
+
+func TestServer_ContactEmailsRepeated(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+
+			user, err := c.GetUser(ctx)
+			require.NoError(t, err)
+
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
+			require.NoError(t, err)
+
+			type testContact struct {
+				Name   string
+				Emails []string
+			}
+
+			testContacts := []testContact{
+				{
+					Name:   "foo",
+					Emails: []string{"foo@bar.com"},
+				},
+				{
+					Name:   "bar",
+					Emails: []string{"foo@bar.com"},
+				},
+				{
+					Name:   "zz",
+					Emails: []string{"foo@bar.com"},
+				},
+			}
+
+			contactDesc := []proton.ContactCards{
+				{
+					Cards: xslices.Map(testContacts, func(contact testContact) *proton.Card {
+						return createVCard(t, addrKRs[addr[0].ID], contact.Name, contact.Emails...)
+					}),
+				},
+			}
+			createReq := proton.CreateContactsReq{
+				Contacts:  contactDesc,
+				Overwrite: 0,
+				Labels:    0,
+			}
+
+			contactsRes, err := c.CreateContacts(ctx, createReq)
+			require.NoError(t, err)
+			assert.Equal(t, 3, len(contactsRes))
+
+			emails, err := c.GetAllContactEmailsPaged(ctx, "foo@bar.com", 2)
+			require.NoError(t, err)
+			require.Len(t, emails, len(testContacts))
+		})
+	})
+}
+
+func createVCard(t *testing.T, addrKR *crypto.KeyRing, name string, email ...string) *proton.Card {
+	card, err := proton.NewCard(addrKR, proton.CardTypeSigned)
+	require.NoError(t, err)
+
+	require.NoError(t, card.Set(addrKR, vcard.FieldUID, &vcard.Field{Value: fmt.Sprintf("proton-legacy-%v", uuid.NewString()), Group: "test"}))
+	require.NoError(t, card.Set(addrKR, vcard.FieldFormattedName, &vcard.Field{Value: name, Group: "test"}))
+	for _, email := range email {
+		require.NoError(t, card.Add(addrKR, vcard.FieldEmail, &vcard.Field{Value: email, Group: "test"}))
+	}
+
+	return card
 }
 
 func withServer(t *testing.T, fn func(ctx context.Context, s *Server, m *proton.Manager), opts ...Option) {

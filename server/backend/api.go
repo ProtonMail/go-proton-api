@@ -1106,18 +1106,26 @@ func (b *Backend) GetUserContact(userID, contactID string) (proton.Contact, erro
 	})
 }
 
-func (b *Backend) GetUserContacts(userID string) ([]proton.Contact, error) {
-	return withAcc(b, userID, func(acc *account) ([]proton.Contact, error) {
-		var contacts []proton.Contact
-		for _, contact := range acc.contacts {
-			contacts = append(contacts, *contact)
-		}
-		return contacts, nil
+func (b *Backend) GetUserContacts(userID string, page int, pageSize int) (int, []proton.Contact, error) {
+	var total int
+	contacts, err := withAcc(b, userID, func(acc *account) ([]proton.Contact, error) {
+		total = len(acc.contacts)
+		values := maps.Values(acc.contacts)
+		slices.SortFunc(values, func(i, j *proton.Contact) bool {
+			return strings.Compare(i.ID, j.ID) < 0
+		})
+		return xslices.Map(xslices.Chunk(values, pageSize)[page], func(c *proton.Contact) proton.Contact {
+			return *c
+		}), nil
 	})
+
+	return total, contacts, err
 }
 
-func (b *Backend) GetUserContactEmails(userID, email string) ([]proton.ContactEmail, error) {
-	return withAcc(b, userID, func(acc *account) ([]proton.ContactEmail, error) {
+func (b *Backend) GetUserContactEmails(userID, email string, page int, pageSize int) (int, []proton.ContactEmail, error) {
+	var total int
+
+	emails, err := withAcc(b, userID, func(acc *account) ([]proton.ContactEmail, error) {
 		var contacts []proton.ContactEmail
 		for _, contact := range acc.contacts {
 			for _, contactEmail := range contact.ContactEmails {
@@ -1126,8 +1134,21 @@ func (b *Backend) GetUserContactEmails(userID, email string) ([]proton.ContactEm
 				}
 			}
 		}
-		return contacts, nil
+
+		total = len(contacts)
+
+		if total < pageSize {
+			return contacts, nil
+		}
+
+		slices.SortFunc(contacts, func(a, b proton.ContactEmail) bool {
+			return strings.Compare(a.ID, b.ID) < 0
+		})
+
+		return xslices.Chunk(contacts, pageSize)[page], nil
 	})
+
+	return total, emails, err
 }
 
 func (b *Backend) AddUserContact(userID string, contact proton.Contact) (proton.Contact, error) {
@@ -1146,15 +1167,8 @@ func (b *Backend) UpdateUserContact(userID, contactID string, cards proton.Cards
 
 func (b *Backend) GenerateContactID(userID string) (string, error) {
 	return withAcc(b, userID, func(acc *account) (string, error) {
-		var lastKey = "0"
-		for k := range acc.contacts {
-			lastKey = k
-		}
-		newKey, err := strconv.Atoi(lastKey)
-		if err != nil {
-			return "", err
-		}
-		return strconv.Itoa(newKey + 1), nil
+		acc.contactCounter++
+		return strconv.Itoa(acc.contactCounter), nil
 	})
 }
 

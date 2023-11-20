@@ -3,8 +3,13 @@ package backend
 import (
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/bradenaw/juniper/xslices"
 	"github.com/emersion/go-vcard"
+	"strconv"
+	"sync/atomic"
 )
+
+var globalContactID int32
 
 func ContactCardToContact(card *proton.Card, contactID string, kr *crypto.KeyRing) (proton.Contact, error) {
 	emails, err := card.Get(kr, vcard.FieldEmail)
@@ -19,13 +24,15 @@ func ContactCardToContact(card *proton.Card, contactID string, kr *crypto.KeyRin
 		ContactMetadata: proton.ContactMetadata{
 			ID:   contactID,
 			Name: names[0].Value,
-			ContactEmails: []proton.ContactEmail{proton.ContactEmail{
-				ID:        "1",
-				Name:      names[0].Value,
-				Email:     emails[0].Value,
-				ContactID: contactID,
-			},
-			},
+			ContactEmails: xslices.Map(emails, func(email *vcard.Field) proton.ContactEmail {
+				id := atomic.AddInt32(&globalContactID, 1)
+				return proton.ContactEmail{
+					ID:        strconv.Itoa(int(id)),
+					Name:      names[0].Value,
+					Email:     email.Value,
+					ContactID: contactID,
+				}
+			}),
 		},
 		ContactCards: proton.ContactCards{Cards: proton.Cards{card}},
 	}, nil
