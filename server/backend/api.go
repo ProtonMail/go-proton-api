@@ -210,12 +210,32 @@ func (b *Backend) DeleteAddress(userID, addrID string) error {
 
 func (b *Backend) SetAddressOrder(userID string, addrIDs []string) error {
 	return b.withAcc(userID, func(acc *account) error {
+
+		primaryID := acc.primary().addrID
+
 		for i, addrID := range addrIDs {
 			if add, ok := acc.addresses[addrID]; ok {
+				if add.order != i+1 {
+					updateID, err := b.newUpdate(&addressUpdated{addressID: addrID})
+					if err != nil {
+						return err
+					}
+
+					acc.updateIDs = append(acc.updateIDs, updateID)
+				}
 				add.order = i + 1
 			} else {
 				return fmt.Errorf("no such address: %s", addrID)
 			}
+		}
+
+		if primaryID != acc.primary().addrID {
+			updateID, err := b.newUpdate(&userInfoUpdate{})
+			if err != nil {
+				return err
+			}
+
+			acc.updateIDs = append(acc.updateIDs, updateID)
 		}
 
 		return nil
@@ -960,7 +980,7 @@ func (b *Backend) GetEvent(userID, rawEventID string) (event proton.Event, more 
 
 					more = lastUpdate != len(acc.updateIDs)
 
-					return buildEvent(updates, acc.addresses, messages, labels, acc.updateIDs[lastUpdate-1].String(), b.attData, attachments), nil
+					return buildEvent(updates, acc.addresses, messages, labels, acc.updateIDs[lastUpdate-1].String(), b.attData, attachments, acc.toUser()), nil
 				})
 			})
 		})
@@ -1180,7 +1200,7 @@ func buildEvent(
 	eventID string,
 	attachmentData map[string][]byte,
 	attachments map[string]*attachment,
-
+	user proton.User,
 ) proton.Event {
 	event := proton.Event{EventID: eventID}
 
@@ -1278,6 +1298,9 @@ func buildEvent(
 				Telemetry:    update.settings.Telemetry,
 				CrashReports: update.settings.CrashReports,
 			}
+
+		case *userInfoUpdate:
+			event.User = &user
 		}
 	}
 
