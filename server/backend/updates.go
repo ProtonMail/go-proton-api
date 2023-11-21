@@ -187,3 +187,16 @@ func (update *userSettingsUpdate) replaces(other update) bool {
 		return false
 	}
 }
+
+type userInfoUpdate struct {
+	baseUpdate
+}
+
+func (update *userInfoUpdate) replaces(other update) bool {
+	switch other.(type) {
+	case *userInfoUpdate:
+		return true
+	default:
+		return false
+	}
+}

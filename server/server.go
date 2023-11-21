@@ -159,6 +159,10 @@ func (s *Server) ChangeAddressAllowSend(userID, addrID string, allowSend bool) e
 	return s.b.ChangeAddressAllowSend(userID, addrID, allowSend)
 }
 
+func (s *Server) SetAddressOrder(userID string, addrIDs []string) error {
+	return s.b.SetAddressOrder(userID, addrIDs)
+}
+
 func (s *Server) ChangeAddressType(userID, addrId string, addrType proton.AddressType) error {
 	return s.b.ChangeAddressType(userID, addrId, addrType)
 }
