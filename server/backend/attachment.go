@@ -8,11 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func (b *Backend) createAttData(dataPacket []byte) string {
+func (b *unsafeBackend) createAttData(dataPacket []byte) string {
 	attDataID := uuid.NewString()
-
-	b.attDataLock.Lock()
-	defer b.attDataLock.Unlock()
 
 	b.attData[attDataID] = dataPacket
 
