@@ -48,7 +48,7 @@ func (b *Backend) NewAuth(username string, ephemeral, proof []byte, session stri
 			delete(b.srp, session)
 
 			serverProof, err := server.VerifyProofs(ephemeral, proof)
-			if !ok {
+			if err != nil {
 				return proton.Auth{}, fmt.Errorf("invalid proof: %w", err)
 			}
 
