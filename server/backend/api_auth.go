@@ -7,6 +7,7 @@ import (
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-srp"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 func (b *Backend) NewAuthInfo(username string) (proton.AuthInfo, error) {
@@ -14,12 +15,14 @@ func (b *Backend) NewAuthInfo(username string) (proton.AuthInfo, error) {
 		return withAccName(b, username, func(acc *account) (proton.AuthInfo, error) {
 			server, err := srp.NewServerFromSigned(modulus, acc.verifier, 2048)
 			if err != nil {
-				return proton.AuthInfo{}, nil
+				logrus.WithError(err).Errorf("Failed to create SRP Server")
+				return proton.AuthInfo{}, fmt.Errorf("failed to create new srp server %w", err)
 			}
 
 			challenge, err := server.GenerateChallenge()
 			if err != nil {
-				return proton.AuthInfo{}, nil
+				logrus.WithError(err).Errorf("Failed to generate srp challeng")
+				return proton.AuthInfo{}, fmt.Errorf("failed to generate srp challend %w", err)
 			}
 
 			session := uuid.NewString()
@@ -42,6 +45,7 @@ func (b *Backend) NewAuth(username string, ephemeral, proof []byte, session stri
 		return withAccName(b, username, func(acc *account) (proton.Auth, error) {
 			server, ok := b.srp[session]
 			if !ok {
+				logrus.Errorf("Session '%v' not found for user='%v'", session, username)
 				return proton.Auth{}, fmt.Errorf("invalid session")
 			}
 

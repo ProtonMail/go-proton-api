@@ -6,6 +6,7 @@ import (
 
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 func (s *Server) handlePostAuthInfo() gin.HandlerFunc {
@@ -18,6 +19,7 @@ func (s *Server) handlePostAuthInfo() gin.HandlerFunc {
 
 		info, err := s.b.NewAuthInfo(req.Username)
 		if err != nil {
+			logrus.WithError(err).Errorf("User '%v' failed auth info", req.Username)
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
@@ -48,6 +50,7 @@ func (s *Server) handlePostAuth() gin.HandlerFunc {
 
 		auth, err := s.b.NewAuth(req.Username, clientEphemeral, clientProof, req.SRPSession)
 		if err != nil {
+			logrus.WithError(err).Errorf("User '%v' not authorized", req.Username)
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
