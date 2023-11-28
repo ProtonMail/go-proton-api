@@ -56,3 +56,35 @@ func createTestMessages(t *testing.T, c *proton.Client, pass string, count int) 
 		require.Equal(t, proton.SuccessCode, res.Code)
 	}
 }
+
+func importMessage(t *testing.T, c *proton.Client, ctx context.Context, pass string, literal string) (stream.Stream[proton.ImportRes], error) {
+	t.Helper()
+
+	user, err := c.GetUser(ctx)
+	require.NoError(t, err)
+
+	addr, err := c.GetAddresses(ctx)
+	require.NoError(t, err)
+
+	salt, err := c.GetSalts(ctx)
+	require.NoError(t, err)
+
+	keyPass, err := salt.SaltForKey([]byte(pass), user.Keys.Primary().ID)
+	require.NoError(t, err)
+
+	_, addrKRs, err := proton.Unlock(user, addr, keyPass, async.NoopPanicHandler{})
+	require.NoError(t, err)
+
+	req := []proton.ImportReq{
+		{
+			Metadata: proton.ImportMetadata{
+				AddressID: addr[0].ID,
+				Flags:     proton.MessageFlagReceived,
+				Unread:    true,
+			},
+			Message: []byte(literal),
+		},
+	}
+
+	return c.ImportMessages(ctx, addrKRs[addr[0].ID], runtime.NumCPU(), runtime.NumCPU(), req...)
+}

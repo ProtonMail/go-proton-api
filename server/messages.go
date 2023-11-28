@@ -486,7 +486,27 @@ func (s *Server) parseMessage(literal []byte) (*rfc822.Header, []string, []*rfc8
 
 	// Force all multipart types to be multipart/mixed.
 	if mimeType.Type() == "multipart" {
-		mimeType = "multipart/mixed"
+		if mimeType == rfc822.MultipartRelated {
+			children, err := root.Children()
+			if err != nil {
+				mimeType = "multipart/mixed"
+			} else {
+				var isHtml = false
+				for _, child := range children {
+					contentType, _, err := child.ContentType()
+					if err == nil && contentType == rfc822.TextHTML {
+						isHtml = true
+					}
+				}
+				if isHtml {
+					mimeType = "text/html"
+				} else {
+					mimeType = "text/plain"
+				}
+			}
+		} else {
+			mimeType = "multipart/mixed"
+		}
 	}
 
 	return header, body, atts, mimeType, nil
@@ -582,8 +602,8 @@ func (s *Server) importBody(
 		subject,
 		sender,
 		toList, ccList, bccList, replytos,
-		string(body[0]),
-		rfc822.MIMEType(mimeType),
+		body[0],
+		mimeType,
 		flags,
 		date,
 		unread, starred,
