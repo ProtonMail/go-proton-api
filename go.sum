@@ -1,5 +1,5 @@
-github.com/LBeernaertProton/resty/v2 v2.0.0-20231030122409-92db8bee3605 h1:54Fh3JS6s2Tjy6ZIRLtt1amZOqfYDcjErdye45z8fkQ=
-github.com/LBeernaertProton/resty/v2 v2.0.0-20231030122409-92db8bee3605/go.mod h1:iiP/OpA0CkcL3IGt1O0+/SIItFUbkkyw5BGXiVdTu+A=
+github.com/LBeernaertProton/resty/v2 v2.0.0-20231129100320-dddf8030d93a h1:eQO/GF/+H8/9udc9QAgieFr+jr1tjXlJo35RAhsUbWY=
+github.com/LBeernaertProton/resty/v2 v2.0.0-20231129100320-dddf8030d93a/go.mod h1:iiP/OpA0CkcL3IGt1O0+/SIItFUbkkyw5BGXiVdTu+A=
 github.com/Masterminds/semver/v3 v3.2.0 h1:3MEsd0SM6jqZojhjLWWeBY+Kcjy9i6MQAeY7YgDP83g=
 github.com/Masterminds/semver/v3 v3.2.0/go.mod h1:qvl/7zhW3nngYb5+80sSMF+FG2BjYrf8m9wsX0PNOMQ=
 github.com/ProtonMail/bcrypt v0.0.0-20210511135022-227b4adcab57/go.mod h1:HecWFHognK8GfRDGnFQbW/LiV7A3MX3gZVs45vk5h8I=
