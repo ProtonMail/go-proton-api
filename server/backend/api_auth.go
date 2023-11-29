@@ -58,9 +58,6 @@ func (b *Backend) NewAuth(username string, ephemeral, proof []byte, session stri
 
 			authUID, auth := uuid.NewString(), newAuth(b.authLife)
 
-			acc.authLock.Lock()
-			defer acc.authLock.Unlock()
-
 			acc.auth[authUID] = auth
 
 			return auth.toAuth(acc.userID, authUID, serverProof), nil
@@ -71,9 +68,6 @@ func (b *Backend) NewAuth(username string, ephemeral, proof []byte, session stri
 func (b *Backend) NewAuthRef(authUID, authRef string) (proton.Auth, error) {
 	return writeBackendRetErr(b, func(b *unsafeBackend) (proton.Auth, error) {
 		for _, acc := range b.accounts {
-			acc.authLock.Lock()
-			defer acc.authLock.Unlock()
-
 			auth, ok := acc.auth[authUID]
 			if !ok {
 				continue
@@ -105,9 +99,6 @@ func (b *Backend) VerifyAuth(authUID, authAcc string) (string, error) {
 func (b *Backend) GetSessions(userID string) ([]proton.AuthSession, error) {
 	return readBackendRetErr(b, func(b *unsafeBackend) ([]proton.AuthSession, error) {
 		return withAcc(b, userID, func(acc *account) ([]proton.AuthSession, error) {
-			acc.authLock.RLock()
-			defer acc.authLock.RUnlock()
-
 			var sessions []proton.AuthSession
 
 			for authUID, auth := range acc.auth {
@@ -122,9 +113,6 @@ func (b *Backend) GetSessions(userID string) ([]proton.AuthSession, error) {
 func (b *Backend) DeleteSession(userID, authUID string) error {
 	return writeBackendRet(b, func(b *unsafeBackend) error {
 		return b.withAcc(userID, func(acc *account) error {
-			acc.authLock.Lock()
-			defer acc.authLock.Unlock()
-
 			delete(acc.auth, authUID)
 
 			return nil

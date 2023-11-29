@@ -1,8 +1,6 @@
 package backend
 
 import (
-	"sync"
-
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/xslices"
@@ -18,8 +16,7 @@ type account struct {
 	contacts       map[string]*proton.Contact
 	contactCounter int
 
-	auth     map[string]auth
-	authLock sync.RWMutex
+	auth map[string]auth
 
 	keys     []key
 	salt     []byte
