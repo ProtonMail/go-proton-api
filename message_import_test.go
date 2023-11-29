@@ -2,13 +2,13 @@ package proton_test
 
 import (
 	"context"
-	"github.com/ProtonMail/gluon/rfc822"
-	"github.com/bradenaw/juniper/stream"
 	"reflect"
 	"testing"
 
+	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/go-proton-api/server"
+	"github.com/bradenaw/juniper/stream"
 	"github.com/stretchr/testify/require"
 )
 

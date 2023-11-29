@@ -486,26 +486,22 @@ func (s *Server) parseMessage(literal []byte) (*rfc822.Header, []string, []*rfc8
 
 	// Force all multipart types to be multipart/mixed.
 	if mimeType.Type() == "multipart" {
-		if mimeType == rfc822.MultipartRelated {
-			children, err := root.Children()
-			if err != nil {
-				mimeType = "multipart/mixed"
-			} else {
-				var isHtml = false
-				for _, child := range children {
-					contentType, _, err := child.ContentType()
-					if err == nil && contentType == rfc822.TextHTML {
-						isHtml = true
-					}
-				}
-				if isHtml {
-					mimeType = "text/html"
-				} else {
-					mimeType = "text/plain"
+		children, err := root.Children()
+		if err != nil {
+			mimeType = "multipart/mixed"
+		} else {
+			var isHtml = false
+			for _, child := range children {
+				contentType, _, err := child.ContentType()
+				if err == nil && contentType == rfc822.TextHTML {
+					isHtml = true
 				}
 			}
-		} else {
-			mimeType = "multipart/mixed"
+			if isHtml {
+				mimeType = "text/html"
+			} else {
+				mimeType = "text/plain"
+			}
 		}
 	}
 
