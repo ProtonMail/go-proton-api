@@ -20,7 +20,7 @@ require (
 	github.com/urfave/cli/v2 v2.24.4
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a
 	go.uber.org/goleak v1.2.1
-	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
+	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 	golang.org/x/net v0.17.0
 	golang.org/x/text v0.13.0
 	google.golang.org/grpc v1.56.3
