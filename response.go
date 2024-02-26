@@ -158,8 +158,7 @@ func catchRetryAfter(_ *resty.Client, res *resty.Response) (time.Duration, error
 	// Add some jitter to the delay.
 	after += rand.Intn(10)
 
-	logrus.WithFields(logrus.Fields{
-		"pkg":    "go-proton-api",
+	log.WithFields(logrus.Fields{
 		"status": res.StatusCode(),
 		"url":    res.Request.URL,
 		"method": res.Request.Method,

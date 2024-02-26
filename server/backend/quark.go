@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/ProtonMail/go-proton-api"
-	"github.com/sirupsen/logrus"
 )
 
 func (s *Backend) RunQuarkCommand(command string, args ...string) (any, error) {
@@ -78,7 +77,7 @@ func (s *Backend) quarkUserCreate(args ...string) (proton.User, error) {
 		}
 	}
 
-	logrus.Infof("User '%v' created with id=%v", *name, userID)
+	log.Infof("User '%v' created with id=%v", *name, userID)
 
 	return s.GetUser(userID)
 }
