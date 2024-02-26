@@ -12,9 +12,12 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
+
+var log = logrus.WithField("pkg", "gpa/server/backend")
 
 type Backend struct {
 	domain string

@@ -9,6 +9,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var log = logrus.WithField("pkg", "gpa/server")
+
 func (s *Server) handlePostAuthInfo() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req proton.AuthInfoReq
@@ -19,7 +21,7 @@ func (s *Server) handlePostAuthInfo() gin.HandlerFunc {
 
 		info, err := s.b.NewAuthInfo(req.Username)
 		if err != nil {
-			logrus.WithError(err).Errorf("User '%v' failed auth info", req.Username)
+			log.WithError(err).Errorf("User '%v' failed auth info", req.Username)
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
@@ -50,7 +52,7 @@ func (s *Server) handlePostAuth() gin.HandlerFunc {
 
 		auth, err := s.b.NewAuth(req.Username, clientEphemeral, clientProof, req.SRPSession)
 		if err != nil {
-			logrus.WithError(err).Errorf("User '%v' not authorized", req.Username)
+			log.WithError(err).Errorf("User '%v' not authorized", req.Username)
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
