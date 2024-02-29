@@ -1,8 +1,9 @@
 package backend
 
 import (
+	"slices"
+
 	"github.com/ProtonMail/go-proton-api"
-	"github.com/bradenaw/juniper/xslices"
 )
 
 func merge(updates []update) []update {
@@ -10,7 +11,7 @@ func merge(updates []update) []update {
 		return updates
 	}
 
-	if merged := merge(updates[1:]); xslices.IndexFunc(merged, func(other update) bool {
+	if merged := merge(updates[1:]); slices.IndexFunc(merged, func(other update) bool {
 		return other.replaces(updates[0])
 	}) < 0 {
 		return append([]update{updates[0]}, merged...)

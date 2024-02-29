@@ -13,6 +13,7 @@ import (
 	"github.com/bradenaw/juniper/stream"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -38,7 +39,7 @@ func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, wor
 	}
 
 	// If any of the messages exceed the maximum import size, return an error.
-	if xslices.Any(req, func(req ImportReq) bool { return len(req.Message) > maxImportSize }) {
+	if slices.ContainsFunc(req, func(req ImportReq) bool { return len(req.Message) > maxImportSize }) {
 		return nil, ErrImportSizeExceeded
 	}
 
