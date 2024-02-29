@@ -341,8 +341,8 @@ func (b *Backend) GetLabels(userID string, types ...proton.LabelType) ([]proton.
 				}
 
 				if len(types) > 0 {
-					res = xslices.Filter(res, func(label proton.Label) bool {
-						return slices.Contains(types, label.Type)
+					res = slices.DeleteFunc(res, func(label proton.Label) bool {
+						return !slices.Contains(types, label.Type)
 					})
 				}
 
@@ -431,7 +431,7 @@ func (b *Backend) DeleteLabel(userID, labelID string) error {
 						return err
 					}
 
-					acc.labelIDs = xslices.Filter(acc.labelIDs, func(otherID string) bool { return otherID != labelID })
+					acc.labelIDs = slices.DeleteFunc(acc.labelIDs, func(otherID string) bool { return otherID == labelID })
 					acc.updateIDs = append(acc.updateIDs, updateID)
 				}
 
@@ -500,7 +500,7 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 				// deleted in between this metadata request. The backend has the information stored differently and can
 				// resolve these gaps.
 				if filter.EndID != "" {
-					index := xslices.IndexFunc(metadata, func(metadata proton.MessageMetadata) bool {
+					index := slices.IndexFunc(metadata, func(metadata proton.MessageMetadata) bool {
 						return metadata.ID == filter.EndID
 					})
 
@@ -509,38 +509,38 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 					}
 				}
 
-				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
+				metadata = slices.DeleteFunc(metadata, func(metadata proton.MessageMetadata) bool {
 					if len(filter.ID) > 0 {
 						if !slices.Contains(filter.ID, metadata.ID) {
-							return false
+							return true
 						}
 					}
 
 					if filter.Subject != "" {
 						if !strings.Contains(metadata.Subject, filter.Subject) {
-							return false
+							return true
 						}
 					}
 
 					if filter.AddressID != "" {
 						if filter.AddressID != metadata.AddressID {
-							return false
+							return true
 						}
 					}
 
 					if filter.ExternalID != "" {
 						if filter.ExternalID != metadata.ExternalID {
-							return false
+							return true
 						}
 					}
 
 					if filter.LabelID != "" {
 						if !slices.Contains(metadata.LabelIDs, filter.LabelID) {
-							return false
+							return true
 						}
 					}
 
-					return true
+					return false
 				})
 
 				pages := xslices.Chunk(metadata, pageSize)
@@ -712,7 +712,7 @@ func (b *Backend) DeleteMessage(userID, messageID string) error {
 					return err
 				}
 
-				acc.messageIDs = xslices.Filter(acc.messageIDs, func(otherID string) bool { return otherID != messageID })
+				acc.messageIDs = slices.DeleteFunc(acc.messageIDs, func(otherID string) bool { return otherID == messageID })
 				acc.updateIDs = append(acc.updateIDs, updateID)
 
 				return nil
@@ -1045,7 +1045,7 @@ func (b *Backend) GetEvent(userID, rawEventID string) (event proton.Event, more 
 			return withMessages(b, func(messages map[string]*message) (proton.Event, error) {
 				return withLabels(b, func(labels map[string]*label) (proton.Event, error) {
 					return withAtts(b, func(attachments map[string]*attachment) (proton.Event, error) {
-						firstUpdate := xslices.Index(acc.updateIDs, eventID) + 1
+						firstUpdate := slices.Index(acc.updateIDs, eventID) + 1
 						lastUpdate := getLastUpdateIndex(len(acc.updateIDs), firstUpdate, b.maxUpdatesPerEvent)
 
 						updates, err := withUpdates(b, func(updates map[ID]update) ([]update, error) {
