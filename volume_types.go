@@ -4,7 +4,7 @@ package proton
 type Volume struct {
 	VolumeID string // Encrypted volume ID
 
-	CreationTime    int64  // Creation time of the volume in Unix time
+	CreateTime      int64  // Creation time of the volume in Unix time
 	ModifyTime      int64  // Last modification time of the volume in Unix time
 	MaxSpace        *int64 // Space limit for the volume in bytes, null if unlimited.
 	UsedSpace       int64  // Space used by files in the volume in bytes
