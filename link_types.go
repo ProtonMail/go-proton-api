@@ -17,23 +17,30 @@ type Link struct {
 	LinkID       string // Encrypted file/folder ID
 	ParentLinkID string // Encrypted parent folder ID (LinkID). Root link has null ParentLinkID.
 
-	Type     LinkType
-	Name     string // Encrypted file name
-	Hash     string // HMAC of name encrypted with parent hash key
-	Size     int64
-	State    LinkState
+	Type               LinkType
+	Name               string // Encrypted file name
+	NameSignatureEmail string // Link name signature email
+	Hash               string // HMAC of name encrypted with parent hash key
+	State              LinkState
+	TotalSize          int64 // Encrypted size of Node (all active and obsolete revisions for files)
+
 	MIMEType string
 
-	CreateTime     int64 // Link creation time
-	ModifyTime     int64 // Link modification time (on API, real modify date is stored in XAttr)
-	ExpirationTime int64 // Link expiration time
-
+	CreateTime              int64  // Link creation time
+	ModifyTime              int64  // Link modification time (on API, real modify date is stored in XAttr)
+	Trashed                 *int64 // Time at which the file was trashed, null if file is not trashed.
 	NodeKey                 string // The private NodeKey, used to decrypt any file/folder content.
 	NodePassphrase          string // The passphrase used to unlock the NodeKey, encrypted by the owning Link/Share keyring.
-	NodePassphraseSignature string
+	NodePassphraseSignature string // Node passphrase signature
 
+	Attributes       int64   // ?
+	XAttr            *string // Extended attributes encrypted with link key
+	Permissions      int64   // ?
 	FileProperties   *FileProperties
 	FolderProperties *FolderProperties
+
+	SignatureEmail string // Signature email address used for passphrase, should be the user's address associated with the Share.
+
 }
 
 type LinkState int
@@ -45,6 +52,23 @@ const (
 	LinkStateDeleted
 	LinkStateRestoring
 )
+
+func (l LinkState) String() string {
+	switch l {
+	case LinkStateDraft:
+		return "draft"
+	case LinkStateActive:
+		return "active"
+	case LinkStateTrashed:
+		return "trashed"
+	case LinkStateDeleted:
+		return "deleted"
+	case LinkStateRestoring:
+		return "restoring"
+	default:
+		return "unknown"
+	}
+}
 
 func (l Link) GetName(parentNodeKR, addrKR *crypto.KeyRing) (string, error) {
 	encName, err := crypto.NewPGPMessageFromArmored(l.Name)
@@ -155,6 +179,17 @@ const (
 	LinkTypeFile
 )
 
+func (t LinkType) String() string {
+	switch t {
+	case LinkTypeFolder:
+		return "folder"
+	case LinkTypeFile:
+		return "file"
+	default:
+		return "unknown"
+	}
+}
+
 type RevisionMetadata struct {
 	ID                string        // Encrypted Revision ID
 	CreateTime        int64         // Unix timestamp of the revision creation time
@@ -166,7 +201,7 @@ type RevisionMetadata struct {
 	ThumbnailHash     string        // Hash of the thumbnail
 }
 
-// Revisions are only for files, they represent “versions” of files.
+// Revision Revisions are only for files, they represent “versions” of files.
 // Each file can have 1 active revision and n obsolete revisions.
 type Revision struct {
 	RevisionMetadata
@@ -182,3 +217,18 @@ const (
 	RevisionStateObsolete
 	RevisionStateDeleted
 )
+
+func (r RevisionState) String() string {
+	switch r {
+	case RevisionStateDraft:
+		return "draft"
+	case RevisionStateActive:
+		return "active"
+	case RevisionStateObsolete:
+		return "obsolete"
+	case RevisionStateDeleted:
+		return "deleted"
+	default:
+		return "unknown"
+	}
+}

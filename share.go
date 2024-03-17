@@ -37,3 +37,12 @@ func (c *Client) GetShare(ctx context.Context, shareID string) (Share, error) {
 
 	return res.Share, nil
 }
+
+func (c *Client) GetMainShare(ctx context.Context) (Share, error) {
+	volume, err := c.GetActiveVolume(ctx)
+	if err != nil {
+		return Share{}, err
+	}
+
+	return c.GetShare(ctx, volume.Share.ShareID)
+}

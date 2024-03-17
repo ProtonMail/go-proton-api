@@ -2,6 +2,7 @@ package proton
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -32,4 +33,19 @@ func (c *Client) GetVolume(ctx context.Context, volumeID string) (Volume, error)
 	}
 
 	return res.Volume, nil
+}
+
+func (c *Client) GetActiveVolume(ctx context.Context) (Volume, error) {
+	volumes, err := c.ListVolumes(ctx)
+	if err != nil {
+		return Volume{}, err
+	}
+
+	for _, volume := range volumes {
+		if volume.State == VolumeStateActive {
+			return volume, nil
+		}
+	}
+
+	return Volume{}, errors.New("no active volume found")
 }
