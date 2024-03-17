@@ -1,5 +1,7 @@
 package proton
 
+import "fmt"
+
 // Volume is a Proton Drive volume.
 type Volume struct {
 	VolumeID string // Encrypted volume ID
@@ -30,6 +32,17 @@ const (
 	VolumeStateLocked VolumeState = 3
 )
 
+func (v VolumeState) String() string {
+	switch v {
+	case VolumeStateActive:
+		return "active"
+	case VolumeStateLocked:
+		return "locked"
+	default:
+		return fmt.Sprintf("unknown (%v)", int(v))
+	}
+}
+
 // VolumeRestoreStatus is the status of the restore task.
 type VolumeRestoreStatus int
 
@@ -38,3 +51,16 @@ const (
 	RestoreStatusInProgress VolumeRestoreStatus = 1
 	RestoreStatusFailed     VolumeRestoreStatus = -1
 )
+
+func (rs VolumeRestoreStatus) String() string {
+	switch rs {
+	case RestoreStatusDone:
+		return "done"
+	case RestoreStatusInProgress:
+		return "in progress"
+	case RestoreStatusFailed:
+		return "failed"
+	default:
+		return fmt.Sprintf("unknown (%v)", int(rs))
+	}
+}

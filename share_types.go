@@ -1,6 +1,10 @@
 package proton
 
-import "github.com/ProtonMail/gopenpgp/v2/crypto"
+import (
+	"fmt"
+
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
+)
 
 type ShareMetadata struct {
 	ShareID  string // Encrypted share ID
@@ -76,6 +80,19 @@ const (
 	ShareTypeDevice   ShareType = 3
 )
 
+func (t ShareType) String() string {
+	switch t {
+	case ShareTypeMain:
+		return "main"
+	case ShareTypeStandard:
+		return "standard"
+	case ShareTypeDevice:
+		return "device"
+	default:
+		return fmt.Sprintf("unknown (%v)", int(t))
+	}
+}
+
 type ShareState int
 
 const (
@@ -83,9 +100,31 @@ const (
 	ShareStateDeleted ShareState = 2
 )
 
+func (s ShareState) String() string {
+	switch s {
+	case ShareStateActive:
+		return "active"
+	case ShareStateDeleted:
+		return "deleted"
+	default:
+		return fmt.Sprintf("unknown (%v)", int(s))
+	}
+}
+
 type ShareFlags int
 
 const (
 	NoFlags ShareFlags = iota
 	PrimaryShare
 )
+
+func (f ShareFlags) String() string {
+	switch f {
+	case NoFlags:
+		return "none"
+	case PrimaryShare:
+		return "primary"
+	default:
+		return fmt.Sprintf("unknown (%v)", int(f))
+	}
+}
