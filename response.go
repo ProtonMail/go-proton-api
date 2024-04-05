@@ -19,16 +19,17 @@ import (
 type Code int
 
 const (
-	SuccessCode               Code = 1000
-	MultiCode                 Code = 1001
-	InvalidValue              Code = 2001
-	AppVersionMissingCode     Code = 5001
-	AppVersionBadCode         Code = 5003
-	UsernameInvalid           Code = 6003 // Deprecated, but still used.
-	PasswordWrong             Code = 8002
-	HumanVerificationRequired Code = 9001
-	PaidPlanRequired          Code = 10004
-	AuthRefreshTokenInvalid   Code = 10013
+	SuccessCode                 Code = 1000
+	MultiCode                   Code = 1001
+	InvalidValue                Code = 2001
+	AppVersionMissingCode       Code = 5001
+	AppVersionBadCode           Code = 5003
+	UsernameInvalid             Code = 6003 // Deprecated, but still used.
+	PasswordWrong               Code = 8002
+	HumanVerificationRequired   Code = 9001
+	PaidPlanRequired            Code = 10004
+	AuthRefreshTokenInvalid     Code = 10013
+	HumanValidationInvalidToken Code = 12087
 )
 
 type ErrDetails []byte
