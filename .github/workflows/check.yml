@@ -9,15 +9,15 @@ jobs:
       - name: Get sources
         uses: actions/checkout@v3
 
-      - name: Set up Go 1.18
+      - name: Set up Go 1.21
         uses: actions/setup-go@v3
         with:
-          go-version: '1.18'
+          go-version: '1.21'
 
-      - name: Run golangci-lint
+      - name: Run golsangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.50.0
+          version: v1.57.2
           args: --timeout=180s
           skip-cache: true
 
@@ -26,3 +26,9 @@ jobs:
 
       - name: Run tests with race check
         run: go test -v -race ./...
+
+      - name: Run govulncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-input: 1.21
+          go-package: ./...
