@@ -26,7 +26,9 @@ const (
 var ErrImportEncrypt = errors.New("failed to encrypt message")
 var ErrImportSizeExceeded = errors.New("message exceeds maximum import size of 30MB")
 
-func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, workers, buffer int, req ...ImportReq) (stream.Stream[ImportRes], error) {
+type ImportResStream stream.Stream[ImportRes] // gomock does not support generics. In order to be able to mock ImportMessages, we introduce a typedef.
+
+func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, workers, buffer int, req ...ImportReq) (ImportResStream, error) {
 	// Encrypt each message.
 	for idx := range req {
 		enc, err := EncryptRFC822(addrKR, req[idx].Message)
