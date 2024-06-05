@@ -7,8 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get sources
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
+      
       - name: Set up Go 1.21
         uses: actions/setup-go@v3
         with:
@@ -26,3 +26,10 @@ jobs:
 
       - name: Run tests with race check
         run: go test -v -race ./...
+
+      - name: Run govulncheck
+        uses: ./.github/actions/govulncheck
+        with:
+          go-version-input: 1.21
+          go-package: ./...
+          
