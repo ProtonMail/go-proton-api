@@ -131,3 +131,10 @@ func (m *Manager) onConnUp() {
 		observer(m.status)
 	}
 }
+
+func (m *Manager) GetStatus() Status {
+	m.statusLock.Lock()
+	defer m.statusLock.Unlock()
+
+	return m.status
+}
