@@ -32,3 +32,4 @@ jobs:
         with:
           go-version-input: 1.21
           go-package: ./...
+          cache: false
