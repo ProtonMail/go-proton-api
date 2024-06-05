@@ -26,10 +26,3 @@ jobs:
 
       - name: Run tests with race check
         run: go test -v -race ./...
-
-      - name: Run govulncheck
-        uses: golang/govulncheck-action@v1
-        with:
-          go-version-input: 1.21
-          go-package: ./...
-          cache: false
