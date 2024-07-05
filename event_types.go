@@ -24,6 +24,8 @@ type Event struct {
 
 	Addresses []AddressEvent
 
+	Notifications []NotificationEvent
+
 	UsedSpace *int64
 }
 
