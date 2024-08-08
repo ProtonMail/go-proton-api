@@ -252,3 +252,11 @@ func (s *Server) Close() {
 	s.proxyTransport.CloseIdleConnections()
 	s.s.Close()
 }
+
+func (s *Server) PushFeatureFlag(flagName string) {
+	s.b.PushFeatureFlag(flagName)
+}
+
+func (s *Server) DeleteFeatureFlags() {
+	s.b.DeleteFeatureFlags()
+}

@@ -48,6 +48,8 @@ type unsafeBackend struct {
 	enableDedup bool
 
 	csTicket []string
+
+	featureFlags []proton.FeatureToggle
 }
 
 func readBackendRet[T any](b *Backend, f func(b *unsafeBackend) T) T {

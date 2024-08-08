@@ -26,6 +26,9 @@ func initRouter(s *Server) {
 		s.applyRateLimit(),
 	)
 
+	// Feature flag route. Needs to be updated when user specific feature flags are implemented
+	s.r.GET("/feature/v2/frontend", s.handleGetFeatures())
+
 	if core := s.r.Group("/core/v4"); core != nil {
 		// Domains routes don't need authentication.
 		if domains := core.Group("/domains"); domains != nil {
