@@ -1294,6 +1294,27 @@ func (b *Backend) GenerateContactID(userID string) (string, error) {
 	})
 }
 
+func (b *Backend) GetFeatureFlags() []proton.FeatureToggle {
+	return readBackendRet(b, func(b *unsafeBackend) []proton.FeatureToggle {
+		return b.featureFlags
+	})
+}
+
+func (b *Backend) PushFeatureFlag(flagName string) {
+	writeBackend(b, func(b *unsafeBackend) {
+		b.featureFlags = append(b.featureFlags, proton.FeatureToggle{
+			Name:    flagName,
+			Enabled: true,
+		})
+	})
+}
+
+func (b *Backend) DeleteFeatureFlags() {
+	writeBackend(b, func(b *unsafeBackend) {
+		b.featureFlags = []proton.FeatureToggle{}
+	})
+}
+
 func buildEvent(
 	updates []update,
 	addresses map[string]*address,
