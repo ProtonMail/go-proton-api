@@ -129,6 +129,8 @@ func initRouter(s *Server) {
 			stats.POST("", s.handlePostDataStats())
 			stats.POST("/multiple", s.handlePostDataStatsMultiple())
 		}
+		// Observability endpoint
+		data.POST("/metrics", s.handleObservabilityPost())
 	}
 
 	// Top level auth routes don't need authentication.

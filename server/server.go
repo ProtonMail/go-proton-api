@@ -260,3 +260,7 @@ func (s *Server) PushFeatureFlag(flagName string) {
 func (s *Server) DeleteFeatureFlags() {
 	s.b.DeleteFeatureFlags()
 }
+
+func (s *Server) GetObservabilityStatistics() backend.ObservabilityStatistics {
+	return s.b.GetObservabilityStatistics()
+}

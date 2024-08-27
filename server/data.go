@@ -1,9 +1,10 @@
 package server
 
 import (
+	"net/http"
+
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func (s *Server) handlePostDataStats() gin.HandlerFunc {
@@ -50,4 +51,20 @@ func (s *Server) handlePostDataStatsMultiple() gin.HandlerFunc {
 
 func validateSendStatReq(req *proton.SendStatsReq) bool {
 	return req.MeasurementGroup != ""
+}
+
+func (s *Server) handleObservabilityPost() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req proton.ObservabilityBatch
+		if err := c.BindJSON(&req); err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		s.b.PushObservabilityMetrics(req.Metrics)
+
+		c.JSON(http.StatusOK, gin.H{
+			"Code": proton.SuccessCode,
+		})
+	}
 }

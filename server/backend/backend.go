@@ -50,6 +50,8 @@ type unsafeBackend struct {
 	csTicket []string
 
 	featureFlags []proton.FeatureToggle
+
+	observabilityStatistics ObservabilityStatistics
 }
 
 func readBackendRet[T any](b *Backend, f func(b *unsafeBackend) T) T {
@@ -91,16 +93,17 @@ func New(authLife time.Duration, domain string, enableDedup bool) *Backend {
 	return &Backend{
 		domain: domain,
 		safeBackend: &unsafeBackend{
-			accounts:           make(map[string]*account),
-			attachments:        make(map[string]*attachment),
-			attData:            make(map[string][]byte),
-			messages:           make(map[string]*message),
-			labels:             make(map[string]*label),
-			updates:            make(map[ID]update),
-			maxUpdatesPerEvent: 0,
-			srp:                make(map[string]*srp.Server),
-			authLife:           authLife,
-			enableDedup:        enableDedup,
+			accounts:                make(map[string]*account),
+			attachments:             make(map[string]*attachment),
+			attData:                 make(map[string][]byte),
+			messages:                make(map[string]*message),
+			labels:                  make(map[string]*label),
+			updates:                 make(map[ID]update),
+			maxUpdatesPerEvent:      0,
+			srp:                     make(map[string]*srp.Server),
+			authLife:                authLife,
+			enableDedup:             enableDedup,
+			observabilityStatistics: NewObservabilityStatistics(),
 		},
 	}
 }
