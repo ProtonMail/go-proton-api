@@ -263,7 +263,7 @@ func (c *Contact) SetSettings(kr *crypto.KeyRing, email string, cardType CardTyp
 	}
 
 	// KEY
-	if settings.Keys != nil && len(settings.Keys) > 0 {
+	if len(settings.Keys) > 0 {
 		var keys = ""
 		for i, key := range settings.Keys {
 			if i > 0 {
