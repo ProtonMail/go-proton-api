@@ -1,6 +1,6 @@
 module github.com/ProtonMail/go-proton-api
 
-go 1.21
+go 1.23
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.0
@@ -21,8 +21,8 @@ require (
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a
 	go.uber.org/goleak v1.2.1
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
-	golang.org/x/net v0.24.0
-	golang.org/x/text v0.14.0
+	golang.org/x/net v0.34.0
+	golang.org/x/text v0.21.0
 	google.golang.org/grpc v1.56.3
 	google.golang.org/protobuf v1.33.0
 )
@@ -61,9 +61,9 @@ require (
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.22.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
