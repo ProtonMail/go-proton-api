@@ -32,6 +32,20 @@ func WithAppVersion(appVersion string) Option {
 	}
 }
 
+type withUserAgent struct {
+	userAgent string
+}
+
+func (opt withUserAgent) config(builder *managerBuilder) {
+	builder.userAgent = opt.userAgent
+}
+
+func WithUserAgent(userAgent string) Option {
+	return &withUserAgent{
+		userAgent: userAgent,
+	}
+}
+
 type withAppVersion struct {
 	appVersion string
 }
