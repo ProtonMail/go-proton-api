@@ -11,7 +11,7 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/google/uuid"
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"

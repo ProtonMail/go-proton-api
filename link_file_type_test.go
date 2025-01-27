@@ -3,7 +3,7 @@ package proton_test
 import (
 	"testing"
 
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 )
 
 func Test_HMAC(t *testing.T) {

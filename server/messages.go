@@ -14,7 +14,7 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/gin-gonic/gin"
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 	"golang.org/x/exp/slices"
 )
 
@@ -489,14 +489,14 @@ func (s *Server) parseMessage(literal []byte) (*rfc822.Header, []string, []*rfc8
 		mimeType = "multipart/mixed"
 		children, err := root.Children()
 		// or determine it if there is only one (non-attachment) child
-		if err == nil && (len(children) - len(atts)) <= 1 {
+		if err == nil && (len(children)-len(atts)) <= 1 {
 			var isHtml = false
 			var isTxt = false
 			for _, child := range children {
 				contentType, _, err := child.ContentType()
 				if err != nil {
 					continue
-				}else if contentType == rfc822.TextHTML {
+				} else if contentType == rfc822.TextHTML {
 					isHtml = true
 				} else if contentType == rfc822.TextPlain {
 					isTxt = true

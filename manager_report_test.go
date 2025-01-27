@@ -7,8 +7,8 @@ import (
 	"mime/multipart"
 	"testing"
 
-	"github.com/ProtonMail/go-proton-api"
-	"github.com/ProtonMail/go-proton-api/server"
+	"github.com/henrybear327/go-proton-api"
+	"github.com/henrybear327/go-proton-api/server"
 	"github.com/stretchr/testify/require"
 )
 

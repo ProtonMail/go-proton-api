@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/ProtonMail/go-proton-api/server/proto";
+option go_package = "github.com/henrybear327/go-proton-api/server/proto";
 
 package proto; 
 

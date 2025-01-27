@@ -2,7 +2,7 @@ package backend
 
 import (
 	"github.com/google/uuid"
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 )
 
 type label struct {

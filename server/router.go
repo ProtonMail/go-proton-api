@@ -15,7 +15,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 )
 
 func initRouter(s *Server) {

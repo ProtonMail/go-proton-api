@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 	"github.com/stretchr/testify/require"
 )
 

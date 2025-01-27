@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ProtonMail/gluon/async"
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 	"github.com/stretchr/testify/require"
 )
 

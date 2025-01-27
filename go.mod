@@ -1,4 +1,4 @@
-module github.com/ProtonMail/go-proton-api
+module github.com/henrybear327/go-proton-api
 
 go 1.22.0
 
@@ -71,5 +71,3 @@ require (
 )
 
 replace github.com/go-resty/resty/v2 => github.com/LBeernaertProton/resty/v2 v2.0.0-20231129100320-dddf8030d93a
-
-replace github.com/ProtonMail/go-proton-api => github.com/henrybear327/go-proton-api v0.0.0-20250127182155-ab0ad0b85cddd6757b087c8ebf8e67d7bb490e6a

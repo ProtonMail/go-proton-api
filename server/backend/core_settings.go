@@ -1,7 +1,7 @@
 package backend
 
 import (
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 )
 
 func newUserSettings() proton.UserSettings {

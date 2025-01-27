@@ -6,7 +6,7 @@ import (
 
 	"github.com/ProtonMail/go-srp"
 	"github.com/google/uuid"
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 )
 
 func (b *Backend) NewAuthInfo(username string) (proton.AuthInfo, error) {

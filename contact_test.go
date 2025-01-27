@@ -7,7 +7,7 @@ import (
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/emersion/go-vcard"
-	"github.com/ProtonMail/go-proton-api"
+	"github.com/henrybear327/go-proton-api"
 	"github.com/stretchr/testify/require"
 )
 
