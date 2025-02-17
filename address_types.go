@@ -1,5 +1,7 @@
 package proton
 
+import "fmt"
+
 type Address struct {
 	ID    string
 	Email string
@@ -27,6 +29,14 @@ const (
 	AddressStatusDeleting
 )
 
+func (s AddressStatus) String() string {
+	statusStrings := [...]string{"disabled", "enabled", "deleting" }
+	 if s < AddressStatusDisabled || s > AddressStatusDeleting {
+		return fmt.Sprintf("Unknown Status (%d)", s)
+	}
+	return statusStrings[s]
+}
+
 type AddressType int
 
 const (
@@ -36,3 +46,13 @@ const (
 	AddressTypePremium
 	AddressTypeExternal
 )
+
+func (a AddressType) String() string {
+	typeStrings := [...]string{"original", "alias", "custom", "premium", "external" }
+	 if a < AddressTypeOriginal || a > AddressTypeExternal {
+		return fmt.Sprintf("Unknown Status (%d)", a)
+	}
+
+	// Proton API defines the start type as `iota + 1`
+	return typeStrings[a-1]
+}
