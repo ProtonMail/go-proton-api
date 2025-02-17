@@ -97,6 +97,7 @@ type AuthRefreshReq struct {
 	GrantType    string
 	RedirectURI  string
 	State        string
+	AccessToken  string `json:",omitempty"`
 }
 
 type AuthSession struct {

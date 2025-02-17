@@ -178,7 +178,7 @@ func (c *Client) authRefresh(ctx context.Context) error {
 	c.hookLock.RLock()
 	defer c.hookLock.RUnlock()
 
-	auth, err := c.m.authRefresh(ctx, c.uid, c.ref)
+	auth, err := c.m.authRefresh(ctx, c.uid, c.ref, c.acc)
 
 	if err != nil {
 		if respErr, ok := err.(*resty.ResponseError); ok {
