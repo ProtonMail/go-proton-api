@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+
 	"github.com/ProtonMail/go-srp"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/go-resty/resty/v2"
@@ -19,7 +20,7 @@ func (m *Manager) NewClient(uid, acc, ref string) *Client {
 func (m *Manager) NewClientWithRefresh(ctx context.Context, uid, ref string) (*Client, Auth, error) {
 	c := newClient(m, uid)
 
-	auth, err := m.authRefresh(ctx, uid, ref)
+	auth, err := m.authRefresh(ctx, uid, ref, "")
 	if err != nil {
 		return nil, Auth{}, err
 	}
@@ -105,7 +106,7 @@ func (m *Manager) auth(ctx context.Context, req AuthReq, hv *APIHVDetails) (Auth
 	return res.Auth, nil
 }
 
-func (m *Manager) authRefresh(ctx context.Context, uid, ref string) (Auth, error) {
+func (m *Manager) authRefresh(ctx context.Context, uid, ref, acc string) (Auth, error) {
 	state, err := crypto.RandomToken(32)
 	if err != nil {
 		return Auth{}, err
@@ -118,6 +119,7 @@ func (m *Manager) authRefresh(ctx context.Context, uid, ref string) (Auth, error
 		GrantType:    "refresh_token",
 		RedirectURI:  "https://protonmail.ch",
 		State:        string(state),
+		AccessToken:  acc,
 	}
 
 	var res struct {
