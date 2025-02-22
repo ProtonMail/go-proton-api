@@ -24,13 +24,14 @@ type MessageMetadata struct {
 	BCCList  []*mail.Address
 	ReplyTos []*mail.Address
 
-	Flags        MessageFlag
-	Time         int64
-	Size         int
-	Unread       Bool
-	IsReplied    Bool
-	IsRepliedAll Bool
-	IsForwarded  Bool
+	Flags          MessageFlag
+	Time           int64
+	ExpirationTime *int64
+	Size           int
+	Unread         Bool
+	IsReplied      Bool
+	IsRepliedAll   Bool
+	IsForwarded    Bool
 
 	NumAttachments int
 }
@@ -69,6 +70,11 @@ type Message struct {
 }
 
 type MessageFlag int64
+
+type MessageExpireActionReq struct {
+	IDs            []string
+	ExpirationTime *int64
+}
 
 const (
 	MessageFlagReceived    MessageFlag = 1 << 0
