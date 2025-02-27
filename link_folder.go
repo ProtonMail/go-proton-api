@@ -71,6 +71,20 @@ func (c *Client) TrashChildren(ctx context.Context, shareID, linkID string, chil
 	return nil
 }
 
+func (c *Client) EmptyTrash(ctx context.Context, shareID string) error {
+	var res struct {
+		APIError
+	}
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetResult(&res).Delete("/drive/shares/" + shareID + "/trash")
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *Client) DeleteChildren(ctx context.Context, shareID, linkID string, childIDs ...string) error {
 	var res struct {
 		Responses []struct {
