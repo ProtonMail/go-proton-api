@@ -194,9 +194,9 @@ func (c *Client) LabelMessages(ctx context.Context, messageIDs []string, labelID
 		}
 
 		if ok, errStr := res.ok(); !ok {
-			tokens := xslices.Map(results, func(res LabelMessagesRes) UndoToken {
+			tokens := append(xslices.Map(results, func(res LabelMessagesRes) UndoToken {
 				return res.UndoToken
-			})
+			}), res.UndoToken)
 
 			if _, undoErr := c.UndoActions(ctx, tokens...); undoErr != nil {
 				return fmt.Errorf("failed to undo label actions (undo reason: %v): %w", errStr, undoErr)
@@ -227,9 +227,9 @@ func (c *Client) UnlabelMessages(ctx context.Context, messageIDs []string, label
 		}
 
 		if ok, errStr := res.ok(); !ok {
-			tokens := xslices.Map(results, func(res LabelMessagesRes) UndoToken {
+			tokens := append(xslices.Map(results, func(res LabelMessagesRes) UndoToken {
 				return res.UndoToken
-			})
+			}), res.UndoToken)
 
 			if _, undoErr := c.UndoActions(ctx, tokens...); undoErr != nil {
 				return fmt.Errorf("failed to undo unlabel actions (undo reason: %v): %w", errStr, undoErr)
