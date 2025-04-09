@@ -1131,6 +1131,21 @@ func (b *Backend) AddAddressCreatedUpdate(userID, addrID string) error {
 	})
 }
 
+func (b *Backend) AddAddressUpdatedEvent(userID, addrID string) error {
+	return writeBackendRet(b, func(b *unsafeBackend) error {
+		return b.withAcc(userID, func(acc *account) error {
+			updateID, err := b.newUpdate(&addressUpdated{addressID: addrID})
+			if err != nil {
+				return err
+			}
+
+			acc.updateIDs = append(acc.updateIDs, updateID)
+
+			return nil
+		})
+	})
+}
+
 func (b *Backend) AddLabelCreatedUpdate(userID, labelID string) error {
 	return writeBackendRet(b, func(b *unsafeBackend) error {
 		return b.withAcc(userID, func(acc *account) error {

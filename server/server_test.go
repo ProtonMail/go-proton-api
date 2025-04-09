@@ -1934,7 +1934,7 @@ func TestServer_AddressCreateDelete(t *testing.T) {
 			require.NoError(t, err)
 
 			// Create an address.
-			alias, err := s.CreateAddress(user.ID, "alias@example.com", []byte("pass"))
+			alias, err := s.CreateAddress(user.ID, "alias@example.com", []byte("pass"), true)
 			require.NoError(t, err)
 
 			// The user should have two addresses, both enabled.
@@ -1982,13 +1982,13 @@ func TestServer_AddressOrder(t *testing.T) {
 			require.NoError(t, err)
 
 			// Create 3 additional addresses.
-			addr1, err := s.CreateAddress(user.ID, "addr1@example.com", []byte("pass"))
+			addr1, err := s.CreateAddress(user.ID, "addr1@example.com", []byte("pass"), true)
 			require.NoError(t, err)
 
-			addr2, err := s.CreateAddress(user.ID, "addr2@example.com", []byte("pass"))
+			addr2, err := s.CreateAddress(user.ID, "addr2@example.com", []byte("pass"), true)
 			require.NoError(t, err)
 
-			addr3, err := s.CreateAddress(user.ID, "addr3@example.com", []byte("pass"))
+			addr3, err := s.CreateAddress(user.ID, "addr3@example.com", []byte("pass"), true)
 			require.NoError(t, err)
 
 			addresses, err := c.GetAddresses(context.Background())
