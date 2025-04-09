@@ -11,6 +11,7 @@ main(){
     ignore GO-2025-3373 "BRIDGE-315 stdlib crypto/x509"
     ignore GO-2025-3420 "BRIDGE-315 stdlib net/http"
     ignore GO-2025-3447 "BRIDGE-315 stdlib crypto/internal/nistec"
+    ignore GO-2025-3563 "BRIDGE-346 stdlib net/http"
 
     has_vulns
 
