@@ -112,7 +112,7 @@ func (s *Server) CreateUser(username string, password []byte) (string, string, e
 		return "", "", err
 	}
 
-	addrID, err := s.b.CreateAddress(userID, username+"@"+s.domain, password, true, proton.AddressStatusEnabled, proton.AddressTypeOriginal)
+	addrID, err := s.b.CreateAddress(userID, username+"@"+s.domain, password, true, proton.AddressStatusEnabled, proton.AddressTypeOriginal, true)
 	if err != nil {
 		return "", "", err
 	}
@@ -147,8 +147,12 @@ func (s *Server) RemoveUserKey(userID, keyID string) error {
 	return s.b.RemoveUserKey(userID, keyID)
 }
 
-func (s *Server) CreateAddress(userID, email string, password []byte) (string, error) {
-	return s.b.CreateAddress(userID, email, password, true, proton.AddressStatusEnabled, proton.AddressTypeOriginal)
+func (s *Server) CreateAddress(userID, email string, password []byte, withSend bool) (string, error) {
+	return s.b.CreateAddress(userID, email, password, true, proton.AddressStatusEnabled, proton.AddressTypeOriginal, withSend)
+}
+
+func (s *Server) CreateExternalAddress(userID, email string, password []byte, withSend bool) (string, error) {
+	return s.b.CreateAddress(userID, email, password, true, proton.AddressStatusEnabled, proton.AddressTypeExternal, withSend)
 }
 
 func (s *Server) CreateAddressAsUpdate(userID, email string, password []byte) (string, error) {
@@ -206,6 +210,10 @@ func (s *Server) UnlabelMessage(userID, msgID, labelID string) error {
 
 func (s *Server) AddAddressCreatedEvent(userID, addrID string) error {
 	return s.b.AddAddressCreatedUpdate(userID, addrID)
+}
+
+func (s *Server) AddAddressUpdatedEvent(userID, addrID string) error {
+	return s.b.AddAddressUpdatedEvent(userID, addrID)
 }
 
 func (s *Server) AddLabelCreatedEvent(userID, labelID string) error {

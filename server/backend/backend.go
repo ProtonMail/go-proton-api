@@ -254,9 +254,9 @@ func (b *Backend) RemoveUserKey(userID, keyID string) error {
 	})
 }
 
-func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType) (string, error) {
+func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType, withSending bool) (string, error) {
 	return writeBackendRetErr(b, func(b *unsafeBackend) (string, error) {
-		return b.createAddress(userID, email, password, withKey, status, addrType, false, true)
+		return b.createAddress(userID, email, password, withKey, status, addrType, false, withSending)
 	})
 }
 

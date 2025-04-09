@@ -16,11 +16,11 @@ func TestAddress_DisplayName(t *testing.T) {
 	// Create a user on the server.
 	userID, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
-	addr1, err := s.CreateAddress(userID, "user1@pm.me", []byte("pass"))
+	addr1, err := s.CreateAddress(userID, "user1@pm.me", []byte("pass"), true)
 	require.NoError(t, err)
 	require.NoError(t, s.ChangeAddressDisplayName(userID, addr1, "User 1"))
 
-	addr2, err := s.CreateAddress(userID, "user2@pm.me", []byte("pass"))
+	addr2, err := s.CreateAddress(userID, "user2@pm.me", []byte("pass"), true)
 	require.NoError(t, err)
 	require.NoError(t, s.ChangeAddressDisplayName(userID, addr2, "User 2"))
 
@@ -60,16 +60,16 @@ func TestAddress_Types(t *testing.T) {
 	// Create a user on the server.
 	userID, _, err := s.CreateUser("user", []byte("pass"))
 	require.NoError(t, err)
-	id2, err := s.CreateAddress(userID, "user@alias.com", []byte("pass"))
+	id2, err := s.CreateAddress(userID, "user@alias.com", []byte("pass"), true)
 	require.NoError(t, err)
 	require.NoError(t, s.ChangeAddressType(userID, id2, proton.AddressTypeAlias))
-	id3, err := s.CreateAddress(userID, "user@custom.com", []byte("pass"))
+	id3, err := s.CreateAddress(userID, "user@custom.com", []byte("pass"), true)
 	require.NoError(t, err)
 	require.NoError(t, s.ChangeAddressType(userID, id3, proton.AddressTypeCustom))
-	id4, err := s.CreateAddress(userID, "user@premium.com", []byte("pass"))
+	id4, err := s.CreateAddress(userID, "user@premium.com", []byte("pass"), true)
 	require.NoError(t, err)
 	require.NoError(t, s.ChangeAddressType(userID, id4, proton.AddressTypePremium))
-	id5, err := s.CreateAddress(userID, "user@external.com", []byte("pass"))
+	id5, err := s.CreateAddress(userID, "user@external.com", []byte("pass"), false)
 	require.NoError(t, err)
 	require.NoError(t, s.ChangeAddressType(userID, id5, proton.AddressTypeExternal))
 

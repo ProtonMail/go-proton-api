@@ -36,3 +36,9 @@ const (
 	AddressTypePremium
 	AddressTypeExternal
 )
+
+// IsBYOEAddress - return a bool corresponding to whether an address is a BYOE address.
+// BYOE addresses have sending enabled and are of type `external`.
+func (a Address) IsBYOEAddress() bool {
+	return bool(a.Send) && a.Type == AddressTypeExternal
+}

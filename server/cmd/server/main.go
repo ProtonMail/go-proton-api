@@ -91,7 +91,7 @@ func (s *service) RevokeUser(ctx context.Context, req *proto.RevokeUserRequest) 
 }
 
 func (s *service) CreateAddress(ctx context.Context, req *proto.CreateAddressRequest) (*proto.CreateAddressResponse, error) {
-	addrID, err := s.server.CreateAddress(req.UserID, req.Email, req.Password)
+	addrID, err := s.server.CreateAddress(req.UserID, req.Email, req.Password, true)
 	if err != nil {
 		return nil, err
 	}
