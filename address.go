@@ -2,9 +2,9 @@ package proton
 
 import (
 	"context"
+	"slices"
 
 	"github.com/go-resty/resty/v2"
-	"golang.org/x/exp/slices"
 )
 
 func (c *Client) GetAddresses(ctx context.Context) ([]Address, error) {
@@ -18,8 +18,8 @@ func (c *Client) GetAddresses(ctx context.Context) ([]Address, error) {
 		return nil, err
 	}
 
-	slices.SortFunc(res.Addresses, func(a, b Address) bool {
-		return a.Order < b.Order
+	slices.SortFunc(res.Addresses, func(a, b Address) int {
+		return a.Order - b.Order
 	})
 
 	return res.Addresses, nil
