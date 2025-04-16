@@ -13,9 +13,9 @@ require (
 	github.com/emersion/go-message v0.16.0
 	github.com/emersion/go-vcard v0.0.0-20230331202150-f3d26859ccd3
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-resty/resty/v2 v2.7.0
-	github.com/google/uuid v1.3.0
-	github.com/sirupsen/logrus v1.9.2
+	github.com/go-resty/resty/v2 v2.16.3
+	github.com/google/uuid v1.6.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.3
 	github.com/urfave/cli/v2 v2.24.4
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a
@@ -30,7 +30,7 @@ require (
 require (
 	github.com/ProtonMail/bcrypt v0.0.0-20211005172633-e235017c1baf // indirect
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
-	github.com/andybalholm/cascadia v1.3.2 // indirect
+	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/cloudflare/circl v1.5.0 // indirect
@@ -67,5 +67,3 @@ require (
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/go-resty/resty/v2 => github.com/LBeernaertProton/resty/v2 v2.0.0-20231129100320-dddf8030d93a

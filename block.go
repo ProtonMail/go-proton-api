@@ -32,7 +32,7 @@ func (c *Client) RequestBlockUpload(ctx context.Context, req BlockUploadReq) ([]
 	return res.UploadLinks, nil
 }
 
-func (c *Client) UploadBlock(ctx context.Context, bareURL, token string, block resty.MultiPartStream) error {
+func (c *Client) UploadBlock(ctx context.Context, bareURL, token string, block io.Reader) error {
 	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
 		return r.
 			SetHeader("pm-storage-token", token).
