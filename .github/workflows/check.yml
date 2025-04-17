@@ -8,16 +8,16 @@ jobs:
     steps:
       - name: Get sources
         uses: actions/checkout@v4
-      
-      - name: Set up Go 1.23.3
+
+      - name: Set up Go 1.24.2
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.3'
+          go-version: "1.24.2"
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v6.5.2
         with:
-          version: v1.62.0
+          version: v1.64.8
           args: --timeout=180s
           skip-cache: true
 
@@ -30,6 +30,5 @@ jobs:
       - name: Run govulncheck
         uses: ./.github/actions/govulncheck
         with:
-          go-version-input: 1.23.3
+          go-version-input: 1.24.2
           go-package: ./...
-          
