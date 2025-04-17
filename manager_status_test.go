@@ -3,7 +3,6 @@ package proton_test
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/http"
 	"testing"
@@ -386,7 +385,6 @@ func TestStatus_ServerHang(t *testing.T) {
 	// Drop all existing connections and hang on writing to new connections.
 	hangListener.DropAll()
 	hangListener.SetCanWrite(false)
-	fmt.Println("Can write is false")
 	// This should fail because the connection will hang.
 	require.ErrorIs(t, getErr(c.GetUser(context.Background())), new(proton.NetError))
 
@@ -398,8 +396,6 @@ func TestStatus_ServerHang(t *testing.T) {
 
 	// This should succeed.
 	require.NoError(t, getErr(c.GetUser(context.Background())))
-
-	fmt.Println("status", status)
 
 	// Status should be up.
 	require.Equal(t, []proton.Status{proton.StatusDown, proton.StatusUp}, status)
