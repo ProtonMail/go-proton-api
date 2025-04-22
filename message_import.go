@@ -19,8 +19,8 @@ const (
 	// maxImportCount is the maximum number of messages that can be imported in a single request.
 	maxImportCount = 10
 
-	// maxImportSize is the maximum total request size permitted for a single import request.
-	maxImportSize = 30 * 1024 * 1024
+	// MaxImportSize is the maximum total request size permitted for a single import request.
+	MaxImportSize = 30 * 1024 * 1024
 )
 
 var ErrImportEncrypt = errors.New("failed to encrypt message")
@@ -31,23 +31,28 @@ type ImportResStream stream.Stream[ImportRes] // gomock does not support generic
 func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, workers, buffer int, req ...ImportReq) (ImportResStream, error) {
 	// Encrypt each message.
 	for idx := range req {
-		enc, err := EncryptRFC822(addrKR, req[idx].Message)
+
+		// Encryption might mangle the original message bufer, so use a copy.
+		msgCopy := make([]byte, len(req[idx].Message))
+		copy(msgCopy, req[idx].Message)
+
+		enc, err := EncryptRFC822(addrKR, msgCopy)
 		if err != nil {
 			return nil, fmt.Errorf("%w %v: %v", ErrImportEncrypt, idx, err)
 		}
 
-		req[idx].Message = enc
+		req[idx].encryptedMessage = enc
 	}
 
 	// If any of the messages exceed the maximum import size, return an error.
-	if xslices.Any(req, func(req ImportReq) bool { return len(req.Message) > maxImportSize }) {
+	if xslices.Any(req, func(req ImportReq) bool { return len(req.encryptedMessage) > MaxImportSize }) {
 		return nil, ErrImportSizeExceeded
 	}
 
 	return stream.Flatten(parallel.MapStream(
 		ctx,
-		stream.FromIterator(iterator.Slice(ChunkSized(req, maxImportCount, maxImportSize, func(req ImportReq) int {
-			return len(req.Message)
+		stream.FromIterator(iterator.Slice(ChunkSized(req, maxImportCount, MaxImportSize, func(req ImportReq) int {
+			return len(req.encryptedMessage)
 		}))),
 		workers,
 		buffer,

@@ -8,8 +8,13 @@ import (
 )
 
 type ImportReq struct {
-	Metadata ImportMetadata
-	Message  []byte
+	Metadata         ImportMetadata
+	Message          []byte
+	encryptedMessage []byte
+}
+
+func (r ImportReq) GetEncryptedMessageLength() int {
+	return len(r.encryptedMessage)
 }
 
 type namedImportReq struct {
@@ -42,7 +47,7 @@ func buildImportReqFields(req []namedImportReq) ([]*resty.MultipartField, error)
 			Param:       req.Name,
 			FileName:    req.Name + ".eml",
 			ContentType: string(rfc822.MessageRFC822),
-			Stream:      resty.NewByteMultipartStream(append(req.Message, "\r\n"...)),
+			Stream:      resty.NewByteMultipartStream(append(req.encryptedMessage, "\r\n"...)),
 		})
 	}
 

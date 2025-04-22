@@ -2700,3 +2700,72 @@ func getFullMessages(ctx context.Context,
 		},
 	)
 }
+
+func TestServer_Import_MessageSizeExceeded_NoDoubleEncryption(t *testing.T) {
+	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
+		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			user, err := c.GetUser(ctx)
+			require.NoError(t, err)
+
+			addr, err := c.GetAddresses(ctx)
+			require.NoError(t, err)
+
+			salt, err := c.GetSalts(ctx)
+			require.NoError(t, err)
+
+			pass, err := salt.SaltForKey([]byte("pass"), user.Keys.Primary().ID)
+			require.NoError(t, err)
+
+			_, addrKRs, err := proton.Unlock(user, addr, pass, async.NoopPanicHandler{})
+			require.NoError(t, err)
+
+			reqs := []proton.ImportReq{
+				{
+					Metadata: proton.ImportMetadata{
+						AddressID: addr[0].ID,
+						LabelIDs:  []string{},
+						Flags:     proton.MessageFlagReceived,
+						Unread:    true,
+					},
+					Message: newMessageLiteralWithSubjectAndSize("test1@example.com", "test2@example.com", uuid.NewString(), 40),
+				},
+				{
+					Metadata: proton.ImportMetadata{
+						AddressID: addr[0].ID,
+						LabelIDs:  []string{},
+						Flags:     proton.MessageFlagReceived,
+						Unread:    true,
+					},
+					Message: newMessageLiteralWithSubjectAndSize("test1@example.com", "test2@example.com", uuid.NewString(), proton.MaxImportSize),
+				},
+				{
+					Metadata: proton.ImportMetadata{
+						AddressID: addr[0].ID,
+						LabelIDs:  []string{},
+						Flags:     proton.MessageFlagReceived,
+						Unread:    true,
+					},
+					Message: newMessageLiteralWithSubjectAndSize("test1@example.com", "test2@example.com", uuid.NewString(), 20),
+				},
+			}
+
+			reqsCopy := make([]proton.ImportReq, len(reqs))
+			for idx := range len(reqs) {
+				messageCopy := make([]byte, len(reqs[idx].Message))
+				copy(messageCopy, reqs[idx].Message)
+				reqsCopy[idx].Message = messageCopy
+			}
+
+			_, err = c.ImportMessages(ctx, addrKRs[addr[0].ID], runtime.NumCPU(), runtime.NumCPU(), reqs...)
+			require.ErrorIs(t, err, proton.ErrImportSizeExceeded)
+
+			for idx := range len(reqs) {
+				require.Equal(t, reqsCopy[idx].Message, reqs[idx].Message)
+				require.True(t, reqs[idx].GetEncryptedMessageLength() > 0)
+			}
+		})
+	})
+}
