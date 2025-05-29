@@ -2,14 +2,14 @@ module github.com/ProtonMail/go-proton-api
 
 go 1.24
 
-toolchain go1.24.2
+toolchain go1.24.3
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/ProtonMail/gluon v0.17.1-0.20230724134000-308be39be96e
-	github.com/ProtonMail/go-crypto v1.1.4-proton
+	github.com/ProtonMail/go-crypto v1.3.0-proton
 	github.com/ProtonMail/go-srp v0.0.7
-	github.com/ProtonMail/gopenpgp/v2 v2.8.2-proton
+	github.com/ProtonMail/gopenpgp/v2 v2.9.0-proton
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/bradenaw/juniper v0.12.0
 	github.com/emersion/go-message v0.16.0
@@ -35,7 +35,7 @@ require (
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
-	github.com/cloudflare/circl v1.5.0 // indirect
+	github.com/cloudflare/circl v1.6.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/cronokirby/saferith v0.33.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
