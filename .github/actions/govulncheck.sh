@@ -8,10 +8,7 @@ main(){
 
     jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv ' < vulns.json > vulns_osv_ids.txt
 
-    ignore GO-2025-3373 "BRIDGE-315 stdlib crypto/x509"
-    ignore GO-2025-3420 "BRIDGE-315 stdlib net/http"
-    ignore GO-2025-3447 "BRIDGE-315 stdlib crypto/internal/nistec"
-    ignore GO-2025-3563 "BRIDGE-346 stdlib net/http"
+    ignore GO-2025-3754 "BRIDGE-388 - github.com/cloudflare/circl indirect import from gopenpgp; wait for upstream to patch"
 
     has_vulns
 
