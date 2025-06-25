@@ -343,11 +343,11 @@ func getCharsetDecoder(r io.Reader, charset string) (io.Reader, error) {
 		}
 	}
 
-	if enc, err := ianaindex.MIME.Encoding(strings.ToLower(charset)); err == nil {
+	if enc, err := ianaindex.MIME.Encoding(strings.ToLower(charset)); enc != nil && err == nil {
 		return enc.NewDecoder().Reader(r), nil
 	}
 
-	if enc, err := ianaindex.MIME.Encoding("cs" + strings.ToLower(charset)); err == nil {
+	if enc, err := ianaindex.MIME.Encoding("cs" + strings.ToLower(charset)); enc != nil && err == nil {
 		return enc.NewDecoder().Reader(r), nil
 	}
 
