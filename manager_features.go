@@ -2,6 +2,10 @@ package proton
 
 import (
 	"context"
+	"fmt"
+	"net/url"
+
+	"github.com/google/uuid"
 )
 
 type FeatureFlagResult struct {
@@ -14,10 +18,17 @@ type FeatureToggle struct {
 	Enabled bool   `json:"enabled"`
 }
 
-func (m *Manager) GetFeatures(ctx context.Context) (FeatureFlagResult, error) {
+func getFeatureFlagEndpoint(stickyKey uuid.UUID) string {
+	params := url.Values{}
+	params.Set("bridgeStickyKey", stickyKey.String())
+	path := fmt.Sprintf("/feature/v2/frontend?%s", params.Encode())
+	return path
+}
+
+func (m *Manager) GetFeatures(ctx context.Context, stickyKey uuid.UUID) (FeatureFlagResult, error) {
 	responseData := FeatureFlagResult{}
 
-	_, err := m.r(ctx).SetResult(&responseData).Get("/feature/v2/frontend")
+	_, err := m.r(ctx).SetResult(&responseData).Get(getFeatureFlagEndpoint(stickyKey))
 	if err != nil {
 		return FeatureFlagResult{}, err
 	}
