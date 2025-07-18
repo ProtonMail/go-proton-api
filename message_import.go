@@ -20,7 +20,7 @@ const (
 	maxImportCount = 10
 
 	// MaxImportSize is the maximum total request size permitted for a single import request.
-	MaxImportSize = 30 * 1024 * 1024
+	MaxImportSize = 55 * 1024 * 1024
 )
 
 var ErrImportEncrypt = errors.New("failed to encrypt message")
