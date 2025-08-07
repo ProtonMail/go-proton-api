@@ -22,6 +22,22 @@ func (c *Client) ListRevisions(ctx context.Context, shareID, linkID string) ([]R
 	return res.Revisions, nil
 }
 
+func (c *Client) GetRevisionAllBlocks(ctx context.Context, shareID, linkID, revisionID string) (Revision, error) {
+	var res struct {
+		Revision Revision
+	}
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.
+			SetResult(&res).
+			Get("/drive/shares/" + shareID + "/files/" + linkID + "/revisions/" + revisionID)
+	}); err != nil {
+		return Revision{}, err
+	}
+
+	return res.Revision, nil
+}
+
 func (c *Client) GetRevision(ctx context.Context, shareID, linkID, revisionID string, fromBlock, pageSize int) (Revision, error) {
 	if fromBlock < 1 {
 		return Revision{}, fmt.Errorf("fromBlock must be greater than 0")
