@@ -53,3 +53,23 @@ func (c *Client) UpdateRevision(ctx context.Context, shareID, linkID, revisionID
 		return r.SetBody(req).Put("/drive/shares/" + shareID + "/files/" + linkID + "/revisions/" + revisionID)
 	})
 }
+
+func (c *Client) DeleteRevision(ctx context.Context, shareID, linkID, revisionID string) error {
+	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.Delete("/drive/shares/" + shareID + "/files/" + linkID + "/revisions/" + revisionID)
+	})
+}
+
+func (c *Client) CreateRevision(ctx context.Context, shareID, linkID string) (CreateRevisionRes, error) {
+	var res struct {
+		Revision CreateRevisionRes
+	}
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetResult(&res).Post("/drive/shares/" + shareID + "/files/" + linkID + "/revisions")
+	}); err != nil {
+		return CreateRevisionRes{}, err
+	}
+
+	return res.Revision, nil
+}
