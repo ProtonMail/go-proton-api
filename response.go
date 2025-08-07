@@ -30,6 +30,16 @@ const (
 	PaidPlanRequired            Code = 10004
 	AuthRefreshTokenInvalid     Code = 10013
 	HumanValidationInvalidToken Code = 12087
+
+	// ProtonDrive
+	AFileOrFolderNameExist Code = 2500
+	ADraftExist            Code = 2500
+)
+
+var (
+	ErrFileNameExist   = errors.New("a file with that name already exists (Code=2500, Status=422)")
+	ErrFolderNameExist = errors.New("a folder with that name already exists (Code=2500, Status=422)")
+	ErrADraftExist     = errors.New("draft already exists on this revision (Code=2500, Status=409)")
 )
 
 type ErrDetails []byte
