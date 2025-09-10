@@ -30,7 +30,7 @@ type FIDO2Req struct {
 	ClientData            string
 	AuthenticatorData     string
 	Signature             string
-	CredentialID          string
+	CredentialID          []int
 }
 
 type AuthReq struct {
