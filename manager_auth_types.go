@@ -74,8 +74,9 @@ type TwoFAInfo struct {
 type TwoFAStatus int
 
 const (
-	HasTOTP TwoFAStatus = 1 << iota
+	HasTOTP TwoFAStatus = iota + 1
 	HasFIDO2
+	HasFIDO2AndTOTP
 )
 
 type PasswordMode int
