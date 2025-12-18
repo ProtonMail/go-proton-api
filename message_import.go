@@ -20,11 +20,12 @@ const (
 	maxImportCount = 10
 
 	// MaxImportSize is the maximum total request size permitted for a single import request.
+	// Note that base64 encoding introduces a ~33% size overhead.
 	MaxImportSize = 70 * 1024 * 1024
 )
 
 var ErrImportEncrypt = errors.New("failed to encrypt message")
-var ErrImportSizeExceeded = errors.New("message exceeds maximum import size of 30MB")
+var ErrImportSizeExceeded = errors.New("message exceeds maximum import size of 50MB")
 
 type ImportResStream stream.Stream[ImportRes] // gomock does not support generics. In order to be able to mock ImportMessages, we introduce a typedef.
 
