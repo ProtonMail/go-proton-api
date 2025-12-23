@@ -2,7 +2,7 @@ module github.com/ProtonMail/go-proton-api
 
 go 1.24
 
-toolchain go1.24.4
+toolchain go1.24.11
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.0
@@ -17,7 +17,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/uuid v1.3.0
-	github.com/sirupsen/logrus v1.9.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.3
 	github.com/urfave/cli/v2 v2.24.4
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a
@@ -35,7 +35,7 @@ require (
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
-	github.com/cloudflare/circl v1.6.0 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/cronokirby/saferith v0.33.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
