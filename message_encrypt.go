@@ -274,6 +274,10 @@ func encryptFull(kr *crypto.KeyRing, literal []byte) ([]byte, error) {
 			newHeader.Set("Received", value)
 		}
 
+		if value, ok := header.GetChecked("Cc"); ok {
+			newHeader.Set("Cc", value)
+		}
+
 		buf.Write(newHeader.Raw())
 	}
 
