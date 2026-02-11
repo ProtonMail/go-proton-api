@@ -325,3 +325,32 @@ SGVsbG8gQXR0YWNobWVudA==
 		require.Equal(t, "Hello Attachment", dec.GetString())
 	}
 }
+
+func TestEncryptMessage_CCIncluded(t *testing.T) {
+	const message = `From: Nathaniel Borenstein <nsb@bellcore.com>
+To:  Ned Freed <ned@innosoft.com>
+CC:  Adam Sand <adam@home.com>
+Subject: Message with CC recepient
+MIME-Version: 1.0
+Content-type: text/plain
+`
+	key, err := crypto.GenerateKey("foobar", "foo@bar.com", "x25519", 0)
+	require.NoError(t, err)
+
+	kr, err := crypto.NewKeyRing(key)
+	require.NoError(t, err)
+
+	encryptedMessage, err := proton.EncryptRFC822(kr, []byte(message))
+	require.NoError(t, err)
+
+	section := rfc822.Parse(encryptedMessage)
+
+	header, err := section.ParseHeader()
+	require.NoError(t, err)
+
+	assert.Equal(t, header.Get("From"), "Nathaniel Borenstein <nsb@bellcore.com>")
+	assert.Equal(t, header.Get("To"), "Ned Freed <ned@innosoft.com>")
+	assert.Equal(t, header.Get("Cc"), "Adam Sand <adam@home.com>")
+	assert.Equal(t, header.Get("Subject"), "Message with CC recepient")
+	assert.Equal(t, header.Get("MIME-Version"), "1.0")
+}
