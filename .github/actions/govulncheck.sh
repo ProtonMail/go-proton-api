@@ -8,10 +8,6 @@ main(){
 
     jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv ' < vulns.json > vulns_osv_ids.txt
 
-    ignore GO-2026-4340 "BRIDGE-466 TLS 1.3 specific, network-local attacker may disclose minor information before encryption level changes"
-    ignore GO-2026-4337 "BRIDGE-466 crypto/tls if underlying Config has ClientCAs or RootCAs fields mutated between handshake and resumed handshake  the resumed one may succeed when it should have failed."
-    ignore GO-2026-4440 "BRIDGE-466 html.Parse has quadratic parsing complexity with certain inputs can lead to DoS"
-    ignore GO-2026-4441 "BRIDGE-466 html.Parse has infinite parsing loop with certain inputs can lead to DoS"
 
     has_vulns
 
