@@ -256,13 +256,19 @@ func (b *Backend) RemoveUserKey(userID, keyID string) error {
 
 func (b *Backend) CreateAddress(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType, withSending bool) (string, error) {
 	return writeBackendRetErr(b, func(b *unsafeBackend) (string, error) {
-		return b.createAddress(userID, email, password, withKey, status, addrType, false, withSending)
+		return b.createAddress(userID, email, password, withKey, status, addrType, false, withSending, 2048)
+	})
+}
+
+func (b *Backend) CreateAddressWithCustomKeyLength(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType, withSending bool, keyLength int) (string, error) {
+	return writeBackendRetErr(b, func(b *unsafeBackend) (string, error) {
+		return b.createAddress(userID, email, password, withKey, status, addrType, false, withSending, keyLength)
 	})
 }
 
 func (b *Backend) CreateAddressAsUpdate(userID, email string, password []byte, withKey bool, status proton.AddressStatus, addrType proton.AddressType) (string, error) {
 	return writeBackendRetErr(b, func(b *unsafeBackend) (string, error) {
-		return b.createAddress(userID, email, password, withKey, status, addrType, true, true)
+		return b.createAddress(userID, email, password, withKey, status, addrType, true, true, 2048)
 	})
 }
 
@@ -274,7 +280,7 @@ func (b *Backend) CreateAddressWithSendDisabled(
 	addrType proton.AddressType,
 ) (string, error) {
 	return writeBackendRetErr(b, func(b *unsafeBackend) (string, error) {
-		return b.createAddress(userID, email, password, withKey, status, addrType, false, false)
+		return b.createAddress(userID, email, password, withKey, status, addrType, false, false, 2048)
 	})
 }
 
@@ -286,6 +292,7 @@ func (b *unsafeBackend) createAddress(
 	addrType proton.AddressType,
 	issueUpdateInsteadOfCreate bool,
 	allowSend bool,
+	keyLength int,
 ) (string, error) {
 	return withAcc(b, userID, func(acc *account) (string, error) {
 		var keys []key
@@ -296,7 +303,11 @@ func (b *unsafeBackend) createAddress(
 				return "", err
 			}
 
-			armKey, err := GenerateKey(acc.username, email, token, "rsa", 2048)
+			if keyLength == 0 || keyLength < 0 {
+				return "", fmt.Errorf("invalid key length: %d", keyLength)
+			}
+
+			armKey, err := GenerateKey(acc.username, email, token, "rsa", keyLength)
 			if err != nil {
 				return "", err
 			}

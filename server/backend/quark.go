@@ -3,6 +3,7 @@ package backend
 import (
 	"flag"
 	"fmt"
+	"strconv"
 
 	"github.com/ProtonMail/go-proton-api"
 )
@@ -70,9 +71,18 @@ func (s *Backend) quarkUserCreate(args ...string) (proton.User, error) {
 		return proton.User{}, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// TODO: Create keys of different types (we always use RSA2048).
+	keyLength := 2048
+
+	// TODO: Support other formats key formats ED25519
 	if *newAddr || *genKeys != "" {
-		if _, err := s.CreateAddress(userID, *name+"@"+s.domain, []byte(*pass), *genKeys != "", addressStatus, proton.AddressTypeOriginal, true); err != nil {
+		if len(*genKeys) > 0 {
+			keyLength, err = strconv.Atoi((*genKeys)[3:])
+			if err != nil {
+				return proton.User{}, fmt.Errorf("invalid key length: %w", err)
+			}
+		}
+
+		if _, err := s.CreateAddressWithCustomKeyLength(userID, *name+"@"+s.domain, []byte(*pass), *genKeys != "", addressStatus, proton.AddressTypeOriginal, true, keyLength); err != nil {
 			return proton.User{}, fmt.Errorf("failed to create address with keys: %w", err)
 		}
 	}
@@ -103,8 +113,16 @@ func (s *Backend) quarkUserCreateAddress(args ...string) (proton.Address, error)
 		return proton.Address{}, err
 	}
 
-	// TODO: Create keys of different types (we always use RSA2048).
-	addrID, err := s.CreateAddress(fs.Arg(0), fs.Arg(2), []byte(fs.Arg(1)), *genKeys != "", addressStatus, proton.AddressTypeOriginal, true)
+	keyLength := 2048
+	if len(*genKeys) != 0 {
+		keyLength, err = strconv.Atoi((*genKeys)[3:])
+		if err != nil {
+			return proton.Address{}, fmt.Errorf("invalid key length: %w", err)
+		}
+	}
+
+	// TODO: Support other formats key formats ED25519
+	addrID, err := s.CreateAddressWithCustomKeyLength(fs.Arg(0), fs.Arg(2), []byte(fs.Arg(1)), *genKeys != "", addressStatus, proton.AddressTypeOriginal, true, keyLength)
 	if err != nil {
 		return proton.Address{}, fmt.Errorf("failed to create address with keys: %w", err)
 	}
