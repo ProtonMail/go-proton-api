@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/ProtonMail/gluon/async"
@@ -46,7 +47,7 @@ func (c *Client) ImportMessages(ctx context.Context, addrKR *crypto.KeyRing, wor
 	}
 
 	// If any of the messages exceed the maximum import size, return an error.
-	if xslices.Any(req, func(req ImportReq) bool { return len(req.encryptedMessage) > MaxImportSize }) {
+	if slices.ContainsFunc(req, func(req ImportReq) bool { return len(req.encryptedMessage) > MaxImportSize }) {
 		return nil, ErrImportSizeExceeded
 	}
 

@@ -79,7 +79,7 @@ func (c *Client) UploadAttachment(ctx context.Context, addrKR *crypto.KeyRing, r
 	return res.Attachment, nil
 }
 
-func (c *Client) getAttachment(ctx context.Context, attachmentID string, reader io.ReaderFrom) error {
+func (c *Client) getAttachment(ctx context.Context, attachmentID string, reader io.ReaderFrom) (err error) {
 	res, err := c.doRes(ctx, func(req *resty.Request) (*resty.Response, error) {
 		res, err := req.SetDoNotParseResponse(true).Get("/mail/v4/attachments/" + attachmentID)
 		return parseResponse(res, err)
@@ -87,11 +87,15 @@ func (c *Client) getAttachment(ctx context.Context, attachmentID string, reader 
 	if err != nil {
 		return fmt.Errorf("failed to request attachment: %w", err)
 	}
-	defer res.RawBody().Close()
+	defer func() {
+		if cerr := res.RawBody().Close(); cerr != nil {
+			err = cerr
+		}
+	}()
 
 	if _, err = reader.ReadFrom(res.RawBody()); err != nil {
-		return err
+		return
 	}
 
-	return nil
+	return
 }

@@ -329,15 +329,20 @@ func encryptFull(kr *crypto.KeyRing, literal []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func encodeBase64(writer io.Writer, b []byte) error {
+func encodeBase64(writer io.Writer, b []byte) (err error) {
 	encoder := base64.NewEncoder(base64.StdEncoding, writer)
-	defer encoder.Close()
 
-	if _, err := encoder.Write(b); err != nil {
-		return err
+	defer func() {
+		if enerr := encoder.Close(); enerr != nil {
+			err = enerr
+		}
+	}()
+
+	if _, err = encoder.Write(b); err != nil {
+		return
 	}
 
-	return nil
+	return
 }
 
 func getCharsetDecoder(r io.Reader, charset string) (io.Reader, error) {

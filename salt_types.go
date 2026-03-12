@@ -3,9 +3,9 @@ package proton
 import (
 	"encoding/base64"
 	"fmt"
+	"slices"
 
 	"github.com/ProtonMail/go-srp"
-	"github.com/bradenaw/juniper/xslices"
 )
 
 type Salt struct {
@@ -15,7 +15,7 @@ type Salt struct {
 type Salts []Salt
 
 func (salts Salts) SaltForKey(keyPass []byte, keyID string) ([]byte, error) {
-	idx := xslices.IndexFunc(salts, func(salt Salt) bool {
+	idx := slices.IndexFunc(salts, func(salt Salt) bool {
 		return salt.ID == keyID
 	})
 

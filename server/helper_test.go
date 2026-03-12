@@ -8,14 +8,14 @@ import (
 )
 
 func newMessageLiteral(from, to string) []byte {
-	return []byte(fmt.Sprintf("From: %v\r\nReceiver: %v\r\nSubject: %v\r\n\r\nHello World!", from, to, uuid.New()))
+	return fmt.Appendf(nil, "From: %v\r\nReceiver: %v\r\nSubject: %v\r\n\r\nHello World!", from, to, uuid.New())
 }
 
 func newMessageLiteralWithSubject(from, to, subject string) []byte {
-	return []byte(fmt.Sprintf("From: %v\r\nReceiver: %v\r\nSubject: %v\r\n\r\nHello World!", from, to, subject))
+	return fmt.Appendf(nil, "From: %v\r\nReceiver: %v\r\nSubject: %v\r\n\r\nHello World!", from, to, subject)
 }
 
 func newMessageLiteralWithSubjectAndSize(from, to, subject string, paddingSize int) []byte {
 	padding := strings.Repeat("A", paddingSize)
-	return []byte(fmt.Sprintf("From: %v\r\nReceiver: %v\r\nSubject: %v\r\n\r\nHello World!Padding:%s", from, to, subject, padding))
+	return fmt.Appendf(nil, "From: %v\r\nReceiver: %v\r\nSubject: %v\r\n\r\nHello World!Padding:%s", from, to, subject, padding)
 }

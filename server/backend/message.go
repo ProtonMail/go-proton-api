@@ -59,7 +59,7 @@ func newMessage(
 		messageID:  uuid.NewString(),
 		externalID: externalID,
 		addrID:     addrID,
-		sysLabel:   pointer(""),
+		sysLabel:   new(""),
 
 		subject:  subject,
 		sender:   sender,
@@ -79,7 +79,7 @@ func newMessageFromSent(addrID, armBody string, msg *message) *message {
 		messageID:  uuid.NewString(),
 		externalID: msg.externalID,
 		addrID:     addrID,
-		sysLabel:   pointer(""),
+		sysLabel:   new(""),
 
 		subject:  msg.subject,
 		sender:   msg.sender,
@@ -106,7 +106,7 @@ func newMessageFromTemplate(
 		messageID:        uuid.NewString(),
 		externalID:       template.ExternalID,
 		addrID:           addrID,
-		sysLabel:         pointer(""),
+		sysLabel:         new(""),
 		inReplyTo:        parentRef,
 		internalParentID: internalParentID,
 
@@ -320,7 +320,7 @@ func (msg *message) addLabel(labelID string, labels map[string]*label) {
 }
 
 func (msg *message) addFlagLabel(labelID string, labels map[string]*label) {
-	msg.labelIDs = xslices.Filter(msg.labelIDs, func(otherLabelID string) bool {
+	msg.labelIDs = proton.Filter(msg.labelIDs, func(otherLabelID string) bool {
 		return labels[otherLabelID].labelType == proton.LabelTypeLabel
 	})
 
@@ -328,7 +328,7 @@ func (msg *message) addFlagLabel(labelID string, labels map[string]*label) {
 }
 
 func (msg *message) addSystemLabel(labelID string, labels map[string]*label) {
-	msg.labelIDs = xslices.Filter(msg.labelIDs, func(otherLabelID string) bool {
+	msg.labelIDs = proton.Filter(msg.labelIDs, func(otherLabelID string) bool {
 		return labels[otherLabelID].labelType == proton.LabelTypeLabel
 	})
 
@@ -337,11 +337,11 @@ func (msg *message) addSystemLabel(labelID string, labels map[string]*label) {
 
 func (msg *message) addUserLabel(label *label, labels map[string]*label) {
 	if label.labelType != proton.LabelTypeLabel {
-		msg.labelIDs = xslices.Filter(msg.labelIDs, func(otherLabelID string) bool {
+		msg.labelIDs = proton.Filter(msg.labelIDs, func(otherLabelID string) bool {
 			return labels[otherLabelID].labelType == proton.LabelTypeLabel
 		})
 
-		msg.sysLabel = pointer("")
+		msg.sysLabel = new("")
 	}
 
 	if !slices.Contains(msg.labelIDs, label.labelID) {
@@ -369,18 +369,18 @@ func (msg *message) remLabel(labelID string, labels map[string]*label) {
 
 func (msg *message) remFlagLabel(labelID string, labels map[string]*label) {
 	if msg.sysLabel == nil {
-		msg.sysLabel = pointer("")
+		msg.sysLabel = new("")
 	}
 }
 
 func (msg *message) remSystemLabel(labelID string, labels map[string]*label) {
 	if msg.sysLabel != nil && *msg.sysLabel == labelID {
-		msg.sysLabel = pointer("")
+		msg.sysLabel = new("")
 	}
 }
 
 func (msg *message) remUserLabel(label *label, labels map[string]*label) {
-	msg.labelIDs = xslices.Filter(msg.labelIDs, func(otherLabelID string) bool {
+	msg.labelIDs = proton.Filter(msg.labelIDs, func(otherLabelID string) bool {
 		return otherLabelID != label.labelID
 	})
 }
@@ -395,6 +395,8 @@ func toAddressList(addrs []*mail.Address) string {
 	return strings.Join(res, ", ")
 }
 
+//go:fix inline
+//nolint:unused
 func pointer[T any](v T) *T {
-	return &v
+	return new(v)
 }

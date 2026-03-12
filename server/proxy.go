@@ -44,7 +44,7 @@ func (s *proxyServer) targetResponseModifier(r *http.Response) error {
 	if r.StatusCode == http.StatusInternalServerError || r.StatusCode == http.StatusBadGateway {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			body = []byte(fmt.Sprintf(`{"read_error": "%v"}`, err))
+			body = fmt.Appendf(nil, `{"read_error": "%v"}`, err)
 		}
 
 		fmt.Printf("PROXY RESP %d CHANGING TO 429: %s %s\n=====BODY=====\n%s\n", r.StatusCode, r.Request.Method, r.Request.RequestURI, string(body))
@@ -236,7 +236,12 @@ func readFromBody[T any](r *http.Request) (T, error) {
 	if err != nil {
 		return *new(T), err
 	}
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			return
+		}
+	}(r.Body)
 
 	v, err := readFrom[T](b)
 	if err != nil {
@@ -268,7 +273,12 @@ func gzipDecode(b []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer func(r *gzip.Reader) {
+		err := r.Close()
+		if err != nil {
+			return
+		}
+	}(r)
 
 	return io.ReadAll(r)
 }

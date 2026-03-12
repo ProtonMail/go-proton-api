@@ -28,7 +28,7 @@ func NewPool[In comparable, Out any](size int, panicHandler async.PanicHandler, 
 		queue: async.NewQueuedChannel[*job[In, Out]](0, 0, panicHandler, "gpa-pool"),
 	}
 
-	for i := 0; i < size; i++ {
+	for range size {
 		pool.wg.Add(1)
 
 		go func() {
@@ -70,7 +70,6 @@ func (pool *Pool[In, Out]) Process(ctx context.Context, reqs []In, fn func(int, 
 	)
 
 	for i, req := range reqs {
-		req := req
 
 		wg.Add(1)
 
