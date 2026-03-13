@@ -275,7 +275,7 @@ func (c *Client) countMessages(ctx context.Context, filter MessageFilter) (int, 
 	req := struct {
 		MessageFilter
 
-		Limit int `json:",,string"`
+		Limit int `json:",string"`
 	}{
 		MessageFilter: filter,
 

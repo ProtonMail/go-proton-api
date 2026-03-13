@@ -36,7 +36,7 @@ func TestNetCtl_ReadLimit(t *testing.T) {
 	if resp, err := client.Get(ts.URL); err != nil {
 		t.Fatal(err)
 	} else {
-		resp.Body.Close()
+		resp.Body.Close() //nolint:errcheck
 	}
 
 	// This should fail.
@@ -69,7 +69,7 @@ func TestNetCtl_WriteLimit(t *testing.T) {
 	if resp, err := client.Post(ts.URL, "application/octet-stream", bytes.NewReader(make([]byte, 100))); err != nil {
 		t.Fatal(err)
 	} else {
-		resp.Body.Close()
+		resp.Body.Close() //nolint:errcheck
 	}
 
 	// This should fail.

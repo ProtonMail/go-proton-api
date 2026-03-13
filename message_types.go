@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net/mail"
+	slices0 "slices"
 
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
@@ -114,13 +115,7 @@ func (f MessageFlag) Matches(flag MessageFlag) bool {
 }
 
 func (f MessageFlag) HasAny(flags ...MessageFlag) bool {
-	for _, flag := range flags {
-		if f.Has(flag) {
-			return true
-		}
-	}
-
-	return false
+	return slices0.ContainsFunc(flags, f.Has)
 }
 
 func (f MessageFlag) HasAll(flags ...MessageFlag) bool {

@@ -34,7 +34,7 @@ type FIDO2Req struct {
 }
 
 type AuthReq struct {
-	Auth2FAReq `json:",omitempty"`
+	Auth2FAReq
 
 	Username        string
 	ClientEphemeral string
@@ -87,8 +87,8 @@ const (
 )
 
 type Auth2FAReq struct {
-	TwoFactorCode string   `json:",omitempty"`
-	FIDO2         FIDO2Req `json:",omitempty"`
+	TwoFactorCode string `json:",omitempty"`
+	FIDO2         FIDO2Req
 }
 
 type AuthRefreshReq struct {

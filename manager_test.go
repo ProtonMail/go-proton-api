@@ -86,7 +86,7 @@ func TestHandleTooManyRequests(t *testing.T) {
 	defer m.Close()
 
 	// Make five calls; they should all succeed, but will be rate limited.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		require.NoError(t, m.Ping(context.Background()))
 	}
 
@@ -121,7 +121,7 @@ func TestHandleTooManyRequests503(t *testing.T) {
 	defer m.Close()
 
 	// Make five calls; they should all succeed, but will be rate limited.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		require.NoError(t, m.Ping(context.Background()))
 	}
 
@@ -329,8 +329,7 @@ func TestStatusCallbacks(t *testing.T) {
 		statusCh <- status
 	})
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ctl.Disable()
 

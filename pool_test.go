@@ -123,16 +123,14 @@ func TestPool_Process_Parallel(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 8; i++ {
-		wg.Add(1)
+	for range 8 {
 
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			require.NoError(t, doubler.Process(context.Background(), []int{1, 2, 3, 4}, func(_ int, _ int, _ int, err error) error {
 				return nil
 			}))
-		}()
+		})
 	}
 
 	wg.Wait()

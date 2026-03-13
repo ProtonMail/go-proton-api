@@ -9,15 +9,15 @@ jobs:
       - name: Get sources
         uses: actions/checkout@v4
 
-      - name: Set up Go 1.24.4
+      - name: Set up Go 1.26
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24.4"
+          go-version: "1.26"
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6.5.2
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v1.64.8
+          version: v2.11.3
           args: --timeout=180s
           skip-cache: true
 
@@ -30,5 +30,5 @@ jobs:
       - name: Run govulncheck
         uses: ./.github/actions/govulncheck
         with:
-          go-version-input: 1.24.4
+          go-version-input: 1.26.1
           go-package: ./...

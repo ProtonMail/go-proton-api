@@ -92,10 +92,10 @@ func (c *Contact) GetSettings(kr *crypto.KeyRing, email string, cardType CardTyp
 	if len(scheme) > 0 {
 		switch scheme[0] {
 		case "pgp-inline":
-			settings.Scheme = newPtr(PGPInlineScheme)
+			settings.Scheme = new(PGPInlineScheme)
 
 		case "pgp-mime":
-			settings.Scheme = newPtr(PGPMIMEScheme)
+			settings.Scheme = new(PGPMIMEScheme)
 		}
 	}
 
@@ -105,7 +105,7 @@ func (c *Contact) GetSettings(kr *crypto.KeyRing, email string, cardType CardTyp
 	}
 
 	if len(mimeType) > 0 {
-		settings.MIMEType = newPtr(rfc822.MIMEType(mimeType[0]))
+		settings.MIMEType = new(rfc822.MIMEType(mimeType[0]))
 	}
 
 	sign, err := group.Get(FieldPMSign)
@@ -119,7 +119,7 @@ func (c *Contact) GetSettings(kr *crypto.KeyRing, email string, cardType CardTyp
 			return ContactSettings{}, err
 		}
 
-		settings.Sign = newPtr(sign)
+		settings.Sign = new(sign)
 	}
 
 	encrypt, err := group.Get(FieldPMEncrypt)
@@ -133,7 +133,7 @@ func (c *Contact) GetSettings(kr *crypto.KeyRing, email string, cardType CardTyp
 			return ContactSettings{}, err
 		}
 
-		settings.Encrypt = newPtr(encrypt)
+		settings.Encrypt = new(encrypt)
 	}
 
 	encryptUntrusted, err := group.Get(FieldPMEncryptUntrusted)
@@ -147,7 +147,7 @@ func (c *Contact) GetSettings(kr *crypto.KeyRing, email string, cardType CardTyp
 			return ContactSettings{}, err
 		}
 
-		settings.EncryptUntrusted = newPtr(b)
+		settings.EncryptUntrusted = new(b)
 	}
 
 	keys, err := group.Get(vcard.FieldKey)
@@ -264,16 +264,16 @@ func (c *Contact) SetSettings(kr *crypto.KeyRing, email string, cardType CardTyp
 
 	// KEY
 	if len(settings.Keys) > 0 {
-		var keys = ""
+		var keys strings.Builder
 		for i, key := range settings.Keys {
 			if i > 0 {
-				keys += ","
+				keys.WriteString(",")
 			}
 			if dec, err := key.Serialize(); err == nil {
-				keys += string(dec)
+				keys.WriteString(string(dec))
 			}
 		}
-		enc := base64.StdEncoding.EncodeToString([]byte(keys))
+		enc := base64.StdEncoding.EncodeToString([]byte(keys.String()))
 		if err := group.Set(vcard.FieldKey, "base64,"+enc, vcard.Params{}); err != nil {
 			return err
 		}
@@ -331,6 +331,8 @@ type DeleteContactsReq struct {
 	IDs []string
 }
 
+//go:fix inline
+//nolint:unused
 func newPtr[T any](v T) *T {
-	return &v
+	return new(v)
 }

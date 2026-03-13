@@ -18,8 +18,14 @@ func (c *Client) GetAddresses(ctx context.Context) ([]Address, error) {
 		return nil, err
 	}
 
-	slices.SortFunc(res.Addresses, func(a, b Address) bool {
-		return a.Order < b.Order
+	slices.SortFunc(res.Addresses, func(a, b Address) int {
+		if a.Order < b.Order {
+			return -1
+		}
+		if a.Order > b.Order {
+			return 1
+		}
+		return 0
 	})
 
 	return res.Addresses, nil

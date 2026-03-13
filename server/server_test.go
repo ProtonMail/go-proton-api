@@ -435,7 +435,7 @@ func TestServer_Events(t *testing.T) {
 
 func TestServer_Events_Multi(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			withUser(ctx, t, s, m, fmt.Sprintf("user%v", i), "pass", func(c *proton.Client) {
 				latest, err := c.GetLatestEventID(ctx)
 				require.NoError(t, err)
@@ -949,8 +949,7 @@ func TestServer_AuthDelete(t *testing.T) {
 }
 
 func TestServer_ForceUpgrade(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	s := New()
 	defer s.Close()
@@ -1607,8 +1606,7 @@ func TestServer_RealProxy(t *testing.T) {
 		t.Skip("skipping test, set the username and password to run")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	proxy := New()
 	defer proxy.Close()
@@ -1638,8 +1636,7 @@ func TestServer_RealProxy_Cache(t *testing.T) {
 		t.Skip("skipping test, set the username and password to run")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	proxy := New(WithAuthCacher(NewAuthCache()))
 	defer proxy.Close()
@@ -2197,9 +2194,10 @@ func TestServer_GetMessageGroupCount(t *testing.T) {
 				}
 
 				var flags proton.MessageFlag
-				if st.LabelID == proton.InboxLabel {
+				switch st.LabelID {
+				case proton.InboxLabel:
 					flags = proton.MessageFlagReceived
-				} else if st.LabelID == proton.SentLabel {
+				case proton.SentLabel:
 					flags = proton.MessageFlagSent
 				}
 
@@ -2218,7 +2216,7 @@ func TestServer_GetMessageGroupCount(t *testing.T) {
 			counts, err := c.GetGroupedMessageCount(ctx)
 			require.NoError(t, err)
 
-			counts = xslices.Filter(counts, func(t proton.MessageGroupCount) bool {
+			counts = proton.Filter(counts, func(t proton.MessageGroupCount) bool {
 				switch t.LabelID {
 				case proton.InboxLabel, proton.TrashLabel, proton.ArchiveLabel, proton.AllMailLabel, proton.SentLabel:
 					return true
@@ -2276,7 +2274,7 @@ func TestServer_TestDraftActions(t *testing.T) {
 
 			importedMessages := importMessages(ctx, t, c, addr[0].ID, addrKRs[addr[0].ID], []string{}, 0, len(tests))
 
-			for i := 0; i < len(tests); i++ {
+			for i := range tests {
 				importedMessageID := importedMessages[i].MessageID
 
 				msg, err := c.GetMessage(ctx, importedMessageID)
@@ -2377,7 +2375,7 @@ func TestServer_Contacts(t *testing.T) {
 			require.Len(t, contacts, len(testContacts))
 
 			for _, v := range testContacts {
-				require.NotEqual(t, -1, xslices.IndexFunc(contacts, func(contact proton.Contact) bool {
+				require.NotEqual(t, -1, slices.IndexFunc(contacts, func(contact proton.Contact) bool {
 					return contact.Name == v.Name
 				}))
 			}
