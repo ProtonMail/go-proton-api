@@ -87,7 +87,9 @@ func (c *Client) getAttachment(ctx context.Context, attachmentID string, reader 
 	if err != nil {
 		return fmt.Errorf("failed to request attachment: %w", err)
 	}
-	defer res.RawBody().Close()
+	defer func() {
+		_ = res.RawBody().Close()
+	}()
 
 	if _, err = reader.ReadFrom(res.RawBody()); err != nil {
 		return err

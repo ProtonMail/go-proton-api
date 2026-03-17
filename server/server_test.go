@@ -2197,9 +2197,10 @@ func TestServer_GetMessageGroupCount(t *testing.T) {
 				}
 
 				var flags proton.MessageFlag
-				if st.LabelID == proton.InboxLabel {
+				switch st.LabelID {
+				case proton.InboxLabel:
 					flags = proton.MessageFlagReceived
-				} else if st.LabelID == proton.SentLabel {
+				case proton.SentLabel:
 					flags = proton.MessageFlagSent
 				}
 

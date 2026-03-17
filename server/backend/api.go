@@ -960,11 +960,11 @@ func (b *Backend) CreateAttachment(
 	armSig string,
 ) (proton.Attachment, error) {
 	if disposition != proton.InlineDisposition && disposition != proton.AttachmentDisposition {
-		return proton.Attachment{}, errors.New("The Disposition only allows 'attachment', or 'inline'")
+		return proton.Attachment{}, errors.New("the Disposition only allows 'attachment', or 'inline'")
 	}
 
 	if disposition == proton.InlineDisposition && contentID == "" {
-		return proton.Attachment{}, errors.New("The 'inline' Disposition is only allowed with Content ID")
+		return proton.Attachment{}, errors.New("the 'inline' Disposition is only allowed with Content ID")
 	}
 
 	return writeBackendRetErr(b, func(b *unsafeBackend) (proton.Attachment, error) {

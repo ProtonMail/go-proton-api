@@ -291,7 +291,9 @@ func TestStatus_ServerDrop(t *testing.T) {
 
 	// Create a listener that will drop connections.
 	dropListener := proton.NewListener(l, proton.NewDropConn)
-	defer dropListener.Close()
+	defer func() {
+		_ = dropListener.Close()
+	}()
 
 	s := server.New(server.WithListener(dropListener), server.WithTLS(true))
 	defer s.Close()
@@ -348,7 +350,9 @@ func TestStatus_ServerHang(t *testing.T) {
 
 	// Create a listener that will hang on reads/writes.
 	hangListener := proton.NewListener(l, proton.NewHangConn)
-	defer hangListener.Close()
+	defer func() {
+		_ = hangListener.Close()
+	}()
 
 	s := server.New(server.WithListener(hangListener), server.WithTLS(false))
 	defer s.Close()
