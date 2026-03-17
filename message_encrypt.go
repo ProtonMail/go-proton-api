@@ -3,6 +3,7 @@ package proton
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -329,15 +330,16 @@ func encryptFull(kr *crypto.KeyRing, literal []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func encodeBase64(writer io.Writer, b []byte) error {
+func encodeBase64(writer io.Writer, b []byte) (err error) {
 	encoder := base64.NewEncoder(base64.StdEncoding, writer)
-	defer encoder.Close()
 
-	if _, err := encoder.Write(b); err != nil {
-		return err
-	}
+	defer func() {
+		err = errors.Join(err, encoder.Close())
+	}()
 
-	return nil
+	_, err = encoder.Write(b)
+
+	return err
 }
 
 func getCharsetDecoder(r io.Reader, charset string) (io.Reader, error) {

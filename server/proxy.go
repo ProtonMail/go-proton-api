@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -236,7 +237,10 @@ func readFromBody[T any](r *http.Request) (T, error) {
 	if err != nil {
 		return *new(T), err
 	}
-	defer r.Body.Close()
+
+	defer func() {
+		_ = r.Body.Close()
+	}()
 
 	v, err := readFrom[T](b)
 	if err != nil {
@@ -263,12 +267,15 @@ func writeBody[T any](w http.ResponseWriter, v T) error {
 	return nil
 }
 
-func gzipDecode(b []byte) ([]byte, error) {
+func gzipDecode(b []byte) (data []byte, err error) {
 	r, err := gzip.NewReader(bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer func() {
+		err = errors.Join(err, r.Close())
+	}()
 
-	return io.ReadAll(r)
+	data, err = io.ReadAll(r)
+	return
 }

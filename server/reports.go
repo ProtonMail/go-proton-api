@@ -32,7 +32,7 @@ func (s *Server) handlePostReportBugAttachments() gin.HandlerFunc {
 			return
 		}
 		if !s.b.GetCSTicket(form.Value["Token"][0]) {
-			_ = c.AbortWithError(http.StatusBadRequest, errors.New("Token not found in CS Ticket List"))
+			_ = c.AbortWithError(http.StatusBadRequest, errors.New("token not found in CS Ticket List"))
 			return
 		}
 	}

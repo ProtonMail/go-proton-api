@@ -224,7 +224,10 @@ func parseResponse(res *resty.Response, err error) (*resty.Response, error) {
 
 func parseRawAPIError(rawResponse io.ReadCloser) (*APIError, bool) {
 	apiErr := APIError{}
-	defer rawResponse.Close()
+
+	defer func() {
+		_ = rawResponse.Close()
+	}()
 
 	body, err := io.ReadAll(rawResponse)
 	if err != nil {
