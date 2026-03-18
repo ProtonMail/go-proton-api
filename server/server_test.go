@@ -2219,7 +2219,7 @@ func TestServer_GetMessageGroupCount(t *testing.T) {
 			counts, err := c.GetGroupedMessageCount(ctx)
 			require.NoError(t, err)
 
-			counts = xslices.Filter(counts, func(t proton.MessageGroupCount) bool {
+			counts = proton.Filter(counts, func(t proton.MessageGroupCount) bool {
 				switch t.LabelID {
 				case proton.InboxLabel, proton.TrashLabel, proton.ArchiveLabel, proton.AllMailLabel, proton.SentLabel:
 					return true
@@ -2378,7 +2378,7 @@ func TestServer_Contacts(t *testing.T) {
 			require.Len(t, contacts, len(testContacts))
 
 			for _, v := range testContacts {
-				require.NotEqual(t, -1, xslices.IndexFunc(contacts, func(contact proton.Contact) bool {
+				require.NotEqual(t, -1, slices.IndexFunc(contacts, func(contact proton.Contact) bool {
 					return contact.Name == v.Name
 				}))
 			}
