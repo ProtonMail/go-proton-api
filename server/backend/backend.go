@@ -240,7 +240,7 @@ func (b *Backend) RemoveUserKey(userID, keyID string) error {
 			return fmt.Errorf("user %s does not exist", userID)
 		}
 
-		idx := xslices.IndexFunc(user.keys, func(key key) bool {
+		idx := slices.IndexFunc(user.keys, func(key key) bool {
 			return key.keyID == keyID
 		})
 
@@ -479,7 +479,7 @@ func (b *Backend) RemoveAddress(userID, addrID string) error {
 func (b *Backend) RemoveAddressKey(userID, addrID, keyID string) error {
 	return writeBackendRet(b, func(b *unsafeBackend) error {
 		return b.withAcc(userID, func(acc *account) error {
-			idx := xslices.IndexFunc(acc.addresses[addrID].keys, func(key key) bool {
+			idx := slices.IndexFunc(acc.addresses[addrID].keys, func(key key) bool {
 				return key.keyID == keyID
 			})
 

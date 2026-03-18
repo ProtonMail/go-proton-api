@@ -320,7 +320,7 @@ func (msg *message) addLabel(labelID string, labels map[string]*label) {
 }
 
 func (msg *message) addFlagLabel(labelID string, labels map[string]*label) {
-	msg.labelIDs = xslices.Filter(msg.labelIDs, func(otherLabelID string) bool {
+	msg.labelIDs = proton.Filter(msg.labelIDs, func(otherLabelID string) bool {
 		return labels[otherLabelID].labelType == proton.LabelTypeLabel
 	})
 
@@ -328,7 +328,7 @@ func (msg *message) addFlagLabel(labelID string, labels map[string]*label) {
 }
 
 func (msg *message) addSystemLabel(labelID string, labels map[string]*label) {
-	msg.labelIDs = xslices.Filter(msg.labelIDs, func(otherLabelID string) bool {
+	msg.labelIDs = proton.Filter(msg.labelIDs, func(otherLabelID string) bool {
 		return labels[otherLabelID].labelType == proton.LabelTypeLabel
 	})
 
@@ -337,7 +337,7 @@ func (msg *message) addSystemLabel(labelID string, labels map[string]*label) {
 
 func (msg *message) addUserLabel(label *label, labels map[string]*label) {
 	if label.labelType != proton.LabelTypeLabel {
-		msg.labelIDs = xslices.Filter(msg.labelIDs, func(otherLabelID string) bool {
+		msg.labelIDs = proton.Filter(msg.labelIDs, func(otherLabelID string) bool {
 			return labels[otherLabelID].labelType == proton.LabelTypeLabel
 		})
 
@@ -380,7 +380,7 @@ func (msg *message) remSystemLabel(labelID string, labels map[string]*label) {
 }
 
 func (msg *message) remUserLabel(label *label, labels map[string]*label) {
-	msg.labelIDs = xslices.Filter(msg.labelIDs, func(otherLabelID string) bool {
+	msg.labelIDs = proton.Filter(msg.labelIDs, func(otherLabelID string) bool {
 		return otherLabelID != label.labelID
 	})
 }

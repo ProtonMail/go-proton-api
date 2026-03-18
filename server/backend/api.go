@@ -8,12 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	"slices"
+
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/xslices"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 func (b *Backend) GetUser(userID string) (proton.User, error) {
@@ -341,7 +342,7 @@ func (b *Backend) GetLabels(userID string, types ...proton.LabelType) ([]proton.
 				}
 
 				if len(types) > 0 {
-					res = xslices.Filter(res, func(label proton.Label) bool {
+					res = proton.Filter(res, func(label proton.Label) bool {
 						return slices.Contains(types, label.Type)
 					})
 				}
@@ -431,7 +432,7 @@ func (b *Backend) DeleteLabel(userID, labelID string) error {
 						return err
 					}
 
-					acc.labelIDs = xslices.Filter(acc.labelIDs, func(otherID string) bool { return otherID != labelID })
+					acc.labelIDs = proton.Filter(acc.labelIDs, func(otherID string) bool { return otherID != labelID })
 					acc.updateIDs = append(acc.updateIDs, updateID)
 				}
 
@@ -500,7 +501,7 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 				// deleted in between this metadata request. The backend has the information stored differently and can
 				// resolve these gaps.
 				if filter.EndID != "" {
-					index := xslices.IndexFunc(metadata, func(metadata proton.MessageMetadata) bool {
+					index := slices.IndexFunc(metadata, func(metadata proton.MessageMetadata) bool {
 						return metadata.ID == filter.EndID
 					})
 
@@ -509,7 +510,7 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 					}
 				}
 
-				metadata = xslices.Filter(metadata, func(metadata proton.MessageMetadata) bool {
+				metadata = proton.Filter(metadata, func(metadata proton.MessageMetadata) bool {
 					if len(filter.ID) > 0 {
 						if !slices.Contains(filter.ID, metadata.ID) {
 							return false
@@ -712,7 +713,7 @@ func (b *Backend) DeleteMessage(userID, messageID string) error {
 					return err
 				}
 
-				acc.messageIDs = xslices.Filter(acc.messageIDs, func(otherID string) bool { return otherID != messageID })
+				acc.messageIDs = proton.Filter(acc.messageIDs, func(otherID string) bool { return otherID != messageID })
 				acc.updateIDs = append(acc.updateIDs, updateID)
 
 				return nil
@@ -1045,7 +1046,7 @@ func (b *Backend) GetEvent(userID, rawEventID string) (event proton.Event, more 
 			return withMessages(b, func(messages map[string]*message) (proton.Event, error) {
 				return withLabels(b, func(labels map[string]*label) (proton.Event, error) {
 					return withAtts(b, func(attachments map[string]*attachment) (proton.Event, error) {
-						firstUpdate := xslices.Index(acc.updateIDs, eventID) + 1
+						firstUpdate := slices.Index(acc.updateIDs, eventID) + 1
 						lastUpdate := getLastUpdateIndex(len(acc.updateIDs), firstUpdate, b.maxUpdatesPerEvent)
 
 						updates, err := withUpdates(b, func(updates map[ID]update) ([]update, error) {
@@ -1239,8 +1240,8 @@ func (b *Backend) GetUserContacts(userID string, page int, pageSize int) (int, [
 		return withAcc(b, userID, func(acc *account) ([]proton.Contact, error) {
 			total = len(acc.contacts)
 			values := maps.Values(acc.contacts)
-			slices.SortFunc(values, func(i, j *proton.Contact) bool {
-				return strings.Compare(i.ID, j.ID) < 0
+			slices.SortFunc(values, func(i, j *proton.Contact) int {
+				return strings.Compare(i.ID, j.ID)
 			})
 			return xslices.Map(xslices.Chunk(values, pageSize)[page], func(c *proton.Contact) proton.Contact {
 				return *c
@@ -1271,8 +1272,8 @@ func (b *Backend) GetUserContactEmails(userID, email string, page int, pageSize 
 				return contacts, nil
 			}
 
-			slices.SortFunc(contacts, func(a, b proton.ContactEmail) bool {
-				return strings.Compare(a.ID, b.ID) < 0
+			slices.SortFunc(contacts, func(a, b proton.ContactEmail) int {
+				return strings.Compare(a.ID, b.ID)
 			})
 
 			return xslices.Chunk(contacts, pageSize)[page], nil
