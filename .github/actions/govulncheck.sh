@@ -8,8 +8,6 @@ main(){
 
     jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv ' < vulns.json > vulns_osv_ids.txt
     ignore GO-2026-4550 "BRIDGE-494 CIRCL has incorrect calculation in secp384r1 CombinedMult"
-    ignore GO-2026-4601 "BRIDGE-494 Incorrect parsing of IPv6 host literals in net/url"
-    ignore GO-2026-4602 "BRIDGE-494 FileInfo can escape from a Root in os on UNIX systems"
 
     has_vulns
 
