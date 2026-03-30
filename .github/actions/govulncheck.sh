@@ -8,7 +8,8 @@ main(){
 
     jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv ' < vulns.json > vulns_osv_ids.txt
     ignore GO-2026-4550 "BRIDGE-494 CIRCL has incorrect calculation in secp384r1 CombinedMult"
-
+    ignore GO-2026-4762 "BRIDGE-494 authorization bypass by improper validation of :path pseudo-header"
+    
     has_vulns
 
     echo
