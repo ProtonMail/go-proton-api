@@ -9,7 +9,7 @@ jobs:
       - name: Get sources
         uses: actions/checkout@v6
 
-      - name: Set up Go 1.24.4
+      - name: Set up Go 1.26.1
         uses: actions/setup-go@v6
         with:
           go-version: "1.26.1"

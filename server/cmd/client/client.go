@@ -259,8 +259,7 @@ func createLabelAction(c *cli.Context) error {
 }
 
 func newServerClient(c *cli.Context) (proto.ServerClient, error) {
-	cc, err := grpc.DialContext(
-		c.Context,
+	cc, err := grpc.NewClient(
 		net.JoinHostPort(c.String("host"), fmt.Sprint(c.Int("port"))),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
