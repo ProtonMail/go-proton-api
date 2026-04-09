@@ -42,7 +42,7 @@ func createTestMessages(t *testing.T, c *proton.Client, pass string, count int) 
 				Flags:     proton.MessageFlagReceived,
 				Unread:    true,
 			},
-			Message: []byte(fmt.Sprintf("From: sender@example.com\r\nReceiver: recipient@example.com\r\nSubject: %v\r\n\r\nHello World!", uuid.New())),
+			Message: fmt.Appendf(nil, "From: sender@example.com\r\nReceiver: recipient@example.com\r\nSubject: %v\r\n\r\nHello World!", uuid.New()),
 		}
 	}))
 

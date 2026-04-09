@@ -1,5 +1,7 @@
 package backend
 
+import "slices"
+
 import "github.com/google/uuid"
 
 func (b *Backend) CreateCSTicket() string {
@@ -17,11 +19,6 @@ func (b *Backend) CreateCSTicket() string {
 
 func (b *Backend) GetCSTicket(token string) bool {
 	return readBackendRet(b, func(b *unsafeBackend) bool {
-		for _, ticket := range b.csTicket {
-			if ticket == token {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(b.csTicket, token)
 	})
 }

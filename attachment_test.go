@@ -13,8 +13,7 @@ import (
 )
 
 func TestAttachment_429Response(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	s := server.New()
 	defer s.Close()

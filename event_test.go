@@ -12,8 +12,7 @@ import (
 )
 
 func TestEventStreamer(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	s := server.New()
 	defer s.Close()
@@ -71,8 +70,7 @@ func TestEventStreamer(t *testing.T) {
 }
 
 func TestMaxEventMerge(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	s := server.New()
 	defer s.Close()
@@ -100,7 +98,7 @@ func TestMaxEventMerge(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	for i := 0; i < 75; i++ {
+	for range 75 {
 		_, err := c.UpdateLabel(ctx, label.ID, proton.UpdateLabelReq{Name: uuid.NewString()})
 		require.NoError(t, err)
 	}
