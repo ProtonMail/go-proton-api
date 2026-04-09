@@ -29,7 +29,6 @@ func (c *Client) GetLabels(ctx context.Context, labelTypes ...LabelType) ([]Labe
 	var labels []Label
 
 	for _, labelType := range labelTypes {
-		labelType := labelType
 
 		var res struct {
 			Labels []Label

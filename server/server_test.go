@@ -435,7 +435,7 @@ func TestServer_Events(t *testing.T) {
 
 func TestServer_Events_Multi(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			withUser(ctx, t, s, m, fmt.Sprintf("user%v", i), "pass", func(c *proton.Client) {
 				latest, err := c.GetLatestEventID(ctx)
 				require.NoError(t, err)
@@ -949,8 +949,7 @@ func TestServer_AuthDelete(t *testing.T) {
 }
 
 func TestServer_ForceUpgrade(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	s := New()
 	defer s.Close()
@@ -1607,8 +1606,7 @@ func TestServer_RealProxy(t *testing.T) {
 		t.Skip("skipping test, set the username and password to run")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	proxy := New()
 	defer proxy.Close()
@@ -1638,8 +1636,7 @@ func TestServer_RealProxy_Cache(t *testing.T) {
 		t.Skip("skipping test, set the username and password to run")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	proxy := New(WithAuthCacher(NewAuthCache()))
 	defer proxy.Close()
@@ -2277,7 +2274,7 @@ func TestServer_TestDraftActions(t *testing.T) {
 
 			importedMessages := importMessages(ctx, t, c, addr[0].ID, addrKRs[addr[0].ID], []string{}, 0, len(tests))
 
-			for i := 0; i < len(tests); i++ {
+			for i := range tests {
 				importedMessageID := importedMessages[i].MessageID
 
 				msg, err := c.GetMessage(ctx, importedMessageID)

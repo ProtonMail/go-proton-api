@@ -25,8 +25,7 @@ func TestFuture(t *testing.T) {
 func TestGroup(t *testing.T) {
 	group := proton.NewGroup[int](async.NoopPanicHandler{})
 
-	for i := 0; i < 10; i++ {
-		i := i
+	for i := range 10 {
 
 		group.Add(func() (int, error) {
 			// Sleep a random amount of time so that results are returned in a random order.
@@ -44,7 +43,7 @@ func TestGroup(t *testing.T) {
 	}()
 
 	// Results should be returned in the original order.
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		require.Equal(t, i, <-resCh)
 	}
 }

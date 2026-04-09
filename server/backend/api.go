@@ -468,11 +468,7 @@ func (b *Backend) GetMessageIDs(userID string, afterID string, limit int) ([]str
 			if limit == 0 {
 				hi = len(acc.messageIDs)
 			} else {
-				hi = lo + limit
-
-				if hi > len(acc.messageIDs) {
-					hi = len(acc.messageIDs)
-				}
+				hi = min(lo+limit, len(acc.messageIDs))
 			}
 
 			return acc.messageIDs[lo:hi], nil

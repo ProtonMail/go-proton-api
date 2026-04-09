@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"io"
 	"net/mail"
+	"slices"
 
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	"golang.org/x/exp/slices"
 )
 
 type MessageMetadata struct {
@@ -114,13 +114,7 @@ func (f MessageFlag) Matches(flag MessageFlag) bool {
 }
 
 func (f MessageFlag) HasAny(flags ...MessageFlag) bool {
-	for _, flag := range flags {
-		if f.Has(flag) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(flags, f.Has)
 }
 
 func (f MessageFlag) HasAll(flags ...MessageFlag) bool {

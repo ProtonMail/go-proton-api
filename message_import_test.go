@@ -1,7 +1,6 @@
 package proton_test
 
 import (
-	"context"
 	"reflect"
 	"testing"
 
@@ -66,8 +65,7 @@ func Test_chunkSized(t *testing.T) {
 }
 
 func TestMessageImport_RelatedInlinePlaintext(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	s := server.New()
 	defer s.Close()

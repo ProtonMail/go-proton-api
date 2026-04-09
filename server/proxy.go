@@ -45,7 +45,7 @@ func (s *proxyServer) targetResponseModifier(r *http.Response) error {
 	if r.StatusCode == http.StatusInternalServerError || r.StatusCode == http.StatusBadGateway {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			body = []byte(fmt.Sprintf(`{"read_error": "%v"}`, err))
+			body = fmt.Appendf(nil, `{"read_error": "%v"}`, err)
 		}
 
 		fmt.Printf("PROXY RESP %d CHANGING TO 429: %s %s\n=====BODY=====\n%s\n", r.StatusCode, r.Request.Method, r.Request.RequestURI, string(body))

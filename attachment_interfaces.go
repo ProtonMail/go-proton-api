@@ -72,10 +72,7 @@ func NewParallelScheduler(workers int, panicHandler async.PanicHandler) *Paralle
 
 func (p ParallelScheduler) Schedule(ctx context.Context, attachmentIDs []string, storageProvider AttachmentAllocator, downloader func(context.Context, string, *bytes.Buffer) error) ([]*bytes.Buffer, error) {
 	// If we have less attachments than the maximum works, reduce worker count to match attachment count.
-	workers := p.workers
-	if len(attachmentIDs) < workers {
-		workers = len(attachmentIDs)
-	}
+	workers := min(len(attachmentIDs), p.workers)
 
 	return parallel.MapContext(ctx, workers, attachmentIDs, func(ctx context.Context, id string) (*bytes.Buffer, error) {
 		defer async.HandlePanic(p.panicHandler)
