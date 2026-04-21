@@ -2,6 +2,8 @@ module github.com/ProtonMail/go-proton-api
 
 go 1.26.1
 
+toolchain go1.26.2
+
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/ProtonMail/gluon v0.17.1-0.20260225115619-c0f05c033a4a
