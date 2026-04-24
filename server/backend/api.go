@@ -12,9 +12,9 @@ import (
 
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
+	"github.com/ProtonMail/go-proton-api/pkg/utils"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/xslices"
-	"golang.org/x/exp/maps"
 )
 
 func (b *Backend) GetUser(userID string) (proton.User, error) {
@@ -183,7 +183,7 @@ func (b *Backend) GetAddress(userID, addrID string) (proton.Address, error) {
 func (b *Backend) GetAddresses(userID string) ([]proton.Address, error) {
 	return readBackendRetErr(b, func(b *unsafeBackend) ([]proton.Address, error) {
 		return withAcc(b, userID, func(acc *account) ([]proton.Address, error) {
-			return xslices.Map(maps.Values(acc.addresses), func(add *address) proton.Address {
+			return xslices.Map(utils.Values(acc.addresses), func(add *address) proton.Address {
 				return add.toAddress()
 			}), nil
 		})
@@ -342,7 +342,7 @@ func (b *Backend) GetLabels(userID string, types ...proton.LabelType) ([]proton.
 				}
 
 				if len(types) > 0 {
-					res = proton.Filter(res, func(label proton.Label) bool {
+					res = utils.Filter(res, func(label proton.Label) bool {
 						return slices.Contains(types, label.Type)
 					})
 				}
@@ -432,7 +432,7 @@ func (b *Backend) DeleteLabel(userID, labelID string) error {
 						return err
 					}
 
-					acc.labelIDs = proton.Filter(acc.labelIDs, func(otherID string) bool { return otherID != labelID })
+					acc.labelIDs = utils.Filter(acc.labelIDs, func(otherID string) bool { return otherID != labelID })
 					acc.updateIDs = append(acc.updateIDs, updateID)
 				}
 
@@ -506,7 +506,7 @@ func (b *Backend) GetMessages(userID string, page, pageSize int, filter proton.M
 					}
 				}
 
-				metadata = proton.Filter(metadata, func(metadata proton.MessageMetadata) bool {
+				metadata = utils.Filter(metadata, func(metadata proton.MessageMetadata) bool {
 					if len(filter.ID) > 0 {
 						if !slices.Contains(filter.ID, metadata.ID) {
 							return false
@@ -693,7 +693,7 @@ func (b *Backend) DeleteMessage(userID, messageID string) error {
 				}
 
 				for _, attID := range message.attIDs {
-					if xslices.CountFunc(maps.Values(b.attachments), func(att *attachment) bool {
+					if xslices.CountFunc(utils.Values(b.attachments), func(att *attachment) bool {
 						return att.attDataID == b.attachments[attID].attDataID
 					}) == 1 {
 						delete(b.attData, b.attachments[attID].attDataID)
@@ -709,7 +709,7 @@ func (b *Backend) DeleteMessage(userID, messageID string) error {
 					return err
 				}
 
-				acc.messageIDs = proton.Filter(acc.messageIDs, func(otherID string) bool { return otherID != messageID })
+				acc.messageIDs = utils.Filter(acc.messageIDs, func(otherID string) bool { return otherID != messageID })
 				acc.updateIDs = append(acc.updateIDs, updateID)
 
 				return nil
@@ -1235,7 +1235,7 @@ func (b *Backend) GetUserContacts(userID string, page int, pageSize int) (int, [
 	contacts, err := readBackendRetErr(b, func(b *unsafeBackend) ([]proton.Contact, error) {
 		return withAcc(b, userID, func(acc *account) ([]proton.Contact, error) {
 			total = len(acc.contacts)
-			values := maps.Values(acc.contacts)
+			values := utils.Values(acc.contacts)
 			slices.SortFunc(values, func(i, j *proton.Contact) int {
 				return strings.Compare(i.ID, j.ID)
 			})

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -20,6 +21,7 @@ import (
 	"github.com/ProtonMail/gluon/async"
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
+	"github.com/ProtonMail/go-proton-api/pkg/utils"
 	"github.com/ProtonMail/go-proton-api/server/backend"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/iterator"
@@ -30,7 +32,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slices"
 )
 
 func TestServer_LoginLogout(t *testing.T) {
@@ -2216,7 +2217,7 @@ func TestServer_GetMessageGroupCount(t *testing.T) {
 			counts, err := c.GetGroupedMessageCount(ctx)
 			require.NoError(t, err)
 
-			counts = proton.Filter(counts, func(t proton.MessageGroupCount) bool {
+			counts = utils.Filter(counts, func(t proton.MessageGroupCount) bool {
 				switch t.LabelID {
 				case proton.InboxLabel, proton.TrashLabel, proton.ArchiveLabel, proton.AllMailLabel, proton.SentLabel:
 					return true

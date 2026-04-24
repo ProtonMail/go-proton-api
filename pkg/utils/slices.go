@@ -1,4 +1,4 @@
-package proton
+package utils
 
 import "slices"
 

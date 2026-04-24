@@ -2,10 +2,10 @@ package server
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/ProtonMail/go-proton-api"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slices"
 )
 
 func (s *Server) handleGetAddresses() gin.HandlerFunc {

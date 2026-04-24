@@ -3,18 +3,18 @@ package backend
 import (
 	"fmt"
 	"net/mail"
+	"slices"
 	"sync"
 	"time"
 
 	"github.com/ProtonMail/gluon/rfc822"
 	"github.com/ProtonMail/go-proton-api"
+	"github.com/ProtonMail/go-proton-api/pkg/utils"
 	"github.com/ProtonMail/go-srp"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/xslices"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 var log = logrus.WithField("pkg", "gpa/server/backend")
@@ -168,7 +168,7 @@ func (b *Backend) RemoveUser(userID string) error {
 
 		for _, messageID := range user.messageIDs {
 			for _, attID := range b.messages[messageID].attIDs {
-				if xslices.CountFunc(maps.Values(b.attachments), func(att *attachment) bool {
+				if xslices.CountFunc(utils.Values(b.attachments), func(att *attachment) bool {
 					return att.attDataID == b.attachments[attID].attDataID
 				}) == 1 {
 					delete(b.attData, b.attachments[attID].attDataID)
