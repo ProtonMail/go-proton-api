@@ -10,6 +10,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
+	"github.com/ProtonMail/go-proton-api/pkg/utils"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/bradenaw/juniper/xslices"
 )
@@ -148,7 +149,7 @@ func (keys Keys) Unlock(passphrase []byte, userKR *crypto.KeyRing) (*crypto.KeyR
 		return nil, err
 	}
 
-	for _, key := range Filter(keys, func(key Key) bool { return bool(key.Active) }) {
+	for _, key := range utils.Filter(keys, func(key Key) bool { return bool(key.Active) }) {
 		unlocked, err := key.Unlock(passphrase, userKR)
 		if err != nil {
 			log.WithField("KeyID", key.ID).WithError(err).Warning("Cannot unlock key")
