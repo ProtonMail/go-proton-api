@@ -87,6 +87,7 @@ func (builder *managerBuilder) build() *Manager {
 	// Configure retry mechanism.
 	m.rc.SetRetryCount(builder.retryCount)
 	m.rc.SetRetryMaxWaitTime(time.Minute)
+	m.rc.SetRetryResetReaders(true)
 	m.rc.AddRetryCondition(catchTooManyRequests)
 	m.rc.AddRetryCondition(catchDialError)
 	m.rc.AddRetryCondition(catchDropError)
