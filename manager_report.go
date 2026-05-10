@@ -1,6 +1,7 @@
 package proton
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/go-resty/resty/v2"
@@ -10,7 +11,7 @@ func (m *Manager) ReportBug(ctx context.Context, req ReportBugReq, atts ...Repor
 	r := m.r(ctx).SetMultipartFormData(req.toFormData())
 
 	for _, att := range atts {
-		r = r.SetMultipartField(att.Name, att.Filename, string(att.MIMEType), resty.NewByteMultipartStream(att.Body))
+		r = r.SetMultipartField(att.Name, att.Filename, string(att.MIMEType), bytes.NewReader(att.Body))
 	}
 	var res ReportBugRes
 
@@ -28,7 +29,7 @@ func (m *Manager) ReportBugAttachement(ctx context.Context, req ReportBugAttachm
 	r := m.r(ctx).SetMultipartFormData(req.toFormData())
 
 	for _, att := range atts {
-		r = r.SetMultipartField(att.Name, att.Filename, string(att.MIMEType), resty.NewByteMultipartStream(att.Body))
+		r = r.SetMultipartField(att.Name, att.Filename, string(att.MIMEType), bytes.NewReader(att.Body))
 	}
 
 	if _, err := r.Post("/core/v4/reports/bug/attachments"); err != nil {
