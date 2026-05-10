@@ -11,7 +11,7 @@ type User struct {
 	MaxSpace  uint64
 	MaxUpload uint64
 
-	Credit   int
+	Credit   int64
 	Currency string
 
 	ProductUsedSpace ProductUsedSpace
