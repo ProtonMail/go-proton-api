@@ -2,6 +2,8 @@ package proton
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -22,12 +24,39 @@ func (c *Client) GetLink(ctx context.Context, shareID, linkID string) (Link, err
 
 func (c *Client) CreateFile(ctx context.Context, shareID string, req CreateFileReq) (CreateFileRes, error) {
 	var res struct {
+		Code int
 		File CreateFileRes
 	}
 
-	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+	resp, err := c.doRes(ctx, func(r *resty.Request) (*resty.Response, error) {
 		return r.SetResult(&res).SetBody(req).Post("/drive/shares/" + shareID + "/files")
-	}); err != nil {
+	})
+	if err != nil { // if the status code is not 200~299, it's considered an error
+
+		// handle the file or folder name exists error
+		if resp.StatusCode() == http.StatusUnprocessableEntity /* 422 */ {
+			var apiError APIError
+			err := json.Unmarshal(resp.Body(), &apiError)
+			if err != nil {
+				return CreateFileRes{}, err
+			}
+			if apiError.Code == AFileOrFolderNameExist {
+				return CreateFileRes{}, ErrFileNameExist // since we are in CreateFile, so we return this error
+			}
+		}
+
+		// handle draft exists error
+		if resp.StatusCode() == http.StatusConflict /* 409 */ {
+			var apiError APIError
+			err := json.Unmarshal(resp.Body(), &apiError)
+			if err != nil {
+				return CreateFileRes{}, err
+			}
+			if apiError.Code == ADraftExist {
+				return CreateFileRes{}, ErrADraftExist
+			}
+		}
+
 		return CreateFileRes{}, err
 	}
 
@@ -39,9 +68,24 @@ func (c *Client) CreateFolder(ctx context.Context, shareID string, req CreateFol
 		Folder CreateFolderRes
 	}
 
-	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+	resp, err := c.doRes(ctx, func(r *resty.Request) (*resty.Response, error) {
 		return r.SetResult(&res).SetBody(req).Post("/drive/shares/" + shareID + "/folders")
-	}); err != nil {
+	})
+	if err != nil { // if the status code is not 200~299, it's considered an error
+
+		// handle the file or folder name exists error
+		if resp.StatusCode() == http.StatusUnprocessableEntity /* 422 */ {
+			// log.Println(resp.String())
+			var apiError APIError
+			err := json.Unmarshal(resp.Body(), &apiError)
+			if err != nil {
+				return CreateFolderRes{}, err
+			}
+			if apiError.Code == AFileOrFolderNameExist {
+				return CreateFolderRes{}, ErrFolderNameExist // since we are in CreateFolder, so we return this error
+			}
+		}
+
 		return CreateFolderRes{}, err
 	}
 
