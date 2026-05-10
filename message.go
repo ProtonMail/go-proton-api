@@ -302,15 +302,11 @@ func (c *Client) GetMessageMetadataPage(ctx context.Context, page, pageSize int,
 
 		Page     int
 		PageSize int
-
-		Sort string
 	}{
 		MessageFilter: filter,
 
 		Page:     page,
 		PageSize: pageSize,
-
-		Sort: "ID",
 	}
 
 	for {
