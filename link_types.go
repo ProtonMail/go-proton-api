@@ -182,3 +182,17 @@ const (
 	RevisionStateObsolete
 	RevisionStateDeleted
 )
+
+type CheckAvailableHashesReq struct {
+	Hashes []string
+}
+
+type PendingHashData struct {
+	Hash       []string
+	RevisionID []string
+	LinkID     []string
+}
+type CheckAvailableHashesRes struct {
+	AvailableHashes   []string
+	PendingHashesData []PendingHashData
+}
