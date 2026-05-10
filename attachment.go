@@ -56,19 +56,19 @@ func (c *Client) UploadAttachment(ctx context.Context, addrKR *crypto.KeyRing, r
 					Param:       "KeyPackets",
 					FileName:    "blob",
 					ContentType: "application/octet-stream",
-					Stream:      resty.NewByteMultipartStream(enc.KeyPacket),
+					Reader:      bytes.NewReader(enc.KeyPacket),
 				},
 				&resty.MultipartField{
 					Param:       "DataPacket",
 					FileName:    "blob",
 					ContentType: "application/octet-stream",
-					Stream:      resty.NewByteMultipartStream(enc.DataPacket),
+					Reader:      bytes.NewReader(enc.DataPacket),
 				},
 				&resty.MultipartField{
 					Param:       "Signature",
 					FileName:    "blob",
 					ContentType: "application/octet-stream",
-					Stream:      resty.NewByteMultipartStream(sig.GetBinary()),
+					Reader:      bytes.NewReader(sig.GetBinary()),
 				},
 			).
 			Post("/mail/v4/attachments")
