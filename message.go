@@ -341,3 +341,25 @@ func (c *Client) GetGroupedMessageCount(ctx context.Context) ([]MessageGroupCoun
 
 	return res.Counts, nil
 }
+
+func (c *Client) SetExpirationTimeOnMessage(ctx context.Context, messageID string, expirationTime *int64) error {
+	return c.SetExpirationTimeOnMessages(ctx, []string{messageID}, expirationTime)
+}
+
+func (c *Client) SetExpirationTimeOnMessages(ctx context.Context, messageIDs []string, expirationTime *int64) error {
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetBody(MessageExpireActionReq{ExpirationTime: expirationTime, IDs: messageIDs}).Put("/mail/v4/messages/expire")
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) RemoveExpirationTime(ctx context.Context, messageID string) error {
+	return c.SetExpirationTimeOnMessage(ctx, messageID, nil)
+}
+
+func (c *Client) RemoveExpirationTimeFromMessages(ctx context.Context, messageIDs []string) error {
+	return c.SetExpirationTimeOnMessages(ctx, messageIDs, nil)
+}
