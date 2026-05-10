@@ -16,6 +16,8 @@ import (
 func TestEncryptMessage_Simple(t *testing.T) {
 	const message = `From: Nathaniel Borenstein <nsb@bellcore.com>
 To:  Ned Freed <ned@innosoft.com>
+Cc: John Doe <john.doe@non-existing-domain.tld>
+Bcc:  Jane Doe <jane.doe@non-existing-domain.tld>
 Subject: Sample message (import 2)
 MIME-Version: 1.0
 Content-type: text/plain
@@ -39,6 +41,8 @@ This is explicitly typed plain ASCII text.
 
 	assert.Equal(t, header.Get("From"), "Nathaniel Borenstein <nsb@bellcore.com>")
 	assert.Equal(t, header.Get("To"), "Ned Freed <ned@innosoft.com>")
+	assert.Equal(t, header.Get("Cc"), "John Doe <john.doe@non-existing-domain.tld>")
+	assert.Equal(t, header.Get("Bcc"), "Jane Doe <jane.doe@non-existing-domain.tld>")
 	assert.Equal(t, header.Get("Subject"), "Sample message (import 2)")
 	assert.Equal(t, header.Get("MIME-Version"), "1.0")
 
@@ -59,6 +63,8 @@ This is explicitly typed plain ASCII text.
 func TestEncryptMessage_MultipleTextParts(t *testing.T) {
 	const message = `From: Nathaniel Borenstein <nsb@bellcore.com>
 To:  Ned Freed <ned@innosoft.com>
+Cc: John Doe <john.doe@non-existing-domain.tld>
+Bcc:  Jane Doe <jane.doe@non-existing-domain.tld>
 Subject: Sample message (import 2)
 MIME-Version: 1.0
 Content-type: multipart/mixed; boundary="simple boundary"
@@ -98,6 +104,8 @@ This is the epilogue.  It is also to be ignored.
 
 		assert.Equal(t, header.Get("From"), "Nathaniel Borenstein <nsb@bellcore.com>")
 		assert.Equal(t, header.Get("To"), "Ned Freed <ned@innosoft.com>")
+		assert.Equal(t, header.Get("Cc"), "John Doe <john.doe@non-existing-domain.tld>")
+		assert.Equal(t, header.Get("Bcc"), "Jane Doe <jane.doe@non-existing-domain.tld>")
 		assert.Equal(t, header.Get("Subject"), "Sample message (import 2)")
 		assert.Equal(t, header.Get("MIME-Version"), "1.0")
 		assert.Equal(t, header.Get("Received"), "from mail.protonmail.ch by mail.protonmail.ch; Tue, 25 Nov 2016")
