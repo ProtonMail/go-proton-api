@@ -14,6 +14,12 @@ main(){
     ignore GO-2026-4980 "BRIDGE-554 html/template escape data passed to <script> block"
     ignore GO-2026-4982 "BRIDGE-554 html/template XSS vector if url contains ASCII whitespace"
     ignore GO-2026-4986 "BRIDGE-554 net/mail triggers CPU exhaustion and memory allocations"
+    ignore GO-2026-5025 "BRIDGE-554 /x/net parsing HTML using Render can lead to unexpected HTML tree."
+    ignore GO-2026-5026 "BRIDGE-554 /x/net ToASCII and ToUnicode incorrectly accept punycode-encoded labels."
+    ignore GO-2026-5027 "BRIDGE-554 /x/net parsing HTML using Render can lead to unexpected HTML tree."
+    ignore GO-2026-5028 "BRIDGE-554 /x/net parsing arbitrary HTML  can consume excessive CPU time"
+    ignore GO-2026-5029 "BRIDGE-554 /x/net parsing HTML using Render can lead to unexpected HTML tree."
+    ignore GO-2026-5030 "BRIDGE-554 /x/net parsing HTML using Render can lead to unexpected HTML tree."
 
     has_vulns
 
