@@ -9,9 +9,6 @@ main(){
     jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv ' < vulns.json > vulns_osv_ids.txt
 
     ignore GO-2026-4550 "Indirect import from goopengpg. Waiting for fix on their side"
-    ignore GO-2026-5037 "BRIDGE-565 crypto/x509 fixes quadratic cost of verifying large DNS SAN lists."
-    ignore GO-2026-5038 "BRIDGE-565 mime Decoding a maliciously-crafted MIME header containing many invalid encoded-words can consume excessive CPU"
-    ignore GO-2026-5039 "BRIDGE-565 net/textproto When returning errors, functions in package would include input as part of error."
 
     has_vulns
 
