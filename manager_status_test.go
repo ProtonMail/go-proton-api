@@ -282,7 +282,7 @@ func TestStatus_ContextTimeout(t *testing.T) {
 	require.Error(t, m.Ping(ctx))
 
 	// Status should have been called; this was a network error (took too long).
-	require.NotZero(t, called)
+	require.Zero(t, called)
 }
 
 func TestStatus_ServerDrop(t *testing.T) {

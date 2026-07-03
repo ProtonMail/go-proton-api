@@ -84,22 +84,31 @@ func (m *Manager) checkConnUp(_ *resty.Client, res *resty.Response) error {
 }
 
 func (m *Manager) checkConnDown(req *resty.Request, err error) {
-	switch {
-	case errors.Is(err, context.Canceled):
+	// superlous case, error should never be nil, but better safe than sorry
+	if err == nil {
+		m.onConnUp()
 		return
 	}
 
-	if res, ok := err.(*resty.ResponseError); ok {
-		if res.Response.RawResponse == nil {
-			m.onConnDown()
-		} else if netErr := new(net.OpError); errors.As(res.Err, &netErr) {
-			m.onConnDown()
-		} else {
-			m.onConnUp()
-		}
-	} else {
-		m.onConnDown()
+	if errors.Is(err, context.Canceled) || req.Context().Err() != nil {
+		return
 	}
+
+	if respErr, ok := err.(*resty.ResponseError); ok {
+		if respErr.Response.RawResponse == nil {
+			m.onConnDown()
+			return
+		}
+
+		if _, ok := errors.AsType[*net.OpError](err); ok {
+			m.onConnDown()
+			return
+		}
+		m.onConnUp()
+		return
+	}
+
+	m.onConnDown()
 }
 
 func (m *Manager) onConnDown() {
