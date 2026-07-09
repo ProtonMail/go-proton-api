@@ -9,7 +9,8 @@ main(){
     jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv ' < vulns.json > vulns_osv_ids.txt
 
     ignore GO-2026-4550 "Indirect import from goopengpg. Waiting for fix on their side"
-
+    ignore GO-2026-5856 "BRIDGE-587 Handshakes which used Encrypted Client Hello could be de-anonymized by passive network observer."
+    
     has_vulns
 
     echo
