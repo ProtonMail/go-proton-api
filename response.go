@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
@@ -167,6 +168,18 @@ func catchRetryAfter(_ *resty.Client, res *resty.Response) (time.Duration, error
 	}).Warn("Too many requests, retrying after delay")
 
 	return time.Duration(after) * time.Second, nil
+}
+
+func retryRefreshFailed(res *resty.Response, err error) bool {
+	if err == nil || res == nil || res.Request == nil {
+		return false
+	}
+
+	if !strings.HasSuffix(res.Request.URL, "/auth/v4/refresh") {
+		return false
+	}
+
+	return res.RawResponse == nil || res.StatusCode() == http.StatusBadRequest || res.StatusCode() == http.StatusUnprocessableEntity
 }
 
 func catchTooManyRequests(res *resty.Response, _ error) bool {
