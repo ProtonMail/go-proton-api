@@ -22,6 +22,10 @@ type CreateFileRes struct {
 	RevisionID string // Encrypted Revision ID
 }
 
+type CreateRevisionRes struct {
+	ID string // Encrypted Revision ID
+}
+
 type UpdateRevisionReq struct {
 	BlockList         []BlockToken
 	State             RevisionState
