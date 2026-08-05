@@ -43,7 +43,7 @@ type CalendarEventPart struct {
 	Author    string
 }
 
-func (part CalendarEventPart) Decode(calKR *crypto.KeyRing, addrKR *crypto.KeyRing, kp []byte) error {
+func (part *CalendarEventPart) Decode(calKR *crypto.KeyRing, addrKR *crypto.KeyRing, kp []byte) error {
 	if part.Type&CalendarEventTypeEncrypted != 0 {
 		var enc *crypto.PGPMessage
 
