@@ -90,7 +90,6 @@ func (builder *managerBuilder) build() *Manager {
 	m.rc.AddRetryCondition(catchTooManyRequests)
 	m.rc.AddRetryCondition(catchDialError)
 	m.rc.AddRetryCondition(catchDropError)
-	m.rc.AddRetryCondition(retryRefreshFailed)
 	m.rc.SetRetryAfter(catchRetryAfter)
 
 	// Set the data type of API errors.
