@@ -9,6 +9,11 @@ main(){
     jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv ' < vulns.json > vulns_osv_ids.txt
 
     ignore GO-2026-4550 "Indirect import from goopengpg. Waiting for fix on their side"
+    ignore GO-2026-5026 "BRIDGE-622 The ToASCII and ToUnicode functions incorrectly accept Punycode-encoded labels that decode to an ASCII-only label."
+    ignore GO-2026-5972 "BRIDGE-622 Enforce a recursion limit in Unmarshal to prevent stack exhaustion when parsing deeply-nested, recursive structures."
+    ignore GO-2026-6088 "BRIDGE-622 Previously, DecodeElement would reset the depth counter causing it to never fire; this could lead to stack exhaustion."
+    ignore GO-2026-6090 "BRIDGE-622 Handshake messages are always considered state-advancing, a malicious client can keep sending these messages to force the server to do key derivation operations."
+    ignore GO-2026-6218 "BRIDGE-622 Path resolution operates on a byte buffer using index-based backtracking for '..' segments, eliminating the quadratic time complexity and significantly reducing memory allocations."
 
     has_vulns
 
