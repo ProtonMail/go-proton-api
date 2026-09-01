@@ -17,7 +17,7 @@ jobs:
       - name: Run govulncheck
         uses: ./.github/actions/govulncheck
         with:
-          go-version-input: 1.26.5
+          go-version-input: 1.26.7
           go-package: ./...
 
       - name: Run golangci-lint
@@ -32,4 +32,3 @@ jobs:
 
       - name: Run tests with race check
         run: go test -v -race ./...
-
