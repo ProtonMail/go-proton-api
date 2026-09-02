@@ -47,3 +47,21 @@ func (c *Client) CreateFolder(ctx context.Context, shareID string, req CreateFol
 
 	return res.Folder, nil
 }
+
+func (c *Client) CheckAvailableHashes(ctx context.Context, shareID, linkID string, req CheckAvailableHashesReq) (CheckAvailableHashesRes, error) {
+	var res struct {
+		AvailableHashes   []string
+		PendingHashesData []PendingHashData
+	}
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetResult(&res).SetBody(req).Post("/drive/shares/" + shareID + "/links/" + linkID + "/checkAvailableHashes")
+	}); err != nil {
+		return CheckAvailableHashesRes{}, err
+	}
+
+	return CheckAvailableHashesRes{
+		AvailableHashes:   res.AvailableHashes,
+		PendingHashesData: res.PendingHashesData,
+	}, nil
+}
