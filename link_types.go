@@ -17,12 +17,13 @@ type Link struct {
 	LinkID       string // Encrypted file/folder ID
 	ParentLinkID string // Encrypted parent folder ID (LinkID). Root link has null ParentLinkID.
 
-	Type     LinkType
-	Name     string // Encrypted file name
-	Hash     string // HMAC of name encrypted with parent hash key
-	Size     int64
-	State    LinkState
-	MIMEType string
+	Type               LinkType
+	Name               string // Encrypted file name
+	NameSignatureEmail string // Signature email for link name
+	Hash               string // HMAC of name encrypted with parent hash key
+	Size               int64
+	State              LinkState
+	MIMEType           string
 
 	CreateTime     int64 // Link creation time
 	ModifyTime     int64 // Link modification time (on API, real modify date is stored in XAttr)
@@ -31,6 +32,7 @@ type Link struct {
 	NodeKey                 string // The private NodeKey, used to decrypt any file/folder content.
 	NodePassphrase          string // The passphrase used to unlock the NodeKey, encrypted by the owning Link/Share keyring.
 	NodePassphraseSignature string
+	SignatureEmail          string // Signature email for the NodePassphraseSignature
 
 	FileProperties   *FileProperties
 	FolderProperties *FolderProperties
