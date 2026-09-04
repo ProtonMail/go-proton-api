@@ -3,10 +3,9 @@
 set -eo pipefail
 
 main(){
-    local go_package="$1"
-    govulncheck -json "$go_package" > vulns.json
+    GOTOOLCHAIN=auto go run golang.org/x/vuln/cmd/govulncheck@latest -json ./... > vulns.json
 
-    jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv ' < vulns.json > vulns_osv_ids.txt
+    jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv' < vulns.json > vulns_osv_ids.txt
 
     ignore GO-2026-4550 "Indirect import from goopengpg. Waiting for fix on their side"
 
@@ -28,7 +27,7 @@ has_vulns(){
     while read -r osv; do
         jq \
             --arg osvid "$osv" \
-            '.osv | select ( .id == $osvid) | {"id":.id, "ranges": .affected[0].ranges,  "import": .affected[0].ecosystem_specific.imports[0].path}' \
+            '.osv | select ( .id == $osvid) | {"id":.id, "ranges": .affected[0].ranges, "import": .affected[0].ecosystem_specific.imports[0].path}' \
             < vulns.json
         has=true
     done < vulns_osv_ids.txt
