@@ -8,6 +8,8 @@ main(){
     jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv' < vulns.json > vulns_osv_ids.txt
 
     ignore GO-2026-4550 "Indirect import from goopengpg. Waiting for fix on their side"
+    ignore GO-2026-6061 "BRIDGE-638 Vulnerabilities in the xDS RBAC authorization engine and the HTTP/2 transport server implementation in google.golang.org/grpc"
+    ignore GO-2026-5676 "BRIDGE-638 HTTP/3 QPACK Trailer Expansion Memory Exhaustion in github.com/quic-go/quic-go"
 
     has_vulns
 

@@ -2057,7 +2057,6 @@ func TestServer_UserSettings(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, proton.SettingDisabled, settings.Telemetry)
 			require.Equal(t, proton.SettingDisabled, settings.CrashReports)
-
 		})
 	})
 }
@@ -2227,7 +2226,6 @@ func TestServer_GetMessageGroupCount(t *testing.T) {
 			})
 			require.NotEmpty(t, counts)
 			require.ElementsMatch(t, expected, counts)
-
 		})
 	})
 }
@@ -2310,7 +2308,6 @@ func TestServer_TestDraftActions(t *testing.T) {
 					require.True(t, msg.Flags&tests[i].flag != 0)
 				}
 			}
-
 		})
 	})
 }
@@ -2318,7 +2315,6 @@ func TestServer_TestDraftActions(t *testing.T) {
 func TestServer_Contacts(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
-
 			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 
@@ -2387,7 +2383,6 @@ func TestServer_Contacts(t *testing.T) {
 func TestServer_ContactEmails(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
-
 			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 
@@ -2455,7 +2450,6 @@ func TestServer_ContactEmails(t *testing.T) {
 func TestServer_ContactEmailsRepeated(t *testing.T) {
 	withServer(t, func(ctx context.Context, s *Server, m *proton.Manager) {
 		withUser(ctx, t, s, m, "user", "pass", func(c *proton.Client) {
-
 			user, err := c.GetUser(ctx)
 			require.NoError(t, err)
 
@@ -2625,15 +2619,15 @@ func importMessages(
 }
 
 func countBytesRead(ctl *proton.NetCtl, fn func()) uint64 {
-	var read uint64
+	var read atomic.Uint64
 
 	ctl.OnRead(func(b []byte) {
-		atomic.AddUint64(&read, uint64(len(b)))
+		read.Add(uint64(len(b)))
 	})
 
 	fn()
 
-	return read
+	return read.Load()
 }
 
 type testCookieJar struct {
@@ -2686,7 +2680,8 @@ func elementsMatch[T comparable](want, got []T) bool {
 func getFullMessages(ctx context.Context,
 	c *proton.Client,
 	workers, buffer int,
-	messageIDs ...string) stream.Stream[proton.FullMessage] {
+	messageIDs ...string,
+) stream.Stream[proton.FullMessage] {
 	scheduler := proton.NewSequentialScheduler()
 	attachmentStorageProvider := proton.NewDefaultAttachmentAllocator()
 	return parallel.MapStream(
