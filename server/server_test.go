@@ -2633,7 +2633,7 @@ func countBytesRead(ctl *proton.NetCtl, fn func()) uint64 {
 
 	fn()
 
-	return read
+	return atomic.LoadUint64(&read)
 }
 
 type testCookieJar struct {
