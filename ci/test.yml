@@ -23,8 +23,8 @@ test-linux:
   script:
     - export PATH="$(go env GOPATH)/bin:$PATH"
     - bash utils/install_gotestsum.sh
-    - gotestsum --junitfile test-linux.xml --format testname -- -timeout 15m ./...
-    - gotestsum --junitfile test-linux-race.xml --format testname -- -race -timeout 15m ./...
+    - bash ci/test.sh linux
+    - bash ci/test_race.sh linux
   artifacts:
     when: always
     paths:
