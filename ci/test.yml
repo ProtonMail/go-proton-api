@@ -19,9 +19,17 @@ test-linux:
   extends:
     - .image-linux-test
     - .rules-MR-and-master-always
-  timeout: 20m
+  timeout: 30m
   script:
-    - go test -v ./...
-    - go test -v -race ./...
+    - export PATH="$(go env GOPATH)/bin:$PATH"
+    - bash utils/install_gotestsum.sh
+    - gotestsum --junitfile test-linux.xml --format testname -- -timeout 15m ./...
+    - gotestsum --junitfile test-linux-race.xml --format testname -- -race -timeout 15m ./...
+  artifacts:
+    when: always
+    paths:
+      - test-linux*.xml
+    reports:
+      junit: test-linux*.xml
   tags:
     - shared-large
