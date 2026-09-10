@@ -1,44 +1,32 @@
 #!/usr/bin/env bash
-
 set -eo pipefail
 
-main(){
-    GOTOOLCHAIN=auto go run golang.org/x/vuln/cmd/govulncheck@latest -json ./... > vulns.json
+CONFIG=".proton/reviewbot/config.yaml"
 
-    jq -r '.finding | select( (.osv != null) and (.trace[0].function != null) ) | .osv' < vulns.json > vulns_osv_ids.txt
+GOTOOLCHAIN=auto go run golang.org/x/vuln/cmd/govulncheck@latest -json ./... > vulns.json
 
-    ignore GO-2026-4550 "Indirect import from goopengpg. Waiting for fix on their side"
-    ignore GO-2026-6061 "BRIDGE-638 Vulnerabilities in the xDS RBAC authorization engine and the HTTP/2 transport server implementation in google.golang.org/grpc"
-    ignore GO-2026-5676 "BRIDGE-638 HTTP/3 QPACK Trailer Expansion Memory Exhaustion in github.com/quic-go/quic-go"
+jq -r '.finding | select((.osv != null) and (.trace[0].function != null)) | .osv' < vulns.json > vulns_osv_ids.txt
 
-    has_vulns
+# Read GO- prefixed ignore rules from reviewbot config (single source of truth)
+if [ -f "$CONFIG" ]; then
+    grep -oE 'GO-[0-9]{4}-[0-9]+' "$CONFIG" | while read -r id; do
+        echo "ignoring $id (tracked in $CONFIG)"
+        grep -v "$id" < vulns_osv_ids.txt > tmp || true
+        mv tmp vulns_osv_ids.txt
+    done
+fi
 
-    echo
-    echo "No new vulnerabilities found."
-}
-
-ignore(){
-    echo "ignoring $1 fix: $2"
-    cp vulns_osv_ids.txt tmp
-    grep -v "$1" < tmp > vulns_osv_ids.txt || true
-    rm tmp
-}
-
-has_vulns(){
-    has=false
+# Fail if any unignored vulns remain
+if [ -s vulns_osv_ids.txt ]; then
     while read -r osv; do
-        jq \
-            --arg osvid "$osv" \
-            '.osv | select ( .id == $osvid) | {"id":.id, "ranges": .affected[0].ranges, "import": .affected[0].ecosystem_specific.imports[0].path}' \
+        jq --arg osvid "$osv" \
+            '.osv | select(.id == $osvid) | {"id":.id, "ranges": .affected[0].ranges, "import": .affected[0].ecosystem_specific.imports[0].path}' \
             < vulns.json
-        has=true
     done < vulns_osv_ids.txt
+    echo
+    echo "Vulnerability found"
+    exit 1
+fi
 
-    if [ "$has" == true ]; then
-        echo
-        echo "Vulnerability found"
-        return 1
-    fi
-}
-
-main
+echo
+echo "No new vulnerabilities found."

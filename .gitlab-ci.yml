@@ -23,6 +23,3 @@ include:
   - local: ci/rules.yml
   - local: ci/lint.yml
   - local: ci/test.yml
-  - component: gitlab.protontech.ch/proton/devops/cicd-components/kits/devsecops/go@~latest
-    inputs:
-      stage: check
