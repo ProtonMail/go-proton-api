@@ -6,7 +6,7 @@ toolchain go1.26.7
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
-	github.com/ProtonMail/gluon v0.17.1-0.20260225115619-c0f05c033a4a
+	github.com/ProtonMail/gluon v0.0.0-20260910132611-39e5c6ac84fe
 	github.com/ProtonMail/go-crypto v1.4.1-proton
 	github.com/ProtonMail/go-srp v0.0.7
 	github.com/ProtonMail/gopenpgp/v2 v2.10.0-proton
