@@ -11,25 +11,27 @@ scanners:
   grype:
     minSeverity: error
     ignoreRules:
-      - "GO-2026-4550"  # BRIDGE-638 — gopenpgp indirect import, waiting for upstream fix
-      - "GO-2026-6061"  # BRIDGE-638 — grpc xDS RBAC + HTTP/2 transport vulns
-      - "GO-2026-5676"  # BRIDGE-638 — quic-go HTTP/3 QPACK memory exhaustion
-      - "GHSA-5cgq-3rg8-m6cv"  # BRIDGE-638 — x/crypto SSH @revoked bypass (indirect, no SSH usage)
-      - "GHSA-vgwf-h737-ff37"  # BRIDGE-638 — x/crypto SSH client deadlock (indirect, no SSH usage)
-      - "GHSA-f5wc-c3c7-36mc"  # BRIDGE-638 — x/crypto SSH agent constraint forwarding (indirect, no SSH usage)
-      - "GHSA-x527-x647-q7gg"  # BRIDGE-638 — x/crypto SSH VerifiedPublicKeyCallback skip (indirect, no SSH usage)
-      - "GHSA-rm3j-f69w-wqmq"  # BRIDGE-638 — x/crypto SSH channel write infinite loop (indirect, no SSH usage)
-      - "GHSA-89gr-r52h-f8rx"  # BRIDGE-638 — x/crypto FIDO/U2F presence check bypass (indirect, no SSH usage)
-      - "GHSA-jppx-rxg9-jmrx"  # BRIDGE-638 — x/crypto SSH agent key constraint bypass (indirect, no SSH usage)
-      - "GHSA-q4h4-gmj2-qvw2"  # BRIDGE-638 — x/crypto SSH byte arithmetic underflow (indirect, no SSH usage)
-      - "GHSA-w879-237q-wc7r"  # BRIDGE-638 — x/crypto SSH RSA/DSA param DoS (indirect, no SSH usage)
-      - "GO-2026-6355"          # BRIDGE-638 — x/crypto SSH channel deadlock (indirect, no SSH usage)
-      - "GO-2026-6303"          # BRIDGE-638 — x/crypto SSH source-address bypass (indirect, no SSH usage)
-      - "GO-2026-6354"          # BRIDGE-638 — x/crypto SSH channel flooding (indirect, no SSH usage)
-      - "GHSA-vp52-pcj8-j9qc"  # BRIDGE-638 — grpc HTTP/2 heap exhaustion (local IPC only)
-      - "GHSA-2v4p-qf9q-27wj"  # BRIDGE-638 — grpc xDS DoS missing headers (xDS not used)
-      - "GHSA-hrxh-6v49-42gf"  # BRIDGE-638 — grpc xDS RBAC + HTTP/2 vulns (xDS not used)
-      - "GO-2026-5942"          # BRIDGE-638 — x/net DNS SVCB/HTTPS RR panic (uses x/net/html, not DNS)
-      - "GO-2026-5970"          # BRIDGE-638 — x/text norm.Iter infinite loop (uses encoding, not norm)
+      - "GO-2026-4550" # BRIDGE-638 — gopenpgp indirect import, waiting for upstream fix
+      - "GO-2026-6061" # BRIDGE-638 — grpc xDS RBAC + HTTP/2 transport vulns
+      - "GO-2026-5676" # BRIDGE-638 — quic-go HTTP/3 QPACK memory exhaustion
+      - "GHSA-5cgq-3rg8-m6cv" # BRIDGE-638 — x/crypto SSH @revoked bypass (indirect, no SSH usage)
+      - "GHSA-vgwf-h737-ff37" # BRIDGE-638 — x/crypto SSH client deadlock (indirect, no SSH usage)
+      - "GHSA-f5wc-c3c7-36mc" # BRIDGE-638 — x/crypto SSH agent constraint forwarding (indirect, no SSH usage)
+      - "GHSA-x527-x647-q7gg" # BRIDGE-638 — x/crypto SSH VerifiedPublicKeyCallback skip (indirect, no SSH usage)
+      - "GHSA-rm3j-f69w-wqmq" # BRIDGE-638 — x/crypto SSH channel write infinite loop (indirect, no SSH usage)
+      - "GHSA-89gr-r52h-f8rx" # BRIDGE-638 — x/crypto FIDO/U2F presence check bypass (indirect, no SSH usage)
+      - "GHSA-jppx-rxg9-jmrx" # BRIDGE-638 — x/crypto SSH agent key constraint bypass (indirect, no SSH usage)
+      - "GHSA-q4h4-gmj2-qvw2" # BRIDGE-638 — x/crypto SSH byte arithmetic underflow (indirect, no SSH usage)
+      - "GHSA-w879-237q-wc7r" # BRIDGE-638 — x/crypto SSH RSA/DSA param DoS (indirect, no SSH usage)
+      - "GO-2026-6355" # BRIDGE-638 — x/crypto SSH channel deadlock (indirect, no SSH usage)
+      - "GO-2026-6303" # BRIDGE-638 — x/crypto SSH source-address bypass (indirect, no SSH usage)
+      - "GO-2026-6354" # BRIDGE-638 — x/crypto SSH channel flooding (indirect, no SSH usage)
+      - "GHSA-vp52-pcj8-j9qc" # BRIDGE-638 — grpc HTTP/2 heap exhaustion (local IPC only)
+      - "GHSA-2v4p-qf9q-27wj" # BRIDGE-638 — grpc xDS DoS missing headers (xDS not used)
+      - "GHSA-hrxh-6v49-42gf" # BRIDGE-638 — grpc xDS RBAC + HTTP/2 vulns (xDS not used)
+      - "GO-2026-5942" # BRIDGE-638 — x/net DNS SVCB/HTTPS RR panic (uses x/net/html, not DNS)
+      - "GO-2026-5970" # BRIDGE-638 — x/text norm.Iter infinite loop (uses encoding, not norm)
+      - "GO-2026-6348" # BRIDGE-638 Heap Memory Exhaustion via HTTP/2 DATA Frame Fragmentation
+      - "GO-2026-6443" # BRIDGE-638 Servers configured with xDS routing can panic when processing requests that lack both :authority and Host headers.
     # Convention: each ignored rule gets a JIRA ticket and reason
     #   - "GHSA-xxxx-yyyy"  # BRIDGE-NNNN — brief reason / remediation status
