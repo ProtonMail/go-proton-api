@@ -1,0 +1,34 @@
+attachment.go
+  h_60baefb4f38937 59,65,71
+block.go
+  h_60baefb4f38937 35
+go.sum
+  h_60baefb4f38937 68-69,231-232
+manager_builder.go
+  h_60baefb4f38937 90
+manager_report.go
+  h_60baefb4f38937 4,14,32
+message_import_types.go
+  h_60baefb4f38937 4,51,63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "c555f7d9111cc46fc078751b012daa6ca09ae9b8",
+  "prompts": {},
+  "humans": {
+    "h_60baefb4f38937": {
+      "author": "Sebastijan Zindl <sebastijan.zindl@proton.ch>"
+    }
+  },
+  "commit_stats": {
+    "human_additions": 11,
+    "unknown_additions": 0,
+    "ai_additions": 0,
+    "ai_accepted": 0,
+    "git_diff_deleted_lines": 10,
+    "git_diff_added_lines": 11,
+    "tool_model_breakdown": {}
+  },
+  "proton_build": "proton-1.7.6-44-g8867e25d"
+}
