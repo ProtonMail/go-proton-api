@@ -7,9 +7,9 @@ toolchain go1.26.7
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/ProtonMail/gluon v0.0.0-20260910132611-39e5c6ac84fe
-	github.com/ProtonMail/go-crypto v1.4.1-proton
+	github.com/ProtonMail/go-crypto v1.5.2-proton
 	github.com/ProtonMail/go-srp v0.0.7
-	github.com/ProtonMail/gopenpgp/v2 v2.10.0-proton
+	github.com/ProtonMail/gopenpgp/v2 v2.11.1-proton
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/bradenaw/juniper v0.15.3
 	github.com/emersion/go-message v0.16.0
@@ -35,7 +35,7 @@ require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect
-	github.com/cloudflare/circl v1.6.2 // indirect
+	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/cronokirby/saferith v0.33.0 // indirect

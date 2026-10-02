@@ -11,7 +11,6 @@ scanners:
   grype:
     minSeverity: error
     ignoreRules:
-      - "GO-2026-4550" # BRIDGE-638 — gopenpgp indirect import, waiting for upstream fix
       - "GO-2026-6061" # BRIDGE-638 — grpc xDS RBAC + HTTP/2 transport vulns
       - "GO-2026-5676" # BRIDGE-638 — quic-go HTTP/3 QPACK memory exhaustion
       - "GHSA-5cgq-3rg8-m6cv" # BRIDGE-638 — x/crypto SSH @revoked bypass (indirect, no SSH usage)
