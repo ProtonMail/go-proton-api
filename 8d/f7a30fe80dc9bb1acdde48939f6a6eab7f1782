@@ -1,0 +1,15 @@
+.proton/reviewbot/config.yaml
+  h_60baefb4f38937 35-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "8df7a30fe80dc9bb1acdde48939f6a6eab7f1782",
+  "prompts": {},
+  "humans": {
+    "h_60baefb4f38937": {
+      "author": "Sebastijan Zindl <sebastijan.zindl@proton.ch>"
+    }
+  },
+  "proton_build": "1.7.6-proton.7"
+}
