@@ -1,0 +1,17 @@
+go.mod
+  h_60baefb4f38937 25-27,61,68,70-71
+go.sum
+  h_60baefb4f38937 107-108,141-150,165-166,185-186,194-195,210-211,233-234,248-249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "506326d4903364e2589b9fc1dbe856c68a434ffc",
+  "prompts": {},
+  "humans": {
+    "h_60baefb4f38937": {
+      "author": "Sebastijan Zindl <sebastijan.zindl@proton.ch>"
+    }
+  },
+  "proton_build": "1.7.6-proton.7"
+}
