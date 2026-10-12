@@ -16,18 +16,26 @@ type Block struct {
 
 type BlockUploadReq struct {
 	AddressID  string
-	ShareID    string
+	ShareID    string `json:",omitempty"`
+	VolumeID   string `json:",omitempty"`
 	LinkID     string
 	RevisionID string
 
-	BlockList []BlockUploadInfo
+	BlockList     []BlockUploadInfo `json:"BlockList"`
+	ThumbnailList []interface{}     `json:"ThumbnailList,omitempty"`
+}
+
+// BlockVerifier holds the verification token for a block upload.
+type BlockVerifier struct {
+	Token string
 }
 
 type BlockUploadInfo struct {
 	Index        int
-	Size         int64
+	Size         int64 `json:",omitempty"`
 	EncSignature string
-	Hash         string
+	Hash         string         `json:",omitempty"`
+	Verifier     *BlockVerifier `json:",omitempty"`
 }
 
 type BlockUploadLink struct {
