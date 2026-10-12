@@ -72,6 +72,46 @@ func (m *Manager) NewClientWithLoginWithHVToken(ctx context.Context, username st
 	return newClient(m, auth.UID).withAuth(auth.AccessToken, auth.RefreshToken), auth, nil
 }
 
+// NewClientWithLoginWithCachedInfo performs the SRP auth step using a
+// previously fetched AuthInfo. This is required for HV retries: the solved
+// CAPTCHA token is bound to the SRP session from the original AuthInfo
+// response. Calling AuthInfo again would generate a new SRP session,
+// invalidating the token.
+func (m *Manager) NewClientWithLoginWithCachedInfo(ctx context.Context, info AuthInfo, username string, password []byte, hv *APIHVDetails) (*Client, Auth, error) {
+	srpAuth, err := srp.NewAuth(info.Version, username, password, info.Salt, info.Modulus, info.ServerEphemeral)
+	if err != nil {
+		return nil, Auth{}, err
+	}
+
+	proofs, err := srpAuth.GenerateProofs(2048)
+	if err != nil {
+		return nil, Auth{}, err
+	}
+
+	auth, err := m.auth(ctx, AuthReq{
+		Username:        username,
+		ClientProof:     base64.StdEncoding.EncodeToString(proofs.ClientProof),
+		ClientEphemeral: base64.StdEncoding.EncodeToString(proofs.ClientEphemeral),
+		SRPSession:      info.SRPSession,
+	}, hv)
+	if err != nil {
+		return nil, Auth{}, err
+	}
+
+	serverProof, err := base64.StdEncoding.DecodeString(auth.ServerProof)
+	if err != nil {
+		return nil, Auth{}, err
+	}
+
+	if m.verifyProofs {
+		if !bytes.Equal(serverProof, proofs.ExpectedServerProof) {
+			return nil, Auth{}, ErrInvalidProof
+		}
+	}
+
+	return newClient(m, auth.UID).withAuth(auth.AccessToken, auth.RefreshToken), auth, nil
+}
+
 func (m *Manager) AuthInfo(ctx context.Context, req AuthInfoReq) (AuthInfo, error) {
 	var res struct {
 		AuthInfo
