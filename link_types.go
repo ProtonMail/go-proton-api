@@ -111,6 +111,33 @@ func (l Link) GetHashKey(nodeKR *crypto.KeyRing) ([]byte, error) {
 	return dec.GetBinary(), nil
 }
 
+func (l Link) GetHashKeyFromParent(parentNodeKey, addrKRs *crypto.KeyRing) ([]byte, error) {
+	if l.Type != LinkTypeFolder {
+		return nil, errors.New("link is not a folder")
+	}
+
+	enc, err := crypto.NewPGPMessageFromArmored(l.FolderProperties.NodeHashKey)
+	if err != nil {
+		return nil, err
+	}
+
+	_, ok := enc.GetSignatureKeyIDs()
+	var dec *crypto.PlainMessage
+	if ok {
+		dec, err = parentNodeKey.Decrypt(enc, addrKRs, crypto.GetUnixTime())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		dec, err = parentNodeKey.Decrypt(enc, nil, 0)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return dec.GetBinary(), nil
+}
+
 func (l Link) GetSessionKey(nodeKR *crypto.KeyRing) (*crypto.SessionKey, error) {
 	if l.Type != LinkTypeFile {
 		return nil, errors.New("link is not a file")
