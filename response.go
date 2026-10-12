@@ -190,7 +190,7 @@ func catchDropError(_ *resty.Response, err error) bool {
 //
 // In this case the resty is not processing request at all including http
 // status check or APIerror parsing. Hence, the returned error would be nil
-// even on non-200 reponsenses.
+// even on non-200 responses.
 //
 // This function also closes the response body.
 func parseResponse(res *resty.Response, err error) (*resty.Response, error) {
