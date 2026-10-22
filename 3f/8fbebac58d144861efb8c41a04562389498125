@@ -1,0 +1,15 @@
+go.mod
+  h_60baefb4f38937 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "3f8fbebac58d144861efb8c41a04562389498125",
+  "prompts": {},
+  "humans": {
+    "h_60baefb4f38937": {
+      "author": "Sebastijan Zindl <sebastijan.zindl@proton.ch>"
+    }
+  },
+  "proton_build": "1.7.6-proton.7"
+}
