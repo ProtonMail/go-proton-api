@@ -1,0 +1,96 @@
+attachment.go
+  h_60baefb4f38937 59,65,71
+go.sum
+  h_60baefb4f38937 68-69,231-232
+manager_builder.go
+  h_60baefb4f38937 91
+  s_3914ed0d9f7754::t_adfae5fe760d66 84
+manager_report.go
+  h_60baefb4f38937 4,14,32
+message_import_types.go
+  h_60baefb4f38937 4,51,63
+manager_test.go
+  s_3914ed0d9f7754::t_ab2551d8672bbd 11-12,18
+  s_3914ed0d9f7754::t_dd07868cc42245 73-103,105-112
+  s_3914ed0d9f7754::t_ab736998dc8cd1 104
+manager.go
+  s_3914ed0d9f7754::t_cd97c0ed786bda 52-70
+  s_3914ed0d9f7754::t_d1a02f5354bf28 16-18
+block.go
+  s_3914ed0d9f7754::t_771148cbd968e2 36,40
+client.go
+  s_3914ed0d9f7754::t_c7b67385725e27 84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "6de7fc79a032e322132f23804b1b2ee668108feb",
+  "prompts": {},
+  "humans": {
+    "h_60baefb4f38937": {
+      "author": "Sebastijan Zindl <sebastijan.zindl@proton.ch>"
+    }
+  },
+  "sessions": {
+    "s_3914ed0d9f7754": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "389c1e6c-0295-4f60-b099-ca6061dae0b7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Sebastijan Zindl <sebastijan.zindl@proton.ch>"
+    }
+  },
+  "commit_stats": {
+    "human_additions": 11,
+    "unknown_additions": 0,
+    "ai_additions": 0,
+    "ai_accepted": 0,
+    "git_diff_deleted_lines": 10,
+    "git_diff_added_lines": 11,
+    "tool_model_breakdown": {}
+  },
+  "token_usage": {
+    "attributable": {
+      "total": {
+        "input_tokens": 98686,
+        "output_tokens": 49042,
+        "cache_creation_input_tokens": 115106,
+        "cache_read_input_tokens": 6480270
+      },
+      "by_tool_model": {
+        "claude::claude-opus-5-5": {
+          "input_tokens": 98686,
+          "output_tokens": 49042,
+          "cache_creation_input_tokens": 115106,
+          "cache_read_input_tokens": 6480270
+        }
+      },
+      "tool_uses": {
+        "bash": 57,
+        "edit": 8,
+        "toolsearch": 1,
+        "write": 2
+      }
+    },
+    "by_prompt": {
+      "s_3914ed0d9f7754": {
+        "input_tokens": 98686,
+        "output_tokens": 49042,
+        "cache_creation_input_tokens": 115106,
+        "cache_read_input_tokens": 6480270
+      }
+    },
+    "origins": [
+      "6ec867c87d5f6ba05fa1f895151deeda75ed950c",
+      "c555f7d9111cc46fc078751b012daa6ca09ae9b8"
+    ]
+  },
+  "activity": {
+    "added_sloc": 66,
+    "deleted_sloc": 14,
+    "checkpoints": 10,
+    "span_seconds": 2528
+  },
+  "proton_build": "proton-1.7.6-44-g8867e25d"
+}
