@@ -1,0 +1,47 @@
+server/router.go
+  h_60baefb4f38937 285,319-320,335
+server/server.go
+  h_60baefb4f38937 7,49,61,238,242
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "de2845a378fe6c476b1c2cafd188fb6d7c62dfae",
+  "prompts": {},
+  "humans": {
+    "h_60baefb4f38937": {
+      "author": "Sebastijan Zindl <sebastijan.zindl@proton.ch>"
+    }
+  },
+  "commit_stats": {
+    "human_additions": 9,
+    "unknown_additions": 0,
+    "ai_additions": 0,
+    "ai_accepted": 0,
+    "git_diff_deleted_lines": 7,
+    "git_diff_added_lines": 9,
+    "tool_model_breakdown": {}
+  },
+  "token_usage": {
+    "carried": {
+      "total": {
+        "input_tokens": 12,
+        "output_tokens": 1655,
+        "cache_creation_input_tokens": 24139,
+        "cache_read_input_tokens": 355294
+      },
+      "by_tool_model": {
+        "claude::claude-opus-5": {
+          "input_tokens": 12,
+          "output_tokens": 1655,
+          "cache_creation_input_tokens": 24139,
+          "cache_read_input_tokens": 355294
+        }
+      }
+    },
+    "origins": [
+      "863217f93d1f1f4057fdc4037d9767a3d2c0d9ed"
+    ]
+  },
+  "proton_build": "proton-1.7.6-44-g8867e25d"
+}
