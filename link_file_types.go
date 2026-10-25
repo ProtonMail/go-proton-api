@@ -1,5 +1,42 @@
 package proton
 
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
+)
+
+// getEncryptedName encrypts name with the node keyring, signs it with the
+// address keyring, and returns the armored ciphertext.
+func getEncryptedName(name string, addrKR, nodeKR *crypto.KeyRing) (string, error) {
+	clearTextName := crypto.NewPlainMessageFromString(name)
+
+	encName, err := nodeKR.Encrypt(clearTextName, addrKR)
+	if err != nil {
+		return "", err
+	}
+
+	encNameString, err := encName.GetArmored()
+	if err != nil {
+		return "", err
+	}
+
+	return encNameString, nil
+}
+
+// GetNameHash returns the hex-encoded HMAC-SHA256 of name keyed by hashKey.
+func GetNameHash(name string, hashKey []byte) (string, error) {
+	mac := hmac.New(sha256.New, hashKey)
+	_, err := mac.Write([]byte(name))
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(mac.Sum(nil)), nil
+}
+
 type CreateFileReq struct {
 	ParentLinkID string
 
