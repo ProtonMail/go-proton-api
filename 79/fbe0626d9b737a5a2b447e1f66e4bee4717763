@@ -1,0 +1,53 @@
+go.mod
+  s_c80d58ae1e118a::t_2b73f937b73ad8 25-26,68,70-71
+go.sum
+  s_c80d58ae1e118a::t_e431f6da65c6e4 165-166,185-186,194-195,210-211,233-234
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "79fbe0626d9b737a5a2b447e1f66e4bee4717763",
+  "prompts": {},
+  "sessions": {
+    "s_c80d58ae1e118a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8fe6ef0e-8369-4af5-8705-5822f7b8b28f",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sebastijan Zindl <sebastijan.zindl@proton.ch>"
+    }
+  },
+  "token_usage": {
+    "attributable": {
+      "total": {
+        "input_tokens": 44,
+        "output_tokens": 9851,
+        "cache_creation_input_tokens": 49337,
+        "cache_read_input_tokens": 1427787
+      },
+      "by_tool_model": {
+        "claude::claude-sonnet-5-5": {
+          "input_tokens": 44,
+          "output_tokens": 9851,
+          "cache_creation_input_tokens": 49337,
+          "cache_read_input_tokens": 1427787
+        }
+      },
+      "tool_uses": {
+        "bash": 19,
+        "edit": 1,
+        "read": 1
+      }
+    },
+    "by_prompt": {
+      "s_c80d58ae1e118a": {
+        "input_tokens": 44,
+        "output_tokens": 9851,
+        "cache_creation_input_tokens": 49337,
+        "cache_read_input_tokens": 1427787
+      }
+    }
+  },
+  "proton_build": "1.7.6-proton.7"
+}
