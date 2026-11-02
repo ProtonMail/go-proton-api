@@ -18,6 +18,20 @@ go.sum
       "human_author": "Sebastijan Zindl <sebastijan.zindl@proton.ch>"
     }
   },
+  "commit_stats": {
+    "human_additions": 0,
+    "unknown_additions": 1,
+    "ai_additions": 5,
+    "ai_accepted": 5,
+    "git_diff_deleted_lines": 17,
+    "git_diff_added_lines": 6,
+    "tool_model_breakdown": {
+      "claude::claude-sonnet-5-5": {
+        "ai_additions": 5,
+        "ai_accepted": 5
+      }
+    }
+  },
   "token_usage": {
     "attributable": {
       "total": {
@@ -48,6 +62,12 @@ go.sum
         "cache_read_input_tokens": 1427787
       }
     }
+  },
+  "activity": {
+    "added_sloc": 5,
+    "deleted_sloc": 16,
+    "checkpoints": 2,
+    "span_seconds": 1789
   },
   "proton_build": "1.7.6-proton.7"
 }
