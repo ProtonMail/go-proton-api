@@ -1,0 +1,53 @@
+manager_download_test.go
+  s_72a06907b78cf1::t_2a959abbbf6b4c 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "b0a1d96c577883a08d15b8a596f36592010dee78",
+  "prompts": {},
+  "sessions": {
+    "s_72a06907b78cf1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f2558f28-3426-432b-8b66-bad8b7391d02",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "ElectroNafta <atanas.janeshliev@proton.ch>"
+    }
+  },
+  "token_usage": {
+    "attributable": {
+      "total": {
+        "input_tokens": 414,
+        "output_tokens": 101273,
+        "cache_creation_input_tokens": 1535860,
+        "cache_read_input_tokens": 23092393
+      },
+      "by_tool_model": {
+        "claude::claude-opus-5-5": {
+          "input_tokens": 414,
+          "output_tokens": 101273,
+          "cache_creation_input_tokens": 1535860,
+          "cache_read_input_tokens": 23092393
+        }
+      },
+      "tool_uses": {
+        "agent": 7,
+        "bash": 105,
+        "edit": 3,
+        "read": 3,
+        "write": 2
+      }
+    },
+    "by_prompt": {
+      "s_72a06907b78cf1": {
+        "input_tokens": 414,
+        "output_tokens": 101273,
+        "cache_creation_input_tokens": 1535860,
+        "cache_read_input_tokens": 23092393
+      }
+    }
+  },
+  "proton_build": "1.7.6-proton.8"
+}
