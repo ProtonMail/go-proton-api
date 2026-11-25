@@ -16,6 +16,20 @@ manager_download_test.go
       "human_author": "ElectroNafta <atanas.janeshliev@proton.ch>"
     }
   },
+  "commit_stats": {
+    "human_additions": 0,
+    "unknown_additions": 1,
+    "ai_additions": 28,
+    "ai_accepted": 28,
+    "git_diff_deleted_lines": 25,
+    "git_diff_added_lines": 29,
+    "tool_model_breakdown": {
+      "claude::claude-opus-5-5": {
+        "ai_additions": 28,
+        "ai_accepted": 28
+      }
+    }
+  },
   "token_usage": {
     "attributable": {
       "total": {
