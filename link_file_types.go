@@ -7,6 +7,11 @@ type CreateFileReq struct {
 	Hash     string // Encrypted content hash
 	MIMEType string // MIME Type
 
+	// ClientUID is used for draft ownership tracking. In case of upload failure,
+	// the client can recognize its own draft and continue the upload.
+	// Per official Proton Drive API (OpenAPI spec).
+	ClientUID string `json:",omitempty"`
+
 	ContentKeyPacket          string // The block's key packet, encrypted with the node key.
 	ContentKeyPacketSignature string // Unencrypted signature of the content session key, signed with the NodeKey
 

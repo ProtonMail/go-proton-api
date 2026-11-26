@@ -182,3 +182,29 @@ const (
 	RevisionStateObsolete
 	RevisionStateDeleted
 )
+
+// CheckAvailableHashesReq is used to check which file name hashes are available
+// for upload in a given folder. Per official Proton Drive API (OpenAPI spec).
+type CheckAvailableHashesReq struct {
+	Hashes []string
+
+	// ClientUID filters pending drafts. If provided, only drafts NOT belonging
+	// to these client UIDs will be returned in PendingHashes.
+	ClientUID []string `json:",omitempty"`
+}
+
+// CheckAvailableHashesRes contains the results of a hash availability check.
+type CheckAvailableHashesRes struct {
+	AvailableHashes []string
+	PendingHashes   []PendingHashData
+}
+
+// PendingHashData represents a pending draft that conflicts with a requested hash.
+type PendingHashData struct {
+	Hash       string
+	RevisionID string
+	LinkID     string
+
+	// ClientUID identifies which client created this pending draft.
+	ClientUID string `json:",omitempty"`
+}
