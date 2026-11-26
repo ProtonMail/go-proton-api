@@ -169,6 +169,23 @@ func catchRetryAfter(_ *resty.Client, res *resty.Response) (time.Duration, error
 	return time.Duration(after) * time.Second, nil
 }
 
+func retryRefreshFailed(res *resty.Response, err error) bool {
+	if err == nil || res == nil || res.Request == nil {
+		return false
+	}
+
+	if !strings.HasSuffix(res.Request.URL, "/auth/v4/refresh") {
+		return false
+	}
+
+	// Retry only transient refresh failures: no response reached us
+	// (network error / timeout) or a 5xx server error. A 400 or 422 on
+	// /auth/v4/refresh is the permanent de-auth signal (see authRefresh,
+	// which treats those exact codes as de-auth); retrying them cannot
+	// succeed and only delays the de-auth while hammering the endpoint.
+	return res.RawResponse == nil || res.StatusCode() >= http.StatusInternalServerError
+}
+
 func catchTooManyRequests(res *resty.Response, _ error) bool {
 	return res.StatusCode() == http.StatusTooManyRequests || res.StatusCode() == http.StatusServiceUnavailable
 }
