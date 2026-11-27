@@ -22,6 +22,17 @@ type CreateFileRes struct {
 	RevisionID string // Encrypted Revision ID
 }
 
+type CreateRevisionRes struct {
+	ID string // Encrypted Revision ID
+}
+
+// CreateRevisionReq is the request body for CreateRevisionFrom.
+// CurrentRevisionID, when non-nil, bases the new draft revision on the
+// specified active revision, enabling block reuse (copy-on-write).
+type CreateRevisionReq struct {
+	CurrentRevisionID *string `json:"CurrentRevisionID,omitempty"`
+}
+
 type UpdateRevisionReq struct {
 	BlockList         []BlockToken
 	State             RevisionState

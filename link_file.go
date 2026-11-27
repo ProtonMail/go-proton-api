@@ -53,3 +53,34 @@ func (c *Client) UpdateRevision(ctx context.Context, shareID, linkID, revisionID
 		return r.SetBody(req).Put("/drive/shares/" + shareID + "/files/" + linkID + "/revisions/" + revisionID)
 	})
 }
+
+func (c *Client) DeleteRevision(ctx context.Context, shareID, linkID, revisionID string) error {
+	return c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.Delete("/drive/shares/" + shareID + "/files/" + linkID + "/revisions/" + revisionID)
+	})
+}
+
+// CreateRevisionFrom creates a new draft revision on an existing file,
+// optionally based on a prior revision for block inheritance (copy-on-write).
+// When req.CurrentRevisionID is set, the new draft inherits the base
+// revision's blocks — the caller only needs to upload changed blocks.
+func (c *Client) CreateRevisionFrom(ctx context.Context, shareID, linkID string, req CreateRevisionReq) (CreateRevisionRes, error) {
+	var res struct {
+		Revision CreateRevisionRes
+	}
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetResult(&res).SetBody(req).Post("/drive/shares/" + shareID + "/files/" + linkID + "/revisions")
+	}); err != nil {
+		return CreateRevisionRes{}, err
+	}
+
+	return res.Revision, nil
+}
+
+// CreateRevision creates a new draft revision on an existing file from
+// scratch (no base revision). It is a convenience wrapper around
+// CreateRevisionFrom with an empty request.
+func (c *Client) CreateRevision(ctx context.Context, shareID, linkID string) (CreateRevisionRes, error) {
+	return c.CreateRevisionFrom(ctx, shareID, linkID, CreateRevisionReq{})
+}
